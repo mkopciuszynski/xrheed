@@ -5,6 +5,14 @@ import numpy as np
 
 from scipy.signal import savgol_filter
 import ruptures as rpt
+import logging
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_SCREEN_ROI_WIDTH = 50.0
+DEFAULT_SCREEN_ROI_HEIGHT = 50.0
+DEFAULT_HP_SIGMA = 30
+DEFAULT_HP_POWER = 0.8
 
 
 @xr.register_dataarray_accessor("R")
@@ -13,6 +21,12 @@ class RHEEDAccessor:
     def __init__(self, xarray_obj: xr.DataArray) -> None:
         self._obj = xarray_obj
         self._center = None
+
+    def _get_attr(self, attr_name: str, default: float) -> float:
+        return self._obj.attrs.get(attr_name, default)
+
+    def _set_attr(self, attr_name: str, value: float) -> None:
+        self._obj.attrs[attr_name] = value
 
     @property
     def image(self) -> xr.DataArray:
@@ -75,21 +89,23 @@ class RHEEDAccessor:
     @property
     def screen_width(self) -> float:
         """Screen width in mm"""
-
-        assert isinstance(self._obj, xr.DataArray)
+        if "screen_width" not in self._obj.attrs:
+            raise KeyError("Attribute 'screen_width' is missing in the DataArray.")
         return self._obj.attrs["screen_width"]
     
     @property 
     def screen_roi_width(self) -> float:
-        return self._obj.attrs.get('screen_roi_width', 50.0)
+        return self._get_attr('screen_roi_width', DEFAULT_SCREEN_ROI_WIDTH)
     
     @screen_roi_width.setter
     def screen_roi_width(self, value: float):
-        self._obj.attrs['screen_roi_width'] = value
+        if value <= 0:
+            raise ValueError("screen_roi_width must be positive.")
+        self._set_attr('screen_roi_width', value)
 
     @property
     def screen_roi_height(self) -> float:
-        return self._obj.attrs.get('screen_roi_height', 50.0)
+        return self._obj.attrs.get('screen_roi_height', DEFAULT_SCREEN_ROI_HEIGHT)
     
     @screen_roi_height.setter
     def screen_roi_height(self, value: float):
@@ -104,7 +120,7 @@ class RHEEDAccessor:
     
     @property
     def hp_sigma(self) -> int:
-        return self._obj.attrs.get('hp_sigma', 30)
+        return self._obj.attrs.get('hp_sigma', DEFAULT_HP_SIGMA)
     
     @hp_sigma.setter
     def hp_sigma(self, value: int):
@@ -112,7 +128,7 @@ class RHEEDAccessor:
     
     @property
     def hp_threshold(self) -> float:
-        return self._obj.attrs.get('hp_power', 0.8)
+        return self._obj.attrs.get('hp_power', DEFAULT_HP_POWER)
     
     @hp_threshold.setter
     def hp_threshold(self, value: float):
@@ -131,7 +147,7 @@ class RHEEDAccessor:
     def apply_hp_filter(self) -> None:
         image = self._obj
         image.data = image.R.hp_image.data
-        print("Original data was exchanged for hp filtered image!")
+        logger.info("Original data was exchanged for hp filtered image!")
 
 
     def plot_image(
@@ -175,18 +191,15 @@ class ProfileAccessor():
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def set_range():
+    def set_range(self) -> None:
         pass
 
 
 def _horizontal_center(image: xr.DataArray) -> float:
-    # Find the horizontal center
-    
+    if 'x' not in image.dims:
+        raise ValueError("Dimension 'x' is missing in the DataArray.")
     profile = image.sum('y')
-    x_max = float(image.x[profile.argmax()])
-
-    # Shift the x-coordinates by the found maximum
-    return x_max
+    return float(image.x[profile.argmax()])
 
 
 def _vertical_center(image: xr.DataArray, 
