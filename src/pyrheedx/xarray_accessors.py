@@ -13,6 +13,7 @@ DEFAULT_SCREEN_ROI_WIDTH = 50.0
 DEFAULT_SCREEN_ROI_HEIGHT = 50.0
 DEFAULT_HP_SIGMA = 30
 DEFAULT_HP_POWER = 0.8
+DEFAULT_THETA = 1.0
 
 
 @xr.register_dataarray_accessor("R")
@@ -23,9 +24,11 @@ class RHEEDAccessor:
         self._center = None
 
     def _get_attr(self, attr_name: str, default: float) -> float:
+        assert isinstance(self._obj, xr.DataArray)
         return self._obj.attrs.get(attr_name, default)
 
     def _set_attr(self, attr_name: str, value: float) -> None:
+        assert isinstance(self._obj, xr.DataArray)
         self._obj.attrs[attr_name] = value
 
     @property
@@ -48,91 +51,82 @@ class RHEEDAccessor:
     @property
     def screen_sample_distance(self) -> float:
         """Screen sample distance"""
-
-        return self._obj.attrs["screen_sample_distance"]
+        return self._get_attr("screen_sample_distance", 1.0)
     
     @property 
     def theta(self) -> float:
         """Polar angle"""
-
-        if 'theta' in self._obj.attrs:
-            return self._obj.attrs['theta']
-        else:
-            print("Warning: theta (polar) angle not found in attributes. Using default value of 1.0")
-            return 1.0
+        return self._get_attr("theta", DEFAULT_THETA)
 
     @theta.setter
-    def theta(self, value):
-        self._obj.attrs['theta'] = value
+    def theta(self, value: float) -> None:
+        self._set_attr("theta", value)
 
     @property
     def screen_scale(self) -> float:
         """Screen scaling px to mm"""
-
-        assert isinstance(self._obj, xr.DataArray)
-        return self._obj.attrs["screen_scale"]
+        return self._get_attr("screen_scale", 1.0)
     
     @screen_scale.setter 
-    def screen_scale(self, px_to_mm: float): 
-
+    def screen_scale(self, px_to_mm: float) -> None: 
         if px_to_mm < 0: 
-            raise ValueError("Cannot be negative")
-        
+            raise ValueError("screen_scale must be positive.")
+        old_px_to_mm = self._get_attr("screen_scale", 1.0)
+        self._set_attr("screen_scale", px_to_mm)
+
         image = self._obj
-
-        old_px_to_mm = image.attrs['screen_scale']
-        image.attrs['screen_scale'] = px_to_mm
-
         image["x"] = image.x * old_px_to_mm / px_to_mm
         image["y"] = image.y * old_px_to_mm / px_to_mm
 
     @property
     def screen_width(self) -> float:
         """Screen width in mm"""
-        if "screen_width" not in self._obj.attrs:
-            raise KeyError("Attribute 'screen_width' is missing in the DataArray.")
-        return self._obj.attrs["screen_width"]
+        return self._get_attr("screen_width", None)
     
     @property 
     def screen_roi_width(self) -> float:
         return self._get_attr('screen_roi_width', DEFAULT_SCREEN_ROI_WIDTH)
     
     @screen_roi_width.setter
-    def screen_roi_width(self, value: float):
+    def screen_roi_width(self, value: float) -> None:
         if value <= 0:
             raise ValueError("screen_roi_width must be positive.")
         self._set_attr('screen_roi_width', value)
 
     @property
     def screen_roi_height(self) -> float:
-        return self._obj.attrs.get('screen_roi_height', DEFAULT_SCREEN_ROI_HEIGHT)
+        return self._get_attr("screen_roi_height", DEFAULT_SCREEN_ROI_HEIGHT)
     
     @screen_roi_height.setter
-    def screen_roi_height(self, value: float):
-        self._obj.attrs['screen_roi_height'] = value
+    def screen_roi_height(self, value: float) -> None:
+        if value <= 0:
+            raise ValueError("screen_roi_height must be positive.")
+        self._set_attr("screen_roi_height", value)
     
     @property
     def beam_energy(self) -> float:
-        """Screen width in mm"""
-
-        assert isinstance(self._obj, xr.DataArray)
-        return self._obj.attrs["beam_energy"]
+        """Beam energy in keV"""
+        return self._get_attr("beam_energy", None)
     
     @property
     def hp_sigma(self) -> int:
-        return self._obj.attrs.get('hp_sigma', DEFAULT_HP_SIGMA)
+        return self._get_attr("hp_sigma", DEFAULT_HP_SIGMA)
     
     @hp_sigma.setter
-    def hp_sigma(self, value: int):
-        self._obj.attrs['hp_sigma'] = value
+    def hp_sigma(self, value: int) -> None:
+        if value <= 0:
+            raise ValueError("hp_sigma must be positive.")
+        self._set_attr("hp_sigma", value)
     
     @property
     def hp_threshold(self) -> float:
-        return self._obj.attrs.get('hp_power', DEFAULT_HP_POWER)
+        return self._get_attr("hp_power", DEFAULT_HP_POWER)
     
     @hp_threshold.setter
-    def hp_threshold(self, value: float):
-        self._obj.attrs['hp_power'] = value
+    def hp_threshold(self, value: float) -> None:
+        if value < 0:
+            raise ValueError("hp_threshold must be non-negative.")
+        self._set_attr("hp_power", value)
     
     def rotate(self, phi: float) -> None:
         image_data = self._obj.data
