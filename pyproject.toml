@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     'xarray>=0.18.2',
     'numpy>=1.21.0',
+    'scpi>=0.1.0',
     'matplotlib>=3.4.2',
 ]
 
