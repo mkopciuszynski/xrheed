@@ -7,8 +7,7 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 
-from pyrheed.plugins import LoadRheedBase
-
+from xrheed.plugins import LoadRheedBase
 
 class LoadPlugin(LoadRheedBase):
 

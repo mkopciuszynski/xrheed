@@ -1,15 +1,16 @@
 import unittest
-import pyrheed
-from pyrheed.io import load_data
+from pathlib import Path
+import xrheed
+from xrheed.io import load_data
 import matplotlib.pyplot as plt
 import numpy as np
 
-class TestPyrheed(unittest.TestCase):
+class TestDataLoading(unittest.TestCase):
 
     def setUp(self):
         # Load the data using the plugin
-        self.r = load_data("docs/notebooks/example_data/si_111_7x7_112_t2.raw", plugin="umcs_arpes_raw")
-
+        test_data_path = Path(__file__).parent / "data" / "si_111_7x7_112.raw"
+        self.r = load_data(str(test_data_path), plugin="umcs_arpes_raw")
 
     def test_set_center(self):
         # Test the set_center method
@@ -17,7 +18,6 @@ class TestPyrheed(unittest.TestCase):
             self.r.R.set_center()
         except Exception as e:
             self.fail(f"set_center method raised an exception: {e}")
-
 
     def test_plot_image(self):
         # Test the plot_image method

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pyrheed.Rheed import Rheed
-from pyrheed.ewald.Lattice import Lattice
+from xrheed.Rheed import Rheed
+from xrheed.ewald.Lattice import Lattice
 import matplotlib.pyplot as plt
 
 def plot_image(rheed: Rheed,
