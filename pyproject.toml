@@ -1,5 +1,5 @@
 [project]
-name = "PyRHEEDx"
+name = "xrheed"
 version = "1.0.0a1"  # First alpha pre-release version
 authors = [
     {name = "Marek Kopciuszyński", email = "mkopciuszynski@gmail.com"},
@@ -16,6 +16,8 @@ license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Physics :: Surface Science"
 ]
 
 dependencies = [
