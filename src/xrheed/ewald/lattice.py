@@ -114,15 +114,54 @@ class Lattice:
         Raises:
             NotImplementedError: If the specified cubic type or plane is not supported.
         """
-        if cubic_type == "FCC":
-            if plane == "111":
-                a_surf = a * 0.7071
-                a1, a2 = Lattice.hex_lattice(a_surf)
-            else:
-                raise NotImplementedError(f"The {plane} plane is not supported yet.")
-        else:
-            raise NotImplementedError(f"The {cubic_type} is not supported yet.")
 
+        if cubic_type not in {'SC', 'FCC', 'BCC'}:
+            raise ValueError("Unsupported cubic_type. Use 'SC', 'FCC', or 'BCC'.")
+        if plane not in {'100', '110', '111'}:
+            raise ValueError("Unsupported plane. Use '100', '110', or '111'.")
+            
+        if (cubic_type, plane) == ('SC', '100'):
+            a1 = np.array([a, 0, 0])
+            a2 = np.array([0, a, 0])
+
+        elif (cubic_type, plane) == ('SC', '110'):
+            a1 = np.array([a * np.sqrt(2), 0, 0])
+            a2 = np.array([0, a, 0])
+
+        elif (cubic_type, plane) == ('SC', '111'):
+            a_surf = a * np.sqrt(2)
+            a1 = np.array([a_surf, 0, 0])
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
+
+        elif (cubic_type, plane) == ('FCC', '100'):
+            a1 = np.array([a, 0, 0])
+            a2 = np.array([a * 0.5, a * 0.5, 0])
+
+        elif (cubic_type, plane) == ('FCC', '110'):
+            a1 = np.array([a * np.sqrt(2), 0, 0])
+            a2 = np.array([0, a, 0])
+
+        elif (cubic_type, plane) == ('FCC', '111'):
+            a_surf = a / np.sqrt(2)
+            a1 = np.array([a_surf, 0, 0])
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
+
+        elif (cubic_type, plane) == ('BCC', '100'):
+            a1 = np.array([a, 0, 0])
+            a2 = np.array([0, a, 0])
+
+        elif (cubic_type, plane) == ('BCC', '110'):
+            a1 = np.array([a * np.sqrt(2), 0, 0])
+            a2 = np.array([0, a, 0])
+
+        elif (cubic_type, plane) == ('BCC', '111'):
+            a_surf = np.sqrt(6) * a / 3
+            a1 = np.array([a_surf, 0, 0])
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])   
+
+        else:
+            raise ValueError(f"Unsupported combination: {cubic_type} {plane}")
+        
         return cls(a1, a2)
 
     def rotate(self, phi: float = 0.0) -> None:
