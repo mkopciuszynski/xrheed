@@ -132,8 +132,8 @@ class Lattice:
         Args:
             phi (float): Rotation angle in degrees.
         """
-        self.a1 = rotation_matrix(phi) @ self.a1
-        self.a2 = rotation_matrix(phi) @ self.a2
+        self.a1 = np.dot(rotation_matrix(phi), self.a1)
+        self.a2 = np.dot(rotation_matrix(phi), self.a2)
 
         self.b1, self.b2 = Lattice._calc_inverse_vectors(self.a1, self.a2)
 
