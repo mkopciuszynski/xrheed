@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 
 from numpy.typing import NDArray
 from typing import Optional, List, Tuple, Literal
@@ -53,12 +54,9 @@ class Lattice:
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
-    def copy(self):
+    def __copy__(self):
         """
-        Create a deep copy of the Lattice object.
-
-        Returns:
-            Lattice: A new Lattice object with copied attributes.
+        Create a shallow copy of the Lattice object.
         """
         cls = self.__class__
         new_lattice = cls.__new__(cls)
@@ -68,6 +66,21 @@ class Lattice:
         new_lattice.b2 = self.b2.copy()
         new_lattice.real_lattice = self.real_lattice.copy()
         new_lattice.inverse_lattice = self.inverse_lattice.copy()
+        return new_lattice
+
+    def __deepcopy__(self, memo):
+        """
+        Create a deep copy of the Lattice object.
+        """
+        cls = self.__class__
+        new_lattice = cls.__new__(cls)
+        memo[id(self)] = new_lattice
+        new_lattice.a1 = copy.deepcopy(self.a1, memo)
+        new_lattice.a2 = copy.deepcopy(self.a2, memo)
+        new_lattice.b1 = copy.deepcopy(self.b1, memo)
+        new_lattice.b2 = copy.deepcopy(self.b2, memo)
+        new_lattice.real_lattice = copy.deepcopy(self.real_lattice, memo)
+        new_lattice.inverse_lattice = copy.deepcopy(self.inverse_lattice, memo)
         return new_lattice
 
     @classmethod
