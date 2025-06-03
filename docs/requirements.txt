@@ -1,0 +1,6 @@
+sphinx
+myst-nb
+sphinx-rtd-theme
+xarray
+numpy
+matplotlib
