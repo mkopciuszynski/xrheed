@@ -25,6 +25,7 @@ dependencies = [
     'numpy>=1.21.0',
     'scipy>=0.1.0',
     'matplotlib>=3.4.2',
+    'ruptures>=1.1.7',
 ]
 
 [build-system]
