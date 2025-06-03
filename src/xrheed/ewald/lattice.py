@@ -213,9 +213,15 @@ class Lattice:
             fig, ax = plt.subplots()
 
         ax.plot(self.real_lattice[:, 0], self.real_lattice[:, 1], ".", **kwargs)
+        # Plot a1 and a2 vectors from origin
+        ax.arrow(0, 0, self.a1[0], self.a1[1], head_width=0.5, head_length=1, fc='r', ec='r', length_includes_head=True, label='a1')
+        ax.arrow(0, 0, self.a2[0], self.a2[1], head_width=0.5, head_length=1, fc='g', ec='g', length_includes_head=True, label='a2')
+        #ax.legend(['Lattice points', 'a1', 'a2'])
 
         ax.set_xlim(-20, 20)
         ax.set_ylim(-10, 10)
+        ax.set_xlabel('x [A]')
+        ax.set_ylabel('y [A]')
         ax.set_aspect(1)
         return ax
 
