@@ -4,15 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from numpy.typing import NDArray
-from typing import Optional, List, Tuple
-
+from typing import Optional, List, Tuple, Literal
 
 Vector = NDArray[np.float64]
+
+ALLOWED_CUBIC_TYPES = Literal["SC", "BCC", "FCC"]
+ALLOWED_PLANES = Literal["111", "110", "100"]
 
 class Lattice:
     """ 
     This class defines the lattice tools that allows to create a 2D lattice 
-    by providing the basic vectors.
+    by providing the basic vectors a1 and a2, or by selecting a plane of a cubic crystal.
+    
+     
     """
 
     def __init__(self, 
@@ -40,30 +44,30 @@ class Lattice:
         return new_lattice
 
     @classmethod
-    def from_bulk(cls, 
-                  a: float = 1.0, 
-                  plane: Optional[str] = None):
-    # TODO add other planes
-        if plane == '111' or None:
-            a_surf = a * 0.7071  # 1/sqrt(2
+    def from_bulk_cubic(
+        cls,
+        a: float = 1.0,
+        cubic_type: ALLOWED_CUBIC_TYPES = "FCC",
+        plane: ALLOWED_PLANES = "111",        
+    ):
+        """
+        Create a 2D lattice from a bulk cubic crystal.
+        Only (111), (110), (100) planes are supported. 
+        cubic_type must be one of: 'SC', 'BCC', 'FCC'.
+        """
 
-            a1, a2 = Lattice._hex_lattice(a_surf)
-            return cls(a1, a2)
+        if cubic_type == "FCC":
+            if plane == "111":
+                a_surf = a * 0.7071 
+                a1, a2 = Lattice.hex_lattice(a_surf)
+            else:
+                raise NotImplementedError(f"The {plane} plane is not supported yet.")
         else:
-            raise(ValueError("Only (111) plane is supported."))
-
-
-    @classmethod
-    def from_surface(cls, 
-                     a: float=1.0,
-                       plane: Optional[str] = None):
+            raise NotImplementedError(f"The {cubic_type} is not supported yet.")
         
-        if plane == '111' or plane is None:
-            a1, a2 = Lattice._hex_lattice(a)
-            return cls(a1, a2)
-        else:
-        #TODO add other symetries
-            raise(ValueError("Only (111) plane is supported."))
+        return cls(a1, a2)
+
+
 
     def rotate(self, phi: float = 0.0):
 
@@ -126,7 +130,7 @@ class Lattice:
 
 
     @staticmethod
-    def _hex_lattice(a) -> Tuple[Vector, Vector]:
+    def hex_lattice(a: float) -> Tuple[Vector, Vector]:
 
         a1 = np.array([a, 0.0, 0.0])
         a2 = np.array([a * 0.5, a * 0.8660, 0])
