@@ -2,8 +2,6 @@ import unittest
 from pathlib import Path
 
 from xrheed.io import load_data
-import matplotlib.pyplot as plt
-import numpy as np
 
 class TestDataLoading(unittest.TestCase):
 
