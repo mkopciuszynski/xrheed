@@ -37,6 +37,10 @@ class TestLattice(unittest.TestCase):
         lattice.rotate(90)
         np.testing.assert_array_almost_equal(lattice.a1, np.array([0.0, 1.0, 0.0]), decimal=4)
         np.testing.assert_array_almost_equal(lattice.a2, np.array([-1.0, 0.0, 0.0]), decimal=4)
+        lattice.rotate(-90)
+        np.testing.assert_array_almost_equal(lattice.a1, np.array([1.0, 0.0, 0.0]), decimal=4)
+        np.testing.assert_array_almost_equal(lattice.a2, np.array([0.0, 1.0, 0.0]), decimal=4)
+        
     
     def test_scale(self):
         a1 = [1.0, 0.0]
