@@ -12,17 +12,39 @@ ALLOWED_CUBIC_TYPES = Literal["SC", "BCC", "FCC"]
 ALLOWED_PLANES = Literal["111", "110", "100"]
 
 class Lattice:
-    """ 
-    This class defines the lattice tools that allows to create a 2D lattice 
-    by providing the basic vectors a1 and a2, or by selecting a plane of a cubic crystal.
-    
-     
+    """
+    Represents a 2D lattice defined by two basis vectors (a1 and a2), or constructed from a specified plane of a cubic crystal.
+
+    This class provides methods for:
+      - Creating a lattice from custom basis vectors or from common cubic crystal planes (e.g., FCC (111)).
+      - Generating both real-space and reciprocal-space (inverse) lattices.
+      - Rotating and scaling the lattice.
+      - Plotting the real and reciprocal lattices.
+
+    Attributes:
+        a1 (Vector): First lattice basis vector in real space.
+        a2 (Vector): Second lattice basis vector in real space.
+        b1 (Vector): First reciprocal lattice vector.
+        b2 (Vector): Second reciprocal lattice vector.
+        real_lattice (NDArray): Array of real-space lattice points.
+        inverse_lattice (NDArray): Array of reciprocal-space lattice points.
     """
 
-    def __init__(self, 
-                 a1: List[float] | Vector, 
-                 a2: List[float] | Vector) -> None:
-        
+    def __init__(
+        self,
+        a1: List[float] | Vector,
+        a2: List[float] | Vector
+    ) -> None:
+        """
+        Initializes a Lattice object with two basis vectors.
+
+        Args:
+            a1 (List[float] | Vector): The first basis vector of the lattice, as a list of floats or a Vector object.
+            a2 (List[float] | Vector): The second basis vector of the lattice, as a list of floats or a Vector object.
+
+        Raises:
+            ValueError: If the provided vectors are invalid or cannot be validated.
+        """
         self.a1 = self._validate_vector(a1)
         self.a2 = self._validate_vector(a2)
 
@@ -31,8 +53,13 @@ class Lattice:
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
-
     def copy(self):
+        """
+        Create a deep copy of the Lattice object.
+
+        Returns:
+            Lattice: A new Lattice object with copied attributes.
+        """
         cls = self.__class__
         new_lattice = cls.__new__(cls)
         new_lattice.a1 = self.a1.copy()
@@ -47,30 +74,41 @@ class Lattice:
     def from_bulk_cubic(
         cls,
         a: float = 1.0,
-        cubic_type: ALLOWED_CUBIC_TYPES = "FCC",
-        plane: ALLOWED_PLANES = "111",        
+        cubic_type: Literal["SC", "BCC", "FCC"] = "FCC",
+        plane: Literal["111", "110", "100"] = "111",
     ):
         """
         Create a 2D lattice from a bulk cubic crystal.
-        Only (111), (110), (100) planes are supported. 
-        cubic_type must be one of: 'SC', 'BCC', 'FCC'.
-        """
 
+        Args:
+            a (float): Lattice constant.
+            cubic_type (str): Type of cubic crystal ('SC', 'BCC', 'FCC').
+            plane (str): Miller indices of the plane ('111', '110', '100').
+
+        Returns:
+            Lattice: A Lattice object constructed from the specified cubic crystal and plane.
+
+        Raises:
+            NotImplementedError: If the specified cubic type or plane is not supported.
+        """
         if cubic_type == "FCC":
             if plane == "111":
-                a_surf = a * 0.7071 
+                a_surf = a * 0.7071
                 a1, a2 = Lattice.hex_lattice(a_surf)
             else:
                 raise NotImplementedError(f"The {plane} plane is not supported yet.")
         else:
             raise NotImplementedError(f"The {cubic_type} is not supported yet.")
-        
+
         return cls(a1, a2)
 
-
-
     def rotate(self, phi: float = 0.0):
+        """
+        Rotate the lattice by a given angle (in degrees).
 
+        Args:
+            phi (float): Rotation angle in degrees.
+        """
         self.a1 = rotation_matrix(phi) @ self.a1
         self.a2 = rotation_matrix(phi) @ self.a2
 
@@ -78,60 +116,89 @@ class Lattice:
 
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
-        
 
     def scale(self, lattice_scale: float = 1.0) -> None:
+        """
+        Scale the lattice vectors by a given factor.
+
+        Args:
+            lattice_scale (float): Scaling factor for the lattice vectors.
+        """
         self.a1 = self.a1 * lattice_scale
         self.a2 = self.a2 * lattice_scale
         self.b1 = self.b1 / lattice_scale
         self.b2 = self.b2 / lattice_scale
-        
+
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
+    def plot_real(
+        self,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
+    ):
+        """
+        Plot the real-space lattice points.
 
+        Args:
+            ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+            **kwargs: Additional keyword arguments passed to plt.plot.
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
 
-    def plot_real(self, 
-             ax: Optional[plt.Axes] = None,
-             **kwargs):
-        
-        if ax is None: 
-            fig, ax = plt.subplots() 
-        
-        ax.plot(self.real_lattice[:,0], 
-                self.real_lattice[:,1], ".", **kwargs) 
-        
+        ax.plot(self.real_lattice[:, 0], self.real_lattice[:, 1], ".", **kwargs)
+
         ax.set_xlim(-20, 20)
         ax.set_ylim(-10, 10)
         ax.set_aspect(1)
 
-    def plot_inverse(self, 
-             ax: Optional[plt.Axes] = None,
-             **kwargs):
-        
-        if ax is None: 
-            fig, ax = plt.subplots() 
-        
-        ax.plot(self.inverse_lattice[:,0], 
-                self.inverse_lattice[:,1], ".", **kwargs) 
-        
-        ax.plot(0,0, 'or')
+    def plot_inverse(
+        self,
+        ax: Optional[plt.Axes] = None,
+        **kwargs
+    ):
+        """
+        Plot the reciprocal-space (inverse) lattice points.
+
+        Args:
+            ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+            **kwargs: Additional keyword arguments passed to plt.plot.
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        ax.plot(self.inverse_lattice[:, 0], self.inverse_lattice[:, 1], ".", **kwargs)
+        ax.plot(0, 0, 'or')
 
         ax.set_xlabel('gx [1/A]')
         ax.set_ylabel('gy [1/A]')
-        
+
         ax.set_xlim(-10, 10)
         ax.set_ylim(-7, 7)
         ax.set_aspect(1)
 
     def __str__(self):
+        """
+        Return a string representation of the lattice basis vectors.
+
+        Returns:
+            str: String representation of a1 and a2.
+        """
         return (f"a1 = [{self.a1[0]}, {self.a1[1]}]\n"
                 f"a2 = [{self.a2[0]}, {self.a2[1]}]")
 
-
     @staticmethod
     def hex_lattice(a: float) -> Tuple[Vector, Vector]:
+        """
+        Generate basis vectors for a 2D hexagonal lattice.
 
+        Args:
+            a (float): Lattice constant.
+
+        Returns:
+            Tuple[Vector, Vector]: Two basis vectors for the hexagonal lattice.
+        """
         a1 = np.array([a, 0.0, 0.0])
         a2 = np.array([a * 0.5, a * 0.8660, 0])
 
@@ -139,26 +206,44 @@ class Lattice:
 
     @staticmethod
     def _validate_vector(vector: List[float] | Vector) -> Vector:
-        #TODO cleanup this mess
-        """Validate that the vector is a list of size (2,) or (3,)."""
+        """
+        Validate that the vector is a list or ndarray of size (2,) or (3,).
+
+        Args:
+            vector (List[float] | Vector): Input vector.
+
+        Returns:
+            Vector: Validated 3D vector.
+
+        Raises:
+            ValueError: If the input is not a list or ndarray, or has invalid shape.
+        """
         if isinstance(vector, list):
             vector = np.array(vector)
         elif isinstance(vector, np.ndarray):
             pass
         else:
             raise ValueError("Vector must be a list or ndarray.")
-        
+
         if vector.shape == (2,):
             vector = np.append(vector, 0)
-        
+
         if vector.shape != (3,):
             raise ValueError("Vector must be of size (2,) or (3,).")
         return vector
 
     @staticmethod
-    def _calc_inverse_vectors(a1: Vector, 
-                              a2: Vector) -> Tuple[Vector, Vector]:
+    def _calc_inverse_vectors(a1: Vector, a2: Vector) -> Tuple[Vector, Vector]:
+        """
+        Calculate the reciprocal lattice vectors for a 2D lattice.
 
+        Args:
+            a1 (Vector): First real-space basis vector.
+            a2 (Vector): Second real-space basis vector.
+
+        Returns:
+            Tuple[Vector, Vector]: Two reciprocal lattice vectors.
+        """
         n = np.array([0, 0, 1])
         surf: float = abs(np.dot(a1, np.cross(a2, n)))
         b1 = 2 * np.pi / surf * np.cross(a2, n)
@@ -166,22 +251,24 @@ class Lattice:
         return b1, b2
 
     @staticmethod
-    def generate_lattice(v1: Vector, 
-                         v2: Vector, 
-                         space_size: float=70) -> NDArray:
+    def generate_lattice(
+        v1: Vector,
+        v2: Vector,
+        space_size: float = 70
+    ) -> NDArray:
+        """
+        Generate a grid of lattice points within a specified space size.
 
-        vec_num_x = int(space_size*2 / max(abs(v1[0]), abs(v2[0])))
-        vec_num_y = int(space_size*2 / max(abs(v1[1]), abs(v2[1])))
+        Args:
+            v1 (Vector): First lattice vector.
+            v2 (Vector): Second lattice vector.
+            space_size (float): The radius of the area in which to generate lattice points.
 
-        x = np.zeros(vec_num_x * vec_num_y, dtype=float)
-        y = np.zeros_like(x)
-        
-        ind = 0
-        for i in range(0, vec_num_x):
-            for j in range(0, vec_num_y):
-                x[ind] = v1[0] * i + v2[0] * j
-                y[ind] = v1[1] * i + v2[1] * j
-                ind += 1
+        Returns:
+            NDArray: Array of lattice points within the specified area.
+        """
+        vec_num_x = int(space_size * 2 / max(abs(v1[0]), abs(v2[0])))
+        vec_num_y = int(space_size * 2 / max(abs(v1[1]), abs(v2[1])))
 
         # Generate a grid of coefficients for the linear combinations
         i_vals = np.arange(-vec_num_x, vec_num_x)
@@ -199,11 +286,19 @@ class Lattice:
 
         return lattice
 
-    
-
 def rotation_matrix(phi):
-    """ Generates a rotation matrix for a given phi angle (in degrees)."""
+    """
+    Generates a 3D rotation matrix for a given angle phi (in degrees) about the z-axis.
+
+    Args:
+        phi (float): Rotation angle in degrees.
+
+    Returns:
+        np.ndarray: 3x3 rotation matrix.
+    """
     phi = np.radians(phi)
-    return np.array([[np.cos(phi), -np.sin(phi), 0],
-                     [np.sin(phi), np.cos(phi), 0],
-                     [0, 0, 1]])
+    return np.array([
+        [np.cos(phi), -np.sin(phi), 0],
+        [np.sin(phi), np.cos(phi), 0],
+        [0, 0, 1]
+    ])
