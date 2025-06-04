@@ -60,7 +60,7 @@ def load_many_images(image_paths: list[Path], plugin_name: str, **kwargs) -> lis
 def get_plugin_class(plugin_name: str) -> Type[LoadRheedBase]:
     """Dynamically load the plugin class by name."""
     try:
-        module = importlib.import_module(f"pyrheed.plugins.{plugin_name}")
+        module = importlib.import_module(f"xrheed.plugins.{plugin_name}")
         if hasattr(module, "LoadPlugin"):
             return module.LoadPlugin
         else:

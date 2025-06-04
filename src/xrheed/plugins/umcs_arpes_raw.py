@@ -28,6 +28,7 @@ class LoadPlugin(LoadRheedBase):
     def load_single_image(
             self,
             file_path: Path,
+            plugin_name: str = "",
             **kwargs,
     ):
 
@@ -55,7 +56,7 @@ class LoadPlugin(LoadRheedBase):
         x_coords -= self.ATTRS['screen_center_x']
         y_coords = self.ATTRS['screen_center_y'] - y_coords
 
-        coords: dict[str, NDArray[np.float_]] = {
+        coords: dict[str, NDArray[np.floating]] = {
                     'y': y_coords,
                     'x': x_coords,
         }
