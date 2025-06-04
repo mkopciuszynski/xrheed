@@ -7,56 +7,44 @@ on:
     branches: [main]
 
 jobs:
-  setup:
+  ruff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install project and dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .[dev]
-          pip install ruff pytest sphinx myst-nb sphinx-rtd-theme
-
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install Ruff
-        run: pip install ruff
+      - name: Install uv
+        run: pip install uv
+      - name: Install Ruff using uv
+        run: uv pip install ruff
       - name: Run Ruff
         run: ruff check ./src ./tests
 
   test:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install project and pytest
-        run: |
-          pip install . pytest
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies using uv
+        run: uv pip install .[dev]
       - name: Run tests
         run: pytest
 
   docs:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install project and doc requirements
-        run: |
-          pip install . sphinx myst-nb sphinx-rtd-theme
+      - name: Install uv
+        run: pip install uv
+      - name: Install docs dependencies
+        run: uv pip install .[dev]
       - name: Build docs
         run: sphinx-build -b html docs/source docs/build

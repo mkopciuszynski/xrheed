@@ -4,30 +4,35 @@ version = "1.0.0a1"  # First alpha pre-release version
 authors = [
     {name = "Marek Kopciuszyński", email = "mkopciuszynski@gmail.com"},
 ]
-
 description = "RHEED tools"
 readme = "README.rst"
 requires-python = ">=3.11"
-
 keywords = ["RHEED"]
-
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
-    "Topic :: Physics :: Surface Science"
+    "Topic :: Physics :: Surface Science",
 ]
-
 dependencies = [
-    'xarray>=0.18.2',
-    'numpy>=1.21.0',
-    'scipy>=0.1.0',
-    'matplotlib>=3.4.2',
-    'ruptures>=1.1.7',
+    "xarray>=0.18.2",
+    "numpy>=1.21.0",
+    "scipy>=0.1.0",
+    "matplotlib>=3.4.2",
+    "ruptures>=1.1.7",
 ]
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "sphinx",
+    "myst-nb",
+    "sphinx-rtd-theme",
+]
