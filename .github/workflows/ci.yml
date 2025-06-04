@@ -45,6 +45,6 @@ jobs:
       - name: Install uv
         run: pip install uv
       - name: Install docs dependencies
-        run: uv pip install .[dev]
+        run: uv pip install --system .[dev]
       - name: Build docs
         run: sphinx-build -b html docs/source docs/build
