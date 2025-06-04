@@ -1,4 +1,4 @@
-name: CI
+name: Tests & Docs
 
 on:
   push:
@@ -6,45 +6,38 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  ruff:
+  build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install uv
-        run: pip install uv
-      - name: Install Ruff using uv
-        run: uv pip install --system ruff
-      - name: Run Ruff
-        run: ruff check ./src ./tests
+    strategy:
+      matrix:
+        python-version: ["3.12"]
 
-  test:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+
       - name: Install uv
-        run: pip install uv
-      - name: Install dependencies using uv
-        run: uv pip install --system .[dev]
+        uses: eifinger/setup-uv@v3
+
+      - name: Set up uv virtualenv
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync all dependencies (with extras)
+        run: uv sync --all-extras --dev
+
       - name: Run tests
-        run: pytest
+        run: uv run pytest -vv
 
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install uv
-        run: pip install uv
-      - name: Install docs dependencies
-        run: uv pip install --system .[dev]
-      - name: Build docs
-        run: sphinx-build -b html docs/source docs/build
+      - name: Build documentation
+        run: |
+          source .venv/bin/activate
+          cd docs
+          make html
