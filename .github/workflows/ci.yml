@@ -17,7 +17,7 @@ jobs:
       - name: Install uv
         run: pip install uv
       - name: Install Ruff using uv
-        run: uv pip install ruff
+        run: uv pip install --system ruff
       - name: Run Ruff
         run: ruff check ./src ./tests
 
@@ -31,7 +31,7 @@ jobs:
       - name: Install uv
         run: pip install uv
       - name: Install dependencies using uv
-        run: uv pip install .[dev]
+        run: uv pip install --system .[dev]
       - name: Run tests
         run: pytest
 
