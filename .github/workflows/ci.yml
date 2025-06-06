@@ -33,6 +33,9 @@ jobs:
       - name: Sync all dependencies (with extras)
         run: uv sync --all-extras --dev
 
+      - name: Run Ruff
+        run: uv run ruff check ./src ./tests
+
       - name: Run tests
         run: uv run pytest -vv
 
