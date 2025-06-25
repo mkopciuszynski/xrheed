@@ -1,7 +1,7 @@
 API Reference
 =============
 
-.. automodule:: your_package
+.. automodule:: xrheed
    :members:
    :undoc-members:
    :show-inheritance:
