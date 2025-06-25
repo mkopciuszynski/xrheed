@@ -44,3 +44,9 @@ jobs:
 
       - name: Build documentation
         run: uv run sphinx-build -b html docs/source docs/build
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sphinx-html-docs
+          path: docs/build
