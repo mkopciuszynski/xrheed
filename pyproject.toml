@@ -35,5 +35,6 @@ dev = [
     "pytest",
     "sphinx",
     "myst-nb",
+    "nbsphinx",
     "sphinx-rtd-theme",
 ]
