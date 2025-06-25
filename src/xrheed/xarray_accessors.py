@@ -2,6 +2,7 @@ from scipy import ndimage
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
+from .plotting.base import plot_image
 
 from scipy.signal import savgol_filter
 import ruptures as rpt
@@ -149,34 +150,19 @@ class RHEEDAccessor:
         hp_filter: bool = False,
         auto_levels: bool = False,
         **kwargs,
-    ):
+        ):
+        
+        image = self.hp_image if hp_filter else self.image
 
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(6, 4))
-
-        if hp_filter:
-            image = self.hp_image
-        else:
-            image = self.image
-
-        if auto_levels:
-            vmin = image.min().values
-            vmax = image.mean().values
-            image = (image - vmin) / (vmax - vmin) * 50
-
-        image.plot(ax=ax, cmap="gray", add_colorbar=False, **kwargs)
-
-        ax.set_xlim(-self.screen_roi_width, self.screen_roi_width)
-        ax.set_ylim(-self.screen_roi_height, 5)
-
-        ax.set_xlabel("Screen x [mm]")
-        ax.set_ylabel("Screen y [mm]")
-
-        ax.axhline(y=0.0, linewidth=0.5, color="w")
-        ax.axvline(x=0.0, linewidth=0.5, color="w")
-
-        ax.set_aspect(1)
-        return ax
+        return plot_image(
+            image=image,
+            ax=ax,
+            screen_roi_width=self.screen_roi_width,
+            screen_roi_height=self.screen_roi_height,
+            hp_filter=hp_filter,
+            auto_levels=auto_levels,
+            **kwargs,
+        )
 
 
 @xr.register_dataarray_accessor("P")
