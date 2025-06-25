@@ -10,6 +10,7 @@ Welcome to xRHEED's documentation!
 
    installation
    usage
+   api
    notbooks/getting_started.ipynb
 
 Introduction
