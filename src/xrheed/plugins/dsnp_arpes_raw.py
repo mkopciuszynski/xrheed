@@ -16,18 +16,18 @@ class LoadPlugin(LoadRheedBase):
 
 
     ATTRS = {
-        "plugin": "UMCS ARPES Raw",
+        "plugin": "UMCS DSNP ARPES Raw",
         "screen_sample_distance": 309.2,
         "screen_scale": 9.6,
         "screen_center_x": 72.0, # horizontal center of an image
-        "screen_center_y": 15.0, # shadow edge possition
+        "screen_center_y": 15.0, # shadow edge position
         "beam_energy": 18.6 * 1000,
     }
 
 
     def load_single_image(
             self,
-            file_path: Path,
+            file_path: Path | str,
             plugin_name: str = "",
             **kwargs,
     ):
@@ -56,13 +56,19 @@ class LoadPlugin(LoadRheedBase):
         x_coords -= self.ATTRS['screen_center_x']
         y_coords = self.ATTRS['screen_center_y'] - y_coords
 
+        image = image.astype(np.uint8)
+
+        # Flip the y_coords and image vertically to match new y_coords
+        y_coords = np.flip(y_coords)
+        image = np.flipud(image)
+
         coords: dict[str, NDArray[np.floating]] = {
                     'y': y_coords,
                     'x': x_coords,
         }
         attrs = self.ATTRS
         
-        image = image.astype(np.uint8)
+        
 
         # Create xarray DataArray
         data_array = xr.DataArray(
