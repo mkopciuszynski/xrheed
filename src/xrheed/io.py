@@ -11,11 +11,10 @@ import xarray as xr
 
 from .plugins import load_single_image
 
-__all__ = (
-    "load_data",
-)
+__all__ = ("load_data",)
 
 logger = logging.getLogger(__name__)
+
 
 def load_data(
     path: str | Path,
@@ -50,10 +49,10 @@ def load_data(
 
     elif path.is_dir():
         logger.warning(f"Directory loading is not implemented yet: {path}")
-        raise NotImplementedError("Loading data from directories is not implemented yet.")
+        raise NotImplementedError(
+            "Loading data from directories is not implemented yet."
+        )
 
     else:
         logger.error(f"Path does not exist: {path}")
         raise ValueError(f"The specified path does not exist: {path}")
-
-

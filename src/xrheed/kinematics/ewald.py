@@ -11,18 +11,19 @@ from numpy.typing import NDArray
 from .lattice import Lattice
 from .lattice import rotation_matrix
 
+
 class Ewald:
 
     def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None):
-        
+
         if image is None:
             warning("RHEED image is not provided, default values are loaded.")
-            self.beam_energy = 18.6*1000
+            self.beam_energy = 18.6 * 1000
             self.screen_sample_distance = 309.2
             self.screen_scale = 9.5
             self.screen_size_w = 60
             self.screen_size_h = 80
-                    
+
             self._image_data_available = False
             self._theta = 1.0
         else:
@@ -33,9 +34,9 @@ class Ewald:
             self.screen_scale = image.R.screen_scale
             self.screen_size_w = image.R.screen_roi_width
             self.screen_size_h = image.R.screen_roi_height
-            
+
             self._theta = image.R.theta
-            self._image_data_available = True       
+            self._image_data_available = True
 
         self._phi = 0.0
         self._lattice_scale = 1.0
@@ -47,7 +48,9 @@ class Ewald:
 
         # Ewald sphere radius
         self.ewald_radius = np.sqrt(self.beam_energy) * 0.5123
-        self._ewald_roi = self.ewald_radius * (self.screen_size_w / self.screen_sample_distance)
+        self._ewald_roi = self.ewald_radius * (
+            self.screen_size_w / self.screen_sample_distance
+        )
 
         # Lattice and its inverse
         self._lattice = lattice
@@ -57,16 +60,15 @@ class Ewald:
         self.mirror = False
 
         self.calculate_ewald()
-        
- 
+
     def __str__(self):
-        #TODO: add more information
+        # TODO: add more information
         pass
 
     def __copy__(self):
-        
+
         new_ewald = Ewald(self._lattice, self.image)
-        
+
         new_ewald.phi = self.phi
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
@@ -78,46 +80,45 @@ class Ewald:
     @property
     def lattice_scale(self) -> float:
         return self._lattice_scale
-    
+
     @lattice_scale.setter
     def lattice_scale(self, value: float):
-        
+
         self._lattice_scale = value
         self.calculate_ewald()
 
     @property
     def phi(self) -> float:
         return self._phi
-    
+
     @phi.setter
     def phi(self, value: float):
         self._phi = value
         self.calculate_ewald()
-    
+
     @property
     def theta(self) -> float:
         return self._theta
-    
+
     @theta.setter
     def theta(self, value: float):
         self._theta = value
         self.calculate_ewald()
-            
+
     @property
     def ewald_roi(self) -> float:
         return self._ewald_roi
-    
+
     @ewald_roi.setter
     def ewald_roi(self, value: float):
 
         self._ewald_roi = value
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-
     @property
     def spot_w(self) -> int:
         return self._spot_w
-    
+
     @spot_w.setter
     def spot_w(self, value: int):
         self._spot_w = value
@@ -126,30 +127,29 @@ class Ewald:
     @property
     def spot_h(self) -> int:
         return self._spot_h
-    
+
     @spot_h.setter
     def spot_h(self, value: int):
         self._spot_h = value
         self._spot_structure = self._generate_spot_structure()
 
-    
-    def calculate_ewald(self, **kwargs):            
-       
+    def calculate_ewald(self, **kwargs):
+
         k = self.ewald_radius
         phi = self._phi
         inverse_lattice = self._inverse_lattice.copy()
 
-        kk = k ** 2      
+        kk = k**2
 
         if phi != 0:
             inverse_lattice = inverse_lattice @ rotation_matrix(phi).T
 
-        gx = inverse_lattice[:,0] / self._lattice_scale
-        gy = inverse_lattice[:,1] / self._lattice_scale
+        gx = inverse_lattice[:, 0] / self._lattice_scale
+        gy = inverse_lattice[:, 1] / self._lattice_scale
 
         # move the lattice to the crossing point of the Ewald sphere and specular revlected beam
         gx = gx - k * (1 - np.cos(np.deg2rad(self._theta)))
-        tr = (gx + k) ** 2 + gy ** 2
+        tr = (gx + k) ** 2 + gy**2
         # select only the points that are inside the Ewald sphere
         ind = tr < kk
         gxt = gx[ind]
@@ -160,9 +160,13 @@ class Ewald:
         rho = self.screen_sample_distance * np.tan(th)
 
         px = rho * gyt / kr
-        pz = np.sqrt(rho ** 2 - px ** 2)
-        
-        ind = (px > -self.screen_size_w) & (px < self.screen_size_w) & (pz < self.screen_size_h)
+        pz = np.sqrt(rho**2 - px**2)
+
+        ind = (
+            (px > -self.screen_size_w)
+            & (px < self.screen_size_w)
+            & (pz < self.screen_size_h)
+        )
 
         px = px[ind]
         pz = pz[ind]
@@ -171,35 +175,35 @@ class Ewald:
             if phi % 60 != 0:
                 px = np.hstack([px, -px])
                 pz = np.hstack([pz, pz])
-        
+
         self.px = px
         self.pz = -pz
 
-    def transform_to_kxky(self,
-                          rotate: bool = True,
-                          ) -> xr.DataArray:
-
+    def transform_to_kxky(
+        self,
+        rotate: bool = True,
+    ) -> xr.DataArray:
 
         # prepare hp_image dataArray
         hp_image = self.image.R.hp_image
-        
+
         # prepare the data for calculations
         screen_sample_distance = self.screen_sample_distance
         theta = self.theta
         phi = self.phi
         k = self.ewald_radius
-        kk = k ** 2 
+        kk = k**2
 
         # new coordinates for transformation
         kx = np.linspace(-10, 10, 1024)
         ky = np.linspace(-10, 10, 1024)
 
-        KX, KY = np.meshgrid(kx, ky, indexing='ij')
+        KX, KY = np.meshgrid(kx, ky, indexing="ij")
 
-        # take into acount the theta angle         
+        # take into acount the theta angle
         KY = KY - k * (1 - np.cos(np.deg2rad(theta)))
 
-        tr = (KY + k) ** 2 + KX ** 2
+        tr = (KY + k) ** 2 + KX**2
 
         # make nans points outside Ewald sphere
         ind = tr > kk
@@ -211,51 +215,46 @@ class Ewald:
         rho = screen_sample_distance * np.tan(th)
 
         px_mm = rho * KX / kr
-        py_mm = - np.sqrt(rho ** 2 - px_mm ** 2)
+        py_mm = -np.sqrt(rho**2 - px_mm**2)
 
         # relation between old and new
-        x = xr.DataArray(px_mm, dims=["kx", "ky"], 
-                        coords={"kx": kx, "ky": ky})
+        x = xr.DataArray(px_mm, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
 
-        y = xr.DataArray(py_mm, dims=["kx", "ky"], 
-                        coords={"kx": kx, "ky": ky})
+        y = xr.DataArray(py_mm, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
 
-        trans_image = hp_image.interp(x=x, y=y, method='linear')
+        trans_image = hp_image.interp(x=x, y=y, method="linear")
         trans_image = trans_image.T
-
 
         if rotate:
             nan_mask = ~np.isnan(trans_image.values)
             trans_image = trans_image.fillna(0)
 
             # Rotate the mask and data
-            rotated_nan_mask = ndimage.rotate(nan_mask.astype(int), angle= 30-phi, reshape=False) > 0
-            trans_image.data = ndimage.rotate(trans_image.data, 30-phi, reshape=False)
+            rotated_nan_mask = (
+                ndimage.rotate(nan_mask.astype(int), angle=30 - phi, reshape=False) > 0
+            )
+            trans_image.data = ndimage.rotate(trans_image.data, 30 - phi, reshape=False)
 
             # Apply the mask to restore NaN values in the rotated DataArray
             trans_image = trans_image.where(rotated_nan_mask)
 
         return trans_image
-    
-    def plot(self, 
-             ax: Optional[plt.Axes] = None,
-             fine_scaling: float = 1.0,
-             **kwargs):
 
-        if ax is None: 
+    def plot(self, ax: Optional[plt.Axes] = None, fine_scaling: float = 1.0, **kwargs):
+
+        if ax is None:
             fig, ax = plt.subplots()
 
-        if 'marker' not in kwargs:
-            kwargs['marker'] = '|'
-        
-        ax.scatter(self.px * fine_scaling, self.pz * fine_scaling, **kwargs)
-        #plt.show()
+        if "marker" not in kwargs:
+            kwargs["marker"] = "|"
 
-        
-    def calculate_match(self, normalize:bool=True) -> float:
+        ax.scatter(self.px * fine_scaling, self.pz * fine_scaling, **kwargs)
+        # plt.show()
+
+    def calculate_match(self, normalize: bool = True) -> float:
 
         assert self._image_data_available, "Image data is not available"
-        
+
         image = self.image
         scale = self.screen_scale
 
@@ -267,22 +266,20 @@ class Ewald:
 
         spot_structure = self._spot_structure
 
-        ppx = ((self.px - center_x)*scale).astype(int)
-        ppy = (-(self.pz - center_y)*scale).astype(int)
+        ppx = ((self.px - center_x) * scale).astype(int)
+        ppy = (-(self.pz - center_y) * scale).astype(int)
 
-        mask[ppy,ppx] = True
-        
-        mask =  ndimage.binary_dilation(mask, structure=spot_structure)
+        mask[ppy, ppx] = True
+
+        mask = ndimage.binary_dilation(mask, structure=spot_structure)
         match_coef = (mask * image_data).sum()
 
         if normalize:
-            #norm_coef = np.ceil(len(ppx) / 10) * 10
-            #norm_coef = len(ppx) * np.count_nonzero(spot_structure)
+            # norm_coef = np.ceil(len(ppx) / 10) * 10
+            # norm_coef = len(ppx) * np.count_nonzero(spot_structure)
             match_coef = match_coef / len(ppx)
 
         return match_coef
-
-
 
     def match_phi(self, phi_vector: NDArray, normalize: bool = True) -> xr.DataArray:
         """Here we can calculate the matching for a series of different phi angles"""
@@ -295,13 +292,18 @@ class Ewald:
 
         return xr.DataArray(match_vector, dims=["phi"], coords={"phi": phi_vector})
 
-
-    def match_scale(self, scale_vector: NDArray, normalize: bool = True) -> xr.DataArray:
+    def match_scale(
+        self, scale_vector: NDArray, normalize: bool = True
+    ) -> xr.DataArray:
         """Here we can calculate the matching for a series of different lattice constants"""
 
         match_vector = np.zeros_like(scale_vector)
 
-        self.ewald_roi = self.ewald_radius * (self.screen_size_w / self.screen_sample_distance) * scale_vector.max()
+        self.ewald_roi = (
+            self.ewald_radius
+            * (self.screen_size_w / self.screen_sample_distance)
+            * scale_vector.max()
+        )
         self._inverse_lattice = self._prepare_inverse_lattice()
 
         for i, scale in enumerate(tqdm(scale_vector)):
@@ -309,17 +311,24 @@ class Ewald:
             self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
 
-        return xr.DataArray(match_vector, dims=["scale"], coords={"scale": scale_vector})
-    
+        return xr.DataArray(
+            match_vector, dims=["scale"], coords={"scale": scale_vector}
+        )
 
-    def match_phi_scale(self, phi_vector: NDArray, scale_vector: NDArray, normalize: bool = True) -> xr.DataArray:
+    def match_phi_scale(
+        self, phi_vector: NDArray, scale_vector: NDArray, normalize: bool = True
+    ) -> xr.DataArray:
         """Here we can calculate the matching for a series of different phi angles and lattice constants"""
 
         match_matrix = np.zeros((len(phi_vector), len(scale_vector)))
 
-        self.ewald_roi = self.ewald_radius * (self.screen_size_w / self.screen_sample_distance) * scale_vector.max()
+        self.ewald_roi = (
+            self.ewald_radius
+            * (self.screen_size_w / self.screen_sample_distance)
+            * scale_vector.max()
+        )
         self._inverse_lattice = self._prepare_inverse_lattice()
-        
+
         for i, scale in enumerate(tqdm(scale_vector, desc="Matching scales")):
             self.lattice_scale = scale
             self.calculate_ewald()
@@ -331,18 +340,20 @@ class Ewald:
 
             match_matrix[:, i] = match_phi
 
-        match_matrix_xr = xr.DataArray(match_matrix, dims=["phi", "scale"], coords={"phi": phi_vector, "scale": scale_vector})
+        match_matrix_xr = xr.DataArray(
+            match_matrix,
+            dims=["phi", "scale"],
+            coords={"phi": phi_vector, "scale": scale_vector},
+        )
         return match_matrix_xr
-
 
     def _prepare_inverse_lattice(self):
         lattice = self._lattice
         space_size = self._ewald_roi
-        inverse_lattice = Lattice.generate_lattice(lattice.b1, 
-                                                    lattice.b2, 
-                                                    space_size=space_size)
+        inverse_lattice = Lattice.generate_lattice(
+            lattice.b1, lattice.b2, space_size=space_size
+        )
         return inverse_lattice
-
 
     def _generate_spot_structure(self) -> np.ndarray:
 
@@ -363,13 +374,12 @@ class Ewald:
         for i in range(spot_h):
             for j in range(spot_w):
                 # Check if the point (j, i) is inside the ellipse
-                if ((j - center_x) ** 2 / radius_x ** 2) + ((i - center_y) ** 2 / radius_y ** 2) <= 1:
+                if ((j - center_x) ** 2 / radius_x**2) + (
+                    (i - center_y) ** 2 / radius_y**2
+                ) <= 1:
                     spot_structure[i, j] = True
-    
+
         return spot_structure
-            
-    #TODO prepare calculate match for a list of phi angles next we will do the same for a list of 
+
+    # TODO prepare calculate match for a list of phi angles next we will do the same for a list of
     # lattice stalling
-
-
-

@@ -13,6 +13,7 @@ Vector = NDArray[np.float64]
 AllowedCubicTypes = Literal["SC", "BCC", "FCC"]
 AllowedPlanes = Literal["111", "110", "100"]
 
+
 class Lattice:
     """
     Represents a 2D lattice defined by two basis vectors (a1 and a2), or constructed from a specified plane of a cubic crystal.
@@ -33,9 +34,7 @@ class Lattice:
     """
 
     def __init__(
-        self,
-        a1: Union[List[float], Vector],
-        a2: Union[List[float], Vector]
+        self, a1: Union[List[float], Vector], a2: Union[List[float], Vector]
     ) -> None:
         """
         Initializes a Lattice object with two basis vectors.
@@ -115,53 +114,53 @@ class Lattice:
             NotImplementedError: If the specified cubic type or plane is not supported.
         """
 
-        if cubic_type not in {'SC', 'FCC', 'BCC'}:
+        if cubic_type not in {"SC", "FCC", "BCC"}:
             raise ValueError("Unsupported cubic_type. Use 'SC', 'FCC', or 'BCC'.")
-        if plane not in {'100', '110', '111'}:
+        if plane not in {"100", "110", "111"}:
             raise ValueError("Unsupported plane. Use '100', '110', or '111'.")
-            
-        if (cubic_type, plane) == ('SC', '100'):
+
+        if (cubic_type, plane) == ("SC", "100"):
             a1 = np.array([a, 0, 0])
             a2 = np.array([0, a, 0])
 
-        elif (cubic_type, plane) == ('SC', '110'):
+        elif (cubic_type, plane) == ("SC", "110"):
             a1 = np.array([a * np.sqrt(2), 0, 0])
             a2 = np.array([0, a, 0])
 
-        elif (cubic_type, plane) == ('SC', '111'):
+        elif (cubic_type, plane) == ("SC", "111"):
             a_surf = a * np.sqrt(2)
             a1 = np.array([a_surf, 0, 0])
             a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
 
-        elif (cubic_type, plane) == ('FCC', '100'):
+        elif (cubic_type, plane) == ("FCC", "100"):
             a1 = np.array([a, 0, 0])
             a2 = np.array([a * 0.5, a * 0.5, 0])
 
-        elif (cubic_type, plane) == ('FCC', '110'):
+        elif (cubic_type, plane) == ("FCC", "110"):
             a1 = np.array([a * np.sqrt(2), 0, 0])
             a2 = np.array([0, a, 0])
 
-        elif (cubic_type, plane) == ('FCC', '111'):
+        elif (cubic_type, plane) == ("FCC", "111"):
             a_surf = a / np.sqrt(2)
             a1 = np.array([a_surf, 0, 0])
             a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
 
-        elif (cubic_type, plane) == ('BCC', '100'):
+        elif (cubic_type, plane) == ("BCC", "100"):
             a1 = np.array([a, 0, 0])
             a2 = np.array([0, a, 0])
 
-        elif (cubic_type, plane) == ('BCC', '110'):
+        elif (cubic_type, plane) == ("BCC", "110"):
             a1 = np.array([a * np.sqrt(2), 0, 0])
             a2 = np.array([0, a, 0])
 
-        elif (cubic_type, plane) == ('BCC', '111'):
+        elif (cubic_type, plane) == ("BCC", "111"):
             a_surf = np.sqrt(6) * a / 3
             a1 = np.array([a_surf, 0, 0])
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])   
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
 
         else:
             raise ValueError(f"Unsupported combination: {cubic_type} {plane}")
-        
+
         return cls(a1, a2)
 
     def rotate(self, phi: float = 0.0) -> None:
@@ -194,11 +193,7 @@ class Lattice:
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
-    def plot_real(
-        self,
-        ax: Optional[Axes] = None,
-        **kwargs
-    ) -> Axes:
+    def plot_real(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
         """
         Plot the real-space lattice points.
 
@@ -214,22 +209,40 @@ class Lattice:
 
         ax.plot(self.real_lattice[:, 0], self.real_lattice[:, 1], ".", **kwargs)
         # Plot a1 and a2 vectors from origin
-        ax.arrow(0, 0, self.a1[0], self.a1[1], head_width=0.5, head_length=1, fc='r', ec='r', length_includes_head=True, label='a1')
-        ax.arrow(0, 0, self.a2[0], self.a2[1], head_width=0.5, head_length=1, fc='g', ec='g', length_includes_head=True, label='a2')
-        #ax.legend(['Lattice points', 'a1', 'a2'])
+        ax.arrow(
+            0,
+            0,
+            self.a1[0],
+            self.a1[1],
+            head_width=0.5,
+            head_length=1,
+            fc="r",
+            ec="r",
+            length_includes_head=True,
+            label="a1",
+        )
+        ax.arrow(
+            0,
+            0,
+            self.a2[0],
+            self.a2[1],
+            head_width=0.5,
+            head_length=1,
+            fc="g",
+            ec="g",
+            length_includes_head=True,
+            label="a2",
+        )
+        # ax.legend(['Lattice points', 'a1', 'a2'])
 
         ax.set_xlim(-20, 20)
         ax.set_ylim(-10, 10)
-        ax.set_xlabel('x [A]')
-        ax.set_ylabel('y [A]')
+        ax.set_xlabel("x [A]")
+        ax.set_ylabel("y [A]")
         ax.set_aspect(1)
         return ax
 
-    def plot_inverse(
-        self,
-        ax: Optional[Axes] = None,
-        **kwargs
-    ) -> Axes:
+    def plot_inverse(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
         """
         Plot the reciprocal-space (inverse) lattice points.
 
@@ -244,10 +257,10 @@ class Lattice:
             fig, ax = plt.subplots()
 
         ax.plot(self.inverse_lattice[:, 0], self.inverse_lattice[:, 1], ".", **kwargs)
-        ax.plot(0, 0, 'or')
+        ax.plot(0, 0, "or")
 
-        ax.set_xlabel('gx [1/A]')
-        ax.set_ylabel('gy [1/A]')
+        ax.set_xlabel("gx [1/A]")
+        ax.set_ylabel("gy [1/A]")
 
         ax.set_xlim(-10, 10)
         ax.set_ylim(-7, 7)
@@ -261,8 +274,9 @@ class Lattice:
         Returns:
             str: String representation of a1 and a2.
         """
-        return (f"a1 = [{self.a1[0]}, {self.a1[1]}]\n"
-                f"a2 = [{self.a2[0]}, {self.a2[1]}]")
+        return (
+            f"a1 = [{self.a1[0]}, {self.a1[1]}]\n" f"a2 = [{self.a2[0]}, {self.a2[1]}]"
+        )
 
     @staticmethod
     def hex_lattice(a: float) -> Tuple[Vector, Vector]:
@@ -328,9 +342,7 @@ class Lattice:
 
     @staticmethod
     def generate_lattice(
-        v1: Vector,
-        v2: Vector,
-        space_size: float = 70.0
+        v1: Vector, v2: Vector, space_size: float = 70.0
     ) -> NDArray[np.float64]:
         """
         Generate a grid of lattice points within a specified space size.
@@ -362,6 +374,7 @@ class Lattice:
 
         return lattice
 
+
 def rotation_matrix(phi: float = 0.0) -> NDArray[np.float64]:
     """
     Generates a 3D rotation matrix for a given angle phi (in degrees) about the z-axis.
@@ -373,8 +386,11 @@ def rotation_matrix(phi: float = 0.0) -> NDArray[np.float64]:
         np.ndarray: 3x3 rotation matrix.
     """
     phi = np.radians(phi)
-    return np.array([
-        [np.cos(phi), -np.sin(phi), 0.0],
-        [np.sin(phi), np.cos(phi), 0.0],
-        [0.0, 0.0, 1.0]
-    ], dtype=float)
+    return np.array(
+        [
+            [np.cos(phi), -np.sin(phi), 0.0],
+            [np.sin(phi), np.cos(phi), 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=float,
+    )

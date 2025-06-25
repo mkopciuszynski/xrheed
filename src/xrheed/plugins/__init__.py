@@ -15,7 +15,6 @@ class LoadRheedBase:
         ".bmp",
     }
 
-
     @classmethod
     def is_file_accepted(
         cls,
@@ -28,7 +27,7 @@ class LoadRheedBase:
             if p.suffix not in cls.TOLERATED_EXTENSIONS:
                 return False
         return True
-    
+
     def load_single_image(
         self,
         file_path: Path,
@@ -44,16 +43,17 @@ class LoadRheedBase:
             raise NotImplementedError(msg)
         return xr.DataArray()
 
-def load_single_image(
-        image_path: Path, 
-        plugin_name: str,
-        **kwargs) -> xr.DataArray:
+
+def load_single_image(image_path: Path, plugin_name: str, **kwargs) -> xr.DataArray:
     """Load a single image using the specified plugin."""
     plugin_cls = get_plugin_class(plugin_name)
     plugin_instance = plugin_cls()
     return plugin_instance.load_single_image(image_path, **kwargs)
 
-def load_many_images(image_paths: list[Path], plugin_name: str, **kwargs) -> list[xr.DataArray]:
+
+def load_many_images(
+    image_paths: list[Path], plugin_name: str, **kwargs
+) -> list[xr.DataArray]:
     pass
 
 
@@ -64,9 +64,8 @@ def get_plugin_class(plugin_name: str) -> Type[LoadRheedBase]:
         if hasattr(module, "LoadPlugin"):
             return module.LoadPlugin
         else:
-            raise ImportError(f"The plugin '{plugin_name}' does not have a 'Plugin' class.")
+            raise ImportError(
+                f"The plugin '{plugin_name}' does not have a 'Plugin' class."
+            )
     except ImportError as e:
         raise ImportError(f"Could not load plugin '{plugin_name}': {e}")
-
-
-

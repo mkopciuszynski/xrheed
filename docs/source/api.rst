@@ -1,7 +1,7 @@
 API Reference
 =============
 
-.. automodule:: xrheed
+.. automodule:: xrheed.kinematics.lattice
    :members:
    :undoc-members:
    :show-inheritance:

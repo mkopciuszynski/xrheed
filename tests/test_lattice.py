@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import copy
-from xrheed.ewald.lattice import Lattice
+from xrheed.kinematics.lattice import Lattice
 
 class TestLattice(unittest.TestCase):
 

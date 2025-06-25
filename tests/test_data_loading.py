@@ -8,7 +8,7 @@ class TestDataLoading(unittest.TestCase):
     def setUp(self):
         # Load the data using the plugin
         test_data_path = Path(__file__).parent / "data" / "si_111_7x7_112.raw"
-        self.rheed_image = load_data(str(test_data_path), plugin="umcs_arpes_raw")
+        self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
 
     def test_set_center(self):
         # Test the set_center method
