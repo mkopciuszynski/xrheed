@@ -10,6 +10,7 @@ Welcome to xRHEED's documentation!
 
    installation
    usage
+   plugins
    api
    notebooks/getting_started.ipynb
 
