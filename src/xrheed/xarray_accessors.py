@@ -1,12 +1,9 @@
 from scipy import ndimage
 import xarray as xr
 import matplotlib.pyplot as plt
-import numpy as np
 from .plotting.base import plot_image
 from .preparation.alignment import find_horizontal_center, find_vertical_center
 
-from scipy.signal import savgol_filter
-import ruptures as rpt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,7 +28,9 @@ class RHEEDAccessor:
             return self._obj.attrs[attr_name]
         if default is not None:
             return default
-        raise AttributeError(f"Attribute '{attr_name}' not found and no default provided.")
+        raise AttributeError(
+            f"Attribute '{attr_name}' not found and no default provided."
+        )
 
     def _set_attr(self, attr_name: str, value: float) -> None:
         assert isinstance(self._obj, xr.DataArray)
@@ -139,10 +138,9 @@ class RHEEDAccessor:
         image_data = ndimage.rotate(image_data, angle, reshape=False)
         self._obj.data = image_data
 
-    def apply_screen_center(self, 
-                            center_x: float = 0.0, 
-                            center_y: float = 0.0,
-                            auto_center: bool= False) -> None:
+    def apply_screen_center(
+        self, center_x: float = 0.0, center_y: float = 0.0, auto_center: bool = False
+    ) -> None:
         image = self._obj
 
         if auto_center:
@@ -165,7 +163,7 @@ class RHEEDAccessor:
         hp_filter: bool = False,
         auto_levels: bool = False,
         **kwargs,
-        ):
+    ):
 
         image = self.hp_image if hp_filter else self.image
 
@@ -188,5 +186,3 @@ class ProfileAccessor:
 
     def set_range(self) -> None:
         pass
-
-

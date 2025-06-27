@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+
 def plot_image(
     image,
     ax: plt.Axes | None = None,
