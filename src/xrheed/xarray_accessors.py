@@ -3,6 +3,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
 from .plotting.base import plot_image
+from .preparation.alignment import find_horizontal_center, find_vertical_center
 
 from scipy.signal import savgol_filter
 import ruptures as rpt
@@ -24,9 +25,13 @@ class RHEEDAccessor:
         self._obj = xarray_obj
         self._center = None
 
-    def _get_attr(self, attr_name: str, default: float) -> float:
+    def _get_attr(self, attr_name: str, default: float | None = None) -> float:
         assert isinstance(self._obj, xr.DataArray)
-        return self._obj.attrs.get(attr_name, default)
+        if attr_name in self._obj.attrs:
+            return self._obj.attrs[attr_name]
+        if default is not None:
+            return default
+        raise AttributeError(f"Attribute '{attr_name}' not found and no default provided.")
 
     def _set_attr(self, attr_name: str, value: float) -> None:
         assert isinstance(self._obj, xr.DataArray)
@@ -134,10 +139,20 @@ class RHEEDAccessor:
         image_data = ndimage.rotate(image_data, phi, reshape=False)
         self._obj.data = image_data
 
-    def set_center(self) -> None:
+    def apply_screen_center(self, 
+                            center_x: float = 0.0, 
+                            center_y: float = 0.0,
+                            auto_center: bool= False) -> None:
         image = self._obj
-        image["x"] = image.x - _horizontal_center(image)
-        image["y"] = image.y - _vertical_center(image)
+
+        if auto_center:
+            center_x = find_horizontal_center(image)
+            center_y = find_vertical_center(image)
+
+        image["x"] = image.x - center_x
+        image["y"] = image.y - center_y
+
+        logger.info("The image was shifted to a new center.")
 
     def apply_hp_filter(self) -> None:
         image = self._obj
@@ -151,7 +166,7 @@ class RHEEDAccessor:
         auto_levels: bool = False,
         **kwargs,
         ):
-        
+
         image = self.hp_image if hp_filter else self.image
 
         return plot_image(
@@ -175,25 +190,3 @@ class ProfileAccessor:
         pass
 
 
-def _horizontal_center(image: xr.DataArray) -> float:
-    if "x" not in image.dims:
-        raise ValueError("Dimension 'x' is missing in the DataArray.")
-    profile = image.sum("y")
-    return float(image.x[profile.argmax()])
-
-
-def _vertical_center(image: xr.DataArray, edge_width: float = 5.0) -> float:
-    # Shadow edges defines the vertical center 0,0 point of an image
-
-    profile = image.sel(x=slice(-20, 20)).mean("x")
-    edge_width_px = int(edge_width * image.R.screen_scale)
-
-    smoothed_data = savgol_filter(profile, window_length=edge_width_px, polyorder=1)
-
-    gradient = np.diff(smoothed_data)
-
-    algo = rpt.Dynp(model="l2").fit(gradient)
-    breakpoints = algo.predict(n_bkps=2)
-
-    edge_pos = image.y[breakpoints[0]]
-    return edge_pos
