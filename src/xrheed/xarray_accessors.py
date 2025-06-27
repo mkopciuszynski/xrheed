@@ -115,7 +115,7 @@ class RHEEDAccessor:
         return self._get_attr("beam_energy", None)
 
     @property
-    def hp_sigma(self) -> int:
+    def hp_sigma(self) -> float:
         return self._get_attr("hp_sigma", DEFAULT_HP_SIGMA)
 
     @hp_sigma.setter
@@ -134,9 +134,9 @@ class RHEEDAccessor:
             raise ValueError("hp_threshold must be non-negative.")
         self._set_attr("hp_power", value)
 
-    def rotate(self, phi: float) -> None:
+    def rotate(self, angle: float) -> None:
         image_data = self._obj.data
-        image_data = ndimage.rotate(image_data, phi, reshape=False)
+        image_data = ndimage.rotate(image_data, angle, reshape=False)
         self._obj.data = image_data
 
     def apply_screen_center(self, 
