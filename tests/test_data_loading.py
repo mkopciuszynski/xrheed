@@ -13,7 +13,7 @@ class TestDataLoading(unittest.TestCase):
     def test_set_center(self):
         # Test the set_center method
         try:
-            self.rheed_image.R.set_center()
+            self.rheed_image.R.apply_image_center(auto_center=True)
         except Exception as e:
             self.fail(f"set_center method raised an exception: {e}")
 
