@@ -18,7 +18,7 @@ class LoadPlugin(LoadRheedBase):
         "plugin": "UMCS DSNP ARPES Raw",
         "screen_sample_distance": 309.2,
         "screen_scale": 9.6,
-        "screen_center_x": 72.0,  # horizontal center of an image
+        "screen_center_x": 76.0,  # horizontal center of an image
         "screen_center_y": 15.0,  # shadow edge position
         "beam_energy": 18.6 * 1000,
     }
