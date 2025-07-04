@@ -138,17 +138,19 @@ class RHEEDAccessor:
         image_data = ndimage.rotate(image_data, angle, reshape=False)
         self._obj.data = image_data
 
-    def apply_screen_center(
+    def apply_image_center(
         self, center_x: float = 0.0, center_y: float = 0.0, auto_center: bool = False
     ) -> None:
         image = self._obj
 
         if auto_center:
             center_x = find_horizontal_center(image)
+            image["x"] = image.x - center_x
             center_y = find_vertical_center(image)
-
-        image["x"] = image.x - center_x
-        image["y"] = image.y - center_y
+            image["y"] = image.y - center_y
+        else:
+            image["x"] = image.x - center_x
+            image["y"] = image.y - center_y
 
         logger.info("The image was shifted to a new center.")
 
@@ -176,7 +178,6 @@ class RHEEDAccessor:
             auto_levels=auto_levels,
             **kwargs,
         )
-
 
 @xr.register_dataarray_accessor("P")
 class ProfileAccessor:
