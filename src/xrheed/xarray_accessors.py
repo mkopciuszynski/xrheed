@@ -36,6 +36,22 @@ class RHEEDAccessor:
         assert isinstance(self._obj, xr.DataArray)
         self._obj.attrs[attr_name] = value
 
+    def __repr__(self):
+
+        screen_scale = self._get_attr("screen_scale")
+        beam_energy = self._get_attr("beam_energy")
+        screen_sample_distance = self._get_attr("screen_sample_distance")
+        theta = self._get_attr("theta", DEFAULT_THETA)
+
+        return (
+            f"<RHEEDAccessor>\n"
+            f"  Image shape: {self._obj.shape}\n"
+            f"  Screen scale: {screen_scale}\n"
+            f"  Screen sample distance: {screen_sample_distance}\n"
+            f"  Theta angle: {theta} deg\n"
+            f"  Beam Energy: {beam_energy} eV\n"
+        )
+
     @property
     def image(self) -> xr.DataArray:
         return self._obj
@@ -178,6 +194,7 @@ class RHEEDAccessor:
             auto_levels=auto_levels,
             **kwargs,
         )
+
 
 @xr.register_dataarray_accessor("P")
 class ProfileAccessor:
