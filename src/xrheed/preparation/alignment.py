@@ -51,7 +51,64 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     sigmoid_center = result.params["x0"].value
     sigmoid_k = result.params["k"].value
 
-    return sigmoid_center - sigmoid_k * 2.0
+    return sigmoid_center - sigmoid_k * 1.0
+
+
+def find_theta(
+    image: xr.DataArray,
+    x_range: tuple[float, float] = (-3, 3),
+    y_range: tuple[float, float] = (-30, 30),
+) -> float:
+    """
+    Find incident theta angle in degrees
+    using the position of transmission and mirror spots.
+
+    Parameters:
+    -----------
+    image : xarray.DataArray
+        RHEED image with 'x' and 'y' coordinates.
+    x_range : tuple(float, float)
+        The range of x to select from the image.
+    y_range : tuple(float, float)
+        The range of y to select from the image.
+
+    Returns:
+    --------
+    theta_deg : float
+        Angle theta in degrees.
+    """
+
+    screen_sample_distance = image.R.screen_sample_distance
+
+    # Sum along y (or x) to get a 1D profile.
+    # Here summing over 'y' to get vertical profile along x.
+    vertical_profile = image.sel(x=slice(*x_range), y=slice(*y_range)).sum("x")
+
+    # Transmission spot: y > 0
+    trans_part = vertical_profile.sel(y=slice(0, 30))
+    x_trans = trans_part.y[np.argmax(trans_part.values)].item()
+
+    # Mirror spot: y < 0
+    mirr_part = vertical_profile.sel(y=slice(-30, 0))
+    x_mirr = mirr_part.y[np.argmax(mirr_part.values)].item()
+
+    # Calculate distance and shadow edge
+    spot_distance = x_trans - x_mirr
+    shadow_edge = 0.5 * (x_trans + x_mirr)
+
+    # Calculate theta in radians
+    theta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
+
+    # Convert to degrees
+    theta_deg = np.degrees(theta_rad)
+
+    print(f"Transmission spot at: {x_trans:.2f}")
+    print(f"Mirror spot at: {x_mirr:.2f}")
+    print(f"Spot distance: {spot_distance:.2f}")
+    print(f"Shadow edge: {shadow_edge:.2f}")
+    print(f"Theta angle: {theta_deg:.2f}")
+
+    return theta_deg
 
 
 # Define sigmoid function for fitting
