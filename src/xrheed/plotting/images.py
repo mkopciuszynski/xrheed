@@ -10,8 +10,10 @@ def plot_image(
     ax: plt.Axes | None = None,
     vmax: float | None = None,
     vmin: float | None = None,
+    show_center_lines: bool = True,
     **kwargs,
-):
+) -> plt.Axes:
+    """Plot a RHEED image."""
 
     image = rheed.image
     if vmax is None:
@@ -22,18 +24,15 @@ def plot_image(
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 4))
 
-    #        ax.set_xlim(self.center_size[0] - self.center_size[2] // 2, self.center_size[0] + self.center_size[2] // 2)
-    #        ax.set_ylim(self.center_size[1] + self.center_size[3], self.center_size[1])
-    ax.axhline(y=0.0, linewidth=0.5)
-    ax.axvline(x=0.0, linewidth=0.5)
+    if show_center_lines:
+        ax.axhline(y=0.0, linewidth=0.5)
+        ax.axvline(x=0.0, linewidth=0.5)
+
     image.plot(ax=ax, add_colorbar=False, cmap="gray", vmin=vmin, vmax=vmax)
     ax.set_aspect(1)
     ax.set_ylim(rheed.screen_size_y, -10)
     ax.set_xlim(-rheed.screen_size_x, rheed.screen_size_x)
 
-    #    ax.set_xlim(-rheed.size[0]//2, rheed.size[0]//2)
-    #    ax.set_ylim(-rheed.size[1]+1, 1)
-    #    ax.set_aspect(aspect=(rheed.size[0] / rheed.size[1]))
     return ax
 
 
