@@ -3,6 +3,7 @@ import numpy as np
 import copy
 from xrheed.kinematics.lattice import Lattice
 
+
 class TestLattice(unittest.TestCase):
 
     def test_initialization(self):
@@ -15,33 +16,46 @@ class TestLattice(unittest.TestCase):
     def test_from_bulk_cubic(self):
         a = 5.43
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="FCC", plane="111")
-        np.testing.assert_array_almost_equal(lattice.a1, np.array([3.84, 0.0, 0.0]), decimal=3)
-        np.testing.assert_array_almost_equal(lattice.a2, np.array([3.84*0.5, 3.325, 0]), decimal=3)
+        np.testing.assert_array_almost_equal(
+            lattice.a1, np.array([3.84, 0.0, 0.0]), decimal=3
+        )
+        np.testing.assert_array_almost_equal(
+            lattice.a2, np.array([3.84 * 0.5, 3.325, 0]), decimal=3
+        )
 
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="SC", plane="110")
-        np.testing.assert_array_almost_equal(lattice.a1, np.array([a * np.sqrt(2) , 0.0, 0.0]), decimal=3)
+        np.testing.assert_array_almost_equal(
+            lattice.a1, np.array([a * np.sqrt(2), 0.0, 0.0]), decimal=3
+        )
         np.testing.assert_array_almost_equal(lattice.a2, np.array([0, a, 0]), decimal=3)
 
-
-        
     def test_hex_lattice(self):
         a = 3.84
         a1, a2 = Lattice.hex_lattice(a)
         np.testing.assert_array_almost_equal(a1, np.array([3.84, 0.0, 0.0]))
-        np.testing.assert_array_almost_equal(a2, np.array([3.84*0.5, 3.325, 0.0]), decimal=3)
+        np.testing.assert_array_almost_equal(
+            a2, np.array([3.84 * 0.5, 3.325, 0.0]), decimal=3
+        )
 
     def test_rotate(self):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
         lattice.rotate(90)
-        np.testing.assert_array_almost_equal(lattice.a1, np.array([0.0, 1.0, 0.0]), decimal=4)
-        np.testing.assert_array_almost_equal(lattice.a2, np.array([-1.0, 0.0, 0.0]), decimal=4)
+        np.testing.assert_array_almost_equal(
+            lattice.a1, np.array([0.0, 1.0, 0.0]), decimal=4
+        )
+        np.testing.assert_array_almost_equal(
+            lattice.a2, np.array([-1.0, 0.0, 0.0]), decimal=4
+        )
         lattice.rotate(-90)
-        np.testing.assert_array_almost_equal(lattice.a1, np.array([1.0, 0.0, 0.0]), decimal=4)
-        np.testing.assert_array_almost_equal(lattice.a2, np.array([0.0, 1.0, 0.0]), decimal=4)
-        
-    
+        np.testing.assert_array_almost_equal(
+            lattice.a1, np.array([1.0, 0.0, 0.0]), decimal=4
+        )
+        np.testing.assert_array_almost_equal(
+            lattice.a2, np.array([0.0, 1.0, 0.0]), decimal=4
+        )
+
     def test_scale(self):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
@@ -84,5 +98,6 @@ class TestLattice(unittest.TestCase):
         lattice.plot_real()
         lattice.plot_inverse()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
