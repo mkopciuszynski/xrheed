@@ -9,23 +9,12 @@ import xarray as xr
 def plot_image(
     rheed_image: xr.DataArray,
     ax: plt.Axes | None = None,
-    hp_filter: bool = False,
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
     **kwargs,
 ):
     """Plot a RHEED image."""
     
-    if hp_filter:
-        hp_power = rheed_image.R.hp_threshold
-        hp_sigma = rheed_image.R.hp_sigma
-
-        blurred_image = ndimage.gaussian_filter(rheed_image, sigma=hp_sigma)
-        high_pass_image = rheed_image.values - hp_power * blurred_image
-        high_pass_image -= high_pass_image.min()
-        rheed_image.values = high_pass_image
-
-
     if auto_levels > 0.0:
         vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
         kwargs["vmin"] = vmin
@@ -84,7 +73,7 @@ def _set_auto_levels(
     )
 
     # Extract the raw data as a NumPy array
-    data_flat = image.values.ravel()
+    data_flat = roi_image.values.ravel()
 
     # Remove NaNs if present
     data_flat = data_flat[~np.isnan(data_flat)]

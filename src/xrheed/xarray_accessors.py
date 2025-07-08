@@ -113,25 +113,11 @@ class RHEEDAccessor:
         """Beam energy in keV"""
         return self._get_attr("beam_energy", None)
 
-    @property
-    def hp_sigma(self) -> float:
-        return self._get_attr("hp_sigma", DEFAULT_HP_SIGMA)
-
-    @hp_sigma.setter
-    def hp_sigma(self, value: int) -> None:
+    @beam_energy.setter
+    def beam_energy(self, value: float) -> None:
         if value <= 0:
-            raise ValueError("hp_sigma must be positive.")
-        self._set_attr("hp_sigma", value)
-
-    @property
-    def hp_threshold(self) -> float:
-        return self._get_attr("hp_power", DEFAULT_HP_POWER)
-
-    @hp_threshold.setter
-    def hp_threshold(self, value: float) -> None:
-        if value < 0:
-            raise ValueError("hp_threshold must be non-negative.")
-        self._set_attr("hp_power", value)
+            raise ValueError("beam_energy must be positive.")
+        self._set_attr("beam_energy", value)
 
     def rotate(self, angle: float) -> None:
         image_data = self._obj.data
@@ -154,16 +140,10 @@ class RHEEDAccessor:
 
         logger.info("The image was shifted to a new center.")
 
-    def apply_hp_filter(self) -> None:
-        image = self._obj
-        image.data = image.R.hp_image.data
-        logger.info("Original data was exchanged for hp filtered image!")
-
 
     def plot_image(
         self,
         ax: plt.Axes | None = None,
-        hp_filter: bool = False,
         auto_levels: float = 0.0,
         show_center_lines: bool = True,
         **kwargs,
@@ -174,8 +154,6 @@ class RHEEDAccessor:
         ----------
         ax : plt.Axes | None, optional
             Axes to plot on. If None, a new figure and axes will be created.
-        hp_filter : bool, optional
-            If True, plot the high-pass filtered image. Default is False.       
         auto_levels : float, optional
             If greater than 0, apply auto levels to the image.
             The number represents the allowed percentage of overexposed pixels.
@@ -197,7 +175,6 @@ class RHEEDAccessor:
         return plot_image(
             rheed_image=rheed_image,
             ax=ax,
-            hp_filter=hp_filter,
             auto_levels=auto_levels,
             show_center_lines=show_center_lines,
             **kwargs,
