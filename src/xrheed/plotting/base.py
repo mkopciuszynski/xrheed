@@ -41,45 +41,44 @@ def plot_image(
     return ax
 
 
-
-
-def _set_auto_levels(
-    image: xr.DataArray,
-    auto_contrast: float = 5.0
-) -> tuple[float, float]:
+def _set_auto_levels(image: xr.DataArray, 
+                     auto_levels: float = 5.0) -> tuple[float, float]:
     """
-    Compute vmin and vmax for plotting, setting vmax such that a given
-    percentage of pixels are overexposed.
+    Calculate vmin and vmax for displaying an image with enhanced contrast,
+    using a region of interest defined by screen dimensions.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     image : xr.DataArray
-        Image data.
-    auto_contrast : float
-        Percentage of overexposed pixels allowed (e.g., 5.0 for 5%).
+        The input image (2D xarray DataArray) with RHEED screen ROI attributes.
+    auto_levels : float
+        Percentage of pixels to clip at both low and high ends. 
+        Higher values increase contrast.
 
-    Returns:
-    --------
+    Returns
+    -------
     vmin, vmax : tuple of floats
-        Suggested min and max values for plotting.
+        Suggested display levels for the image.
     """
 
-
+    # Extract ROI based on screen dimensions from the xarray accessor
     screen_roi_width = image.R.screen_roi_width
     screen_roi_height = image.R.screen_roi_height
+
     roi_image = image.sel(
         x=slice(-screen_roi_width, screen_roi_width),
         y=slice(-screen_roi_height, 0)
     )
 
-    # Extract the raw data as a NumPy array
-    data_flat = roi_image.values.ravel()
+    # Flatten, exclude NaNs
+    values = roi_image.values.ravel()
+    values = values[~np.isnan(values)]
 
-    # Remove NaNs if present
-    data_flat = data_flat[~np.isnan(data_flat)]
+    # Compute clipped percentiles
+    low_percentile = auto_levels
+    high_percentile = 100 - auto_levels
 
-    # Compute vmin as the minimum value, vmax from the given percentile
-    vmin = float(np.min(data_flat))
-    vmax = float(np.percentile(data_flat, 100 - auto_contrast))
+    vmin = np.percentile(values, low_percentile)
+    vmax = np.percentile(values, high_percentile)
 
-    return vmin, vmax
+    return float(vmin), float(vmax)
