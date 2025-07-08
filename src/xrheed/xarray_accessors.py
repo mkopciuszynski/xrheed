@@ -47,27 +47,11 @@ class RHEEDAccessor:
             f"<RHEEDAccessor>\n"
             f"  Image shape: {self._obj.shape}\n"
             f"  Screen scale: {screen_scale}\n"
-            f"  Screen sample distance: {screen_sample_distance}\n"
-            f"  Theta angle: {theta} deg\n"
+            f"  Screen sample distance: {screen_sample_distance:.2f}\n"
+            f"  Theta angle: {theta:.2f} deg\n"
             f"  Beam Energy: {beam_energy} eV\n"
         )
 
-    @property
-    def image(self) -> xr.DataArray:
-        return self._obj
-
-    @property
-    def hp_image(self) -> xr.DataArray:
-        image = self._obj
-
-        hp_power = self.hp_threshold
-        hp_sigma = self.hp_sigma
-
-        blurred_image = ndimage.gaussian_filter(image, sigma=hp_sigma)
-        high_pass_image = image - hp_power * blurred_image
-        high_pass_image -= high_pass_image.min()
-
-        return high_pass_image
 
     @property
     def screen_sample_distance(self) -> float:
@@ -175,23 +159,47 @@ class RHEEDAccessor:
         image.data = image.R.hp_image.data
         logger.info("Original data was exchanged for hp filtered image!")
 
+
     def plot_image(
         self,
         ax: plt.Axes | None = None,
         hp_filter: bool = False,
-        auto_levels: bool = False,
+        auto_levels: float = 0.0,
+        show_center_lines: bool = True,
         **kwargs,
-    ):
+    ) -> plt.Axes:
+        """Plot RHEED image.
 
-        image = self.hp_image if hp_filter else self.image
+        Parameters
+        ----------
+        ax : plt.Axes | None, optional
+            Axes to plot on. If None, a new figure and axes will be created.
+        hp_filter : bool, optional
+            If True, plot the high-pass filtered image. Default is False.       
+        auto_levels : float, optional
+            If greater than 0, apply auto levels to the image.
+            The number represents the allowed percentage of overexposed pixels.
+            Default is 0.0 (no auto autolevels).
+        show_center_lines : bool, optional
+            If True, draw horizontal and vertical lines at the center of the image. 
+            Default is True.
+        **kwargs : dict
+            Additional keyword arguments passed to the plotting function.
+        Returns
+        ------- 
+        plt.Axes
+            The axes with the plotted image.
+        """
+
+        # use a copy of the object to avoid modifying the original data
+        rheed_image = self._obj.copy()
 
         return plot_image(
-            image=image,
+            rheed_image=rheed_image,
             ax=ax,
-            screen_roi_width=self.screen_roi_width,
-            screen_roi_height=self.screen_roi_height,
             hp_filter=hp_filter,
             auto_levels=auto_levels,
+            show_center_lines=show_center_lines,
             **kwargs,
         )
 
