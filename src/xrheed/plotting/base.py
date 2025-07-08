@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-from scipy import ndimage
 
 import numpy as np
 import xarray as xr
@@ -14,7 +13,7 @@ def plot_image(
     **kwargs,
 ):
     """Plot a RHEED image."""
-    
+
     if auto_levels > 0.0:
         vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
         kwargs["vmin"] = vmin
@@ -41,8 +40,9 @@ def plot_image(
     return ax
 
 
-def _set_auto_levels(image: xr.DataArray, 
-                     auto_levels: float = 5.0) -> tuple[float, float]:
+def _set_auto_levels(
+    image: xr.DataArray, auto_levels: float = 5.0
+) -> tuple[float, float]:
     """
     Calculate vmin and vmax for displaying an image with enhanced contrast,
     using a region of interest defined by screen dimensions.
@@ -52,7 +52,7 @@ def _set_auto_levels(image: xr.DataArray,
     image : xr.DataArray
         The input image (2D xarray DataArray) with RHEED screen ROI attributes.
     auto_levels : float
-        Percentage of pixels to clip at both low and high ends. 
+        Percentage of pixels to clip at both low and high ends.
         Higher values increase contrast.
 
     Returns
@@ -66,8 +66,7 @@ def _set_auto_levels(image: xr.DataArray,
     screen_roi_height = image.R.screen_roi_height
 
     roi_image = image.sel(
-        x=slice(-screen_roi_width, screen_roi_width),
-        y=slice(-screen_roi_height, 0)
+        x=slice(-screen_roi_width, screen_roi_width), y=slice(-screen_roi_height, 0)
     )
 
     # Flatten, exclude NaNs

@@ -18,7 +18,6 @@ def plot_image(
     **kwargs,
 ) -> plt.Axes:
     """Plot a RHEED image."""
-    
 
     if hp_filter:
 
@@ -30,7 +29,6 @@ def plot_image(
         high_pass_image -= high_pass_image.min()
 
         rheed_image.values = high_pass_image
-
 
     if auto_levels > 0.0:
         vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
@@ -101,10 +99,8 @@ def plot_evald(
     return ax
 
 
-
 def _set_auto_levels(
-    image: xr.DataArray,
-    auto_contrast: float = 5.0
+    image: xr.DataArray, auto_contrast: float = 5.0
 ) -> tuple[float, float]:
     """
     Compute vmin and vmax for plotting, setting vmax such that a given

@@ -52,7 +52,6 @@ class RHEEDAccessor:
             f"  Beam Energy: {beam_energy} eV\n"
         )
 
-
     @property
     def screen_sample_distance(self) -> float:
         """Screen sample distance"""
@@ -140,7 +139,6 @@ class RHEEDAccessor:
 
         logger.info("The image was shifted to a new center.")
 
-
     def plot_image(
         self,
         ax: plt.Axes | None = None,
@@ -159,12 +157,12 @@ class RHEEDAccessor:
             The number represents the allowed percentage of overexposed pixels.
             Default is 0.0 (no auto autolevels).
         show_center_lines : bool, optional
-            If True, draw horizontal and vertical lines at the center of the image. 
+            If True, draw horizontal and vertical lines at the center of the image.
             Default is True.
         **kwargs : dict
             Additional keyword arguments passed to the plotting function.
         Returns
-        ------- 
+        -------
         plt.Axes
             The axes with the plotted image.
         """

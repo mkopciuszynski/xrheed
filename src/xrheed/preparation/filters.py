@@ -50,9 +50,10 @@ def gaussian_filter_profile(
 
     return filtered_profile
 
-def high_pass_filter(rheed_image: xr.DataArray,
-                     threshold: float = 0.1,
-                     sigma: float = 1.0) -> xr.DataArray:
+
+def high_pass_filter(
+    rheed_image: xr.DataArray, threshold: float = 0.1, sigma: float = 1.0
+) -> xr.DataArray:
     """
     Apply a high-pass filter to a RHEED image using Gaussian filtering.
     Parameters
@@ -71,11 +72,15 @@ def high_pass_filter(rheed_image: xr.DataArray,
     xr.DataArray
         The high-pass filtered RHEED image as a new DataArray.
     """
-    
-    # Validate input    
-    assert isinstance(rheed_image, xr.DataArray), "rheed_image must be an xarray.DataArray"
+
+    # Validate input
+    assert isinstance(
+        rheed_image, xr.DataArray
+    ), "rheed_image must be an xarray.DataArray"
     assert rheed_image.ndim == 2, "rheed_image must have two dimensions"
-    assert "screen_scale" in rheed_image.attrs, "rheed_image must have 'screen_scale' attribute"
+    assert (
+        "screen_scale" in rheed_image.attrs
+    ), "rheed_image must have 'screen_scale' attribute"
 
     # Create a copy of the input image to avoid modifying the original
     high_pass_image = rheed_image.copy()
@@ -86,11 +91,11 @@ def high_pass_filter(rheed_image: xr.DataArray,
 
     # Apply Gaussian filter to the image
     blurred_image_values = gaussian_filter(rheed_image_values, sigma=sigma_px)
-    
+
     high_pass_image_values = rheed_image_values - threshold * blurred_image_values
     high_pass_image_values -= high_pass_image_values.min()
-    
-    high_pass_image.values = high_pass_image_values 
+
+    high_pass_image.values = high_pass_image_values
 
     # Set attributes for the high-pass filtered image
     high_pass_image.attrs["hp_filter"] = True
