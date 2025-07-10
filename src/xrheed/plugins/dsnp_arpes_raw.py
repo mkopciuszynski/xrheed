@@ -15,12 +15,12 @@ class LoadPlugin(LoadRheedBase):
     TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".raw"}
 
     ATTRS = {
-        "plugin": "UMCS DSNP ARPES Raw",
-        "screen_sample_distance": 309.2,
-        "screen_scale": 9.6,
-        "screen_center_x": 76.0,  # horizontal center of an image
-        "screen_center_y": 15.0,  # shadow edge position
-        "beam_energy": 18.6 * 1000,
+        "plugin": "UMCS DSNP ARPES raw",
+        "screen_sample_distance": 309.2, # mm
+        "screen_scale": 9.04,       # pixels per mm
+        "screen_center_x": 76.0,    # horizontal center of an image
+        "screen_center_y": 15.0,    # shadow edge position
+        "beam_energy": 18.6 * 1000, # eV
     }
 
     def load_single_image(
