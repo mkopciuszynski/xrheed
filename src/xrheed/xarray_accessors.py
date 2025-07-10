@@ -1,8 +1,10 @@
-from scipy import ndimage
+from scipy import ndimage, constants
 import xarray as xr
+import numpy as np  
 import matplotlib.pyplot as plt
 from .plotting.base import plot_image
 from .preparation.alignment import find_horizontal_center, find_vertical_center
+from .conversion.base import convert_x_to_kx
 
 import logging
 
@@ -116,6 +118,17 @@ class RHEEDAccessor:
             raise ValueError("beam_energy must be positive.")
         self._set_attr("beam_energy", value)
 
+    @property
+    def ewald_sphere_radius(self) -> float:
+        """Ewald radius in 1/Å"""
+        beam_energy = self.beam_energy
+        if beam_energy is None:
+            raise ValueError("Beam energy is not set.")
+        
+        k_e = np.sqrt(2 * constants.m_e * constants.e * beam_energy) / constants.hbar
+
+        return k_e * 1e-10
+
     def rotate(self, angle: float) -> None:
         image_data = self._obj.data
         image_data = ndimage.rotate(image_data, angle, reshape=False)
@@ -136,6 +149,55 @@ class RHEEDAccessor:
             image["y"] = image.y - center_y
 
         logger.info("The image was shifted to a new center.")
+
+    def get_profile(
+        self,
+        center: tuple[float, float] | None = None,
+        width: float | None = None,
+        height: float | None = None,
+    ) -> xr.DataArray:
+        """Get a profile of the RHEED image.
+
+        Parameters
+        ----------
+        center : tuple[float, float] | None, optional
+            Center of the profile in (x, y) coordinates. If None, the center of the image will be used.
+        width : float | None, optional
+            Width of the profile. If None, the full width of the image will be used.
+        height : float | None, optional
+            Height of the profile. If None, the full height of the image will be used.
+
+        Returns
+        -------
+        xr.DataArray
+            The profile of the RHEED image.
+        """
+
+        rheed_image = self._obj
+
+        if center is None:
+            center = (0.0, 0.0)
+
+        if width is None:
+            width = rheed_image.x.size
+
+        if height is None:
+            height = rheed_image.y.size
+
+        profile = rheed_image.sel(
+            x=slice(center[0] - width / 2, center[0] + width / 2),
+            y=slice(center[1] - height / 2, center[1] + height / 2),
+        ).sum("y")
+
+        # Manually copy attrs
+        profile.attrs = rheed_image.attrs.copy()
+
+        profile.attrs["profile_center"] = center
+        profile.attrs["profile_width"] = width  
+        profile.attrs["profile_height"] = height
+
+        return profile
+    
 
     def plot_image(
         self,
@@ -177,11 +239,38 @@ class RHEEDAccessor:
         )
 
 
-@xr.register_dataarray_accessor("P")
-class ProfileAccessor:
-
-    def __init__(self, xarray_obj):
+@xr.register_dataarray_accessor("rp")
+class RHEEDProfileAccessor:
+    def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
 
-    def set_range(self) -> None:
-        pass
+    def __repr__(self):
+        center = self._obj.attrs.get("profile_center", "N/A")
+        width = self._obj.attrs.get("profile_width", "N/A")
+        height = self._obj.attrs.get("profile_height", "N/A")
+        return (
+            f"<RHEEDProfileAccessor\n"
+            f"  Center: x, y [mm]: {center} \n"
+            f"  Width: {width} mm\n"
+            f"  Height: {height} mm\n"
+        )
+
+    def convert_to_kx(self) -> xr.DataArray:
+        """Convert the profile x coordinate to kx [1/Å] using the Ewald sphere radius and screen sample distance."""
+
+        if "x" not in self._obj.coords:
+            raise ValueError("The profile must have 'x' coordinate to convert to kx.")  
+
+        k_e = self._obj.R.ewald_sphere_radius
+        screen_sample_distance = self._obj.R.screen_sample_distance
+
+        x = self._obj.coords["x"].data
+        
+        kx = convert_x_to_kx(x, 
+                            ewald_sphere_radius=k_e,
+                            screen_sample_distance_mm=screen_sample_distance)
+
+        profile_kx = self._obj.assign_coords(x=kx).rename({'x': 'kx'}) 
+        
+
+        return profile_kx
