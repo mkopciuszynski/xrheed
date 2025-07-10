@@ -1,6 +1,6 @@
 from scipy import ndimage, constants
 import xarray as xr
-import numpy as np  
+import numpy as np
 import matplotlib.pyplot as plt
 from .plotting.base import plot_image
 from .preparation.alignment import find_horizontal_center, find_vertical_center
@@ -124,7 +124,7 @@ class RHEEDAccessor:
         beam_energy = self.beam_energy
         if beam_energy is None:
             raise ValueError("Beam energy is not set.")
-        
+
         k_e = np.sqrt(2 * constants.m_e * constants.e * beam_energy) / constants.hbar
 
         return k_e * 1e-10
@@ -193,11 +193,10 @@ class RHEEDAccessor:
         profile.attrs = rheed_image.attrs.copy()
 
         profile.attrs["profile_center"] = center
-        profile.attrs["profile_width"] = width  
+        profile.attrs["profile_width"] = width
         profile.attrs["profile_height"] = height
 
         return profile
-    
 
     def plot_image(
         self,
@@ -259,18 +258,17 @@ class RHEEDProfileAccessor:
         """Convert the profile x coordinate to kx [1/Å] using the Ewald sphere radius and screen sample distance."""
 
         if "x" not in self._obj.coords:
-            raise ValueError("The profile must have 'x' coordinate to convert to kx.")  
+            raise ValueError("The profile must have 'x' coordinate to convert to kx.")
 
         k_e = self._obj.R.ewald_sphere_radius
         screen_sample_distance = self._obj.R.screen_sample_distance
 
         x = self._obj.coords["x"].data
-        
-        kx = convert_x_to_kx(x, 
-                            ewald_sphere_radius=k_e,
-                            screen_sample_distance_mm=screen_sample_distance)
 
-        profile_kx = self._obj.assign_coords(x=kx).rename({'x': 'kx'}) 
-        
+        kx = convert_x_to_kx(
+            x, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance
+        )
+
+        profile_kx = self._obj.assign_coords(x=kx).rename({"x": "kx"})
 
         return profile_kx
