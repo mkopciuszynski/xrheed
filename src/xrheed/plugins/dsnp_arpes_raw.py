@@ -16,11 +16,11 @@ class LoadPlugin(LoadRheedBase):
 
     ATTRS = {
         "plugin": "UMCS DSNP ARPES raw",
-        "screen_sample_distance": 309.2, # mm
-        "screen_scale": 9.04,       # pixels per mm
-        "screen_center_x": 76.0,    # horizontal center of an image
-        "screen_center_y": 15.0,    # shadow edge position
-        "beam_energy": 18.6 * 1000, # eV
+        "screen_sample_distance": 309.2,  # mm
+        "screen_scale": 9.04,  # pixels per mm
+        "screen_center_x": 76.0,  # horizontal center of an image
+        "screen_center_y": 15.0,  # shadow edge position
+        "beam_energy": 18.6 * 1000,  # eV
     }
 
     def load_single_image(
