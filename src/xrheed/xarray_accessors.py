@@ -2,7 +2,9 @@ from scipy import ndimage, constants
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from .plotting.base import plot_image
+from .plotting.profiles import plot_profile
 from .preparation.alignment import find_horizontal_center, find_vertical_center
 from .conversion.base import convert_x_to_kx
 
@@ -155,6 +157,7 @@ class RHEEDAccessor:
         center: tuple[float, float] | None = None,
         width: float | None = None,
         height: float | None = None,
+        plot_origin: bool = False,
     ) -> xr.DataArray:
         """Get a profile of the RHEED image.
 
@@ -195,6 +198,29 @@ class RHEEDAccessor:
         profile.attrs["profile_center"] = center
         profile.attrs["profile_width"] = width
         profile.attrs["profile_height"] = height
+
+        if plot_origin:
+            # Plot the DataArray
+            fig, ax = plt.subplots()
+
+            plot_image(
+                rheed_image=rheed_image, ax=ax, auto_levels=0.5, show_center_lines=False
+            )
+
+            # Compute bottom-left corner of the box
+            start_x = center[0] - width / 2
+            start_y = center[1] - height / 2
+
+            # Add the rectangle
+            rect = Rectangle(
+                (start_x, start_y),
+                width,
+                height,
+                linewidth=1,
+                edgecolor="red",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
 
         return profile
 
@@ -272,3 +298,41 @@ class RHEEDProfileAccessor:
         profile_kx = self._obj.assign_coords(x=kx).rename({"x": "kx"})
 
         return profile_kx
+
+    def plot_profile(
+        self,
+        ax: plt.Axes | None = None,
+        transform_to_kx: bool = True,
+        normalize: bool = True,
+        **kwargs,
+    ) -> plt.Axes:
+        """Plot a RHEED profile.
+
+        Parameters
+        ----------
+        ax : plt.Axes | None, optional
+            Axes to plot on. If None, a new figure and axes will be created.
+        transform_to_kx : bool, optional
+            If True, convert the x coordinate to kx [1/Å].
+            Default is True.
+        normalize : bool, optional
+            If True, normalize the profile to the range [0, 1].
+            Default is True.
+        **kwargs : dict
+            Additional keyword arguments passed to the plotting function.
+
+        Returns
+        -------
+        plt.Axes
+            The axes with the plotted profile.
+        """
+
+        rheed_profile = self._obj.copy()
+
+        return plot_profile(
+            rheed_profile=rheed_profile,
+            ax=ax,
+            transform_to_kx=transform_to_kx,
+            normalize=normalize,
+            **kwargs,
+        )
