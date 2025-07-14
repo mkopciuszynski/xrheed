@@ -18,7 +18,7 @@ class TestDataLoading(unittest.TestCase):
         center_x = -0.5
         center_y = 0.5
 
-        self.rheed_image.R.apply_image_center(center_x=center_x, center_y=center_y)
+        self.rheed_image.ri.apply_image_center(center_x=center_x, center_y=center_y)
 
         center_x = find_horizontal_center(self.rheed_image)
         center_y = find_vertical_center(self.rheed_image, shadow_edge_width=5.0)
@@ -29,7 +29,7 @@ class TestDataLoading(unittest.TestCase):
 
     def test_plot_image(self):
         try:
-            self.rheed_image.R.plot_image()
+            self.rheed_image.ri.plot_image()
         except Exception as e:
             self.fail(f"plot_image method raised an exception: {e}")
 

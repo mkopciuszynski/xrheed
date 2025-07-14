@@ -15,7 +15,7 @@ DEFAULT_SCREEN_ROI_HEIGHT = 50.0
 DEFAULT_THETA = 1.0
 
 
-@xr.register_dataarray_accessor("R")
+@xr.register_dataarray_accessor("ri")
 class RHEEDAccessor:
 
     def __init__(self, xarray_obj: xr.DataArray) -> None:
@@ -260,8 +260,8 @@ class RHEEDProfileAccessor:
         if "x" not in self._obj.coords:
             raise ValueError("The profile must have 'x' coordinate to convert to kx.")
 
-        k_e = self._obj.R.ewald_sphere_radius
-        screen_sample_distance = self._obj.R.screen_sample_distance
+        k_e = self._obj.ri.ewald_sphere_radius
+        screen_sample_distance = self._obj.ri.screen_sample_distance
 
         x = self._obj.coords["x"].data
 

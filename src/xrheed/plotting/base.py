@@ -28,8 +28,8 @@ def plot_image(
 
     rheed_image.plot(ax=ax, add_colorbar=False, cmap="gray", **kwargs)
 
-    roi_width = rheed_image.R.screen_roi_width
-    roi_height = rheed_image.R.screen_roi_height
+    roi_width = rheed_image.ri.screen_roi_width
+    roi_height = rheed_image.ri.screen_roi_height
 
     ax.set_aspect(1)
     ax.set_xlim(-roi_width, roi_width)
@@ -62,8 +62,8 @@ def _set_auto_levels(
     """
 
     # Extract ROI based on screen dimensions from the xarray accessor
-    screen_roi_width = image.R.screen_roi_width
-    screen_roi_height = image.R.screen_roi_height
+    screen_roi_width = image.ri.screen_roi_width
+    screen_roi_height = image.ri.screen_roi_height
 
     roi_image = image.sel(
         x=slice(-screen_roi_width, screen_roi_width), y=slice(-screen_roi_height, 0)
