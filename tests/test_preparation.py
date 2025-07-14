@@ -15,7 +15,7 @@ class TestDataLoading(unittest.TestCase):
 
     def test_set_center(self):
 
-        center_x = 0.5
+        center_x = -0.5
         center_y = 0.5
 
         self.rheed_image.R.apply_image_center(center_x=center_x, center_y=center_y)
@@ -24,8 +24,8 @@ class TestDataLoading(unittest.TestCase):
         center_y = find_vertical_center(self.rheed_image, shadow_edge_width=5.0)
 
         # Correct assertion
-        self.assertAlmostEqual(center_x, 0.375, places=2)
-        self.assertAlmostEqual(center_y, -2.026, places=2)
+        self.assertAlmostEqual(center_x, 0.28, places=2)
+        self.assertAlmostEqual(center_y, 1.13, places=2)
 
     def test_plot_image(self):
         try:

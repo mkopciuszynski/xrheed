@@ -18,8 +18,8 @@ class LoadPlugin(LoadRheedBase):
         "plugin": "UMCS DSNP ARPES raw",
         "screen_sample_distance": 309.2,  # mm
         "screen_scale": 9.04,  # pixels per mm
-        "screen_center_x": 76.0,  # horizontal center of an image
-        "screen_center_y": 15.0,  # shadow edge position
+        "screen_center_x_px": 740,  # horizontal center of an image in px
+        "screen_center_y_px": 155,  # shadow edge position in px
         "beam_energy": 18.6 * 1000,  # eV
     }
 
@@ -28,7 +28,7 @@ class LoadPlugin(LoadRheedBase):
         file_path: Path | str,
         plugin_name: str = "",
         **kwargs,
-    ):
+    ) -> xr.DataArray:
 
         if not self.is_file_accepted(file_path):
             print("File not accepted")
@@ -46,13 +46,17 @@ class LoadPlugin(LoadRheedBase):
         image = (image / 256).astype(np.uint8)
 
         height, width = image_size
-        x_coords = np.arange(width) / px_to_mm
-        y_coords = np.arange(height) / px_to_mm
+
+        x_coords = np.arange(width, dtype=np.float64)
+        y_coords = np.arange(height, dtype=np.float64)
+
+        x_coords -= self.ATTRS["screen_center_x_px"]
+        y_coords = self.ATTRS["screen_center_y_px"] - y_coords
+
+        x_coords /= px_to_mm
+        y_coords /= px_to_mm
 
         dims = ["y", "x"]
-
-        x_coords -= self.ATTRS["screen_center_x"]
-        y_coords = self.ATTRS["screen_center_y"] - y_coords
 
         image = image.astype(np.uint8)
 

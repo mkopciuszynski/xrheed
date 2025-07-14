@@ -51,7 +51,7 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     sigmoid_center = result.params["x0"].value
     sigmoid_k = result.params["k"].value
 
-    return sigmoid_center - sigmoid_k * 1.0
+    return sigmoid_center - sigmoid_k * 3.0
 
 
 def find_theta(
