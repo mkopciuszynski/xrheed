@@ -42,7 +42,7 @@ def plot_profile(
             profile,
             **kwargs,
         )
-        ax.set_xlabel("$k_x$ [1/Å]")
+        ax.set_xlabel("$k_x$ (1/Å)")
 
     else:
         profile.plot(ax=ax, **kwargs)
