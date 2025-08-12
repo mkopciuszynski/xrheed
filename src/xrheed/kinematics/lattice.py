@@ -163,6 +163,7 @@ class Lattice:
 
         return cls(a1, a2)
 
+
     def rotate(self, phi: float = 0.0) -> None:
         """
         Rotate the lattice by a given angle (in degrees).
@@ -193,7 +194,7 @@ class Lattice:
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
         self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
-    def plot_real(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
+    def plot_real(self, ax: Optional[Axes] = None, space_size : float=10.0, **kwargs) -> Axes:
         """
         Plot the real-space lattice points.
 
@@ -233,16 +234,16 @@ class Lattice:
             length_includes_head=True,
             label="a2",
         )
-        # ax.legend(['Lattice points', 'a1', 'a2'])
 
-        ax.set_xlim(-20, 20)
-        ax.set_ylim(-10, 10)
+        ax.legend()
+        ax.set_xlim(-space_size, space_size)
+        ax.set_ylim(-space_size, space_size)
         ax.set_xlabel("x [A]")
         ax.set_ylabel("y [A]")
         ax.set_aspect(1)
         return ax
 
-    def plot_inverse(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
+    def plot_inverse(self, ax: Optional[Axes] = None, space_size: float = 5.0, **kwargs) -> Axes:
         """
         Plot the reciprocal-space (inverse) lattice points.
 
@@ -262,12 +263,14 @@ class Lattice:
         ax.set_xlabel("gx [1/A]")
         ax.set_ylabel("gy [1/A]")
 
-        ax.set_xlim(-10, 10)
-        ax.set_ylim(-7, 7)
+      
+
+        ax.set_xlim(-space_size, space_size)
+        ax.set_ylim(-space_size, space_size)
         ax.set_aspect(1)
         return ax
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """
         Return a string representation of the lattice basis vectors.
 
@@ -275,7 +278,8 @@ class Lattice:
             str: String representation of a1 and a2.
         """
         return (
-            f"a1 = [{self.a1[0]}, {self.a1[1]}]\n" f"a2 = [{self.a2[0]}, {self.a2[1]}]"
+            f"a1 = [{self.a1[0]:.3f}, {self.a1[1]:.3f}] A\n"
+            f"a2 = [{self.a2[0]:.3f}, {self.a2[1]:.3f}] A"
         )
 
     @staticmethod
