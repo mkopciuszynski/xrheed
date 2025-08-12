@@ -78,7 +78,7 @@ def find_theta(
         Angle theta in degrees.
     """
 
-    screen_sample_distance = image.R.screen_sample_distance
+    screen_sample_distance = image.ri.screen_sample_distance
 
     # Sum along y (or x) to get a 1D profile.
     # Here summing over 'y' to get vertical profile along x.

@@ -85,7 +85,7 @@ def high_pass_filter(
     # Create a copy of the input image to avoid modifying the original
     high_pass_image = rheed_image.copy()
 
-    sigma_px = sigma * rheed_image.R.screen_scale
+    sigma_px = sigma * rheed_image.ri.screen_scale
 
     rheed_image_values = rheed_image.values
 
