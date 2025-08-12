@@ -8,6 +8,19 @@ from xrheed.preparation.filters import gaussian_filter_profile
 
 
 def find_horizontal_center(image: xr.DataArray) -> float:
+    """
+    Find the horizontal center of a RHEED image by summing along the y-axis and finding the maximum position.
+
+    Parameters
+    ----------
+    image : xr.DataArray
+        RHEED image with 'x' and 'y' coordinates.
+
+    Returns
+    -------
+    float
+        The x-coordinate of the horizontal center.
+    """
 
     profile = image.sum("y")
     profile_smoothed = gaussian_filter_profile(profile, sigma=1.0)
@@ -19,7 +32,22 @@ def find_horizontal_center(image: xr.DataArray) -> float:
 
 
 def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) -> float:
-    # Shadow edges defines the vertical center 0, 0 point of an image
+
+    """
+    Find the vertical center of a RHEED image using the shadow edge and a linear+sigmoid fit.
+
+    Parameters
+    ----------
+    image : xr.DataArray
+        RHEED image with 'x' and 'y' coordinates.
+    shadow_edge_width : float, optional
+        Estimated width of the shadow edge (default is 5.0).
+
+    Returns
+    -------
+    float
+        The y-coordinate of the vertical center.
+    """
 
     x_range = 20.0
     x_mirror_spot_size = 3.0
@@ -113,9 +141,53 @@ def find_theta(
 
 # Define sigmoid function for fitting
 def _sigmoid(x, amp, k, x0, back):
+    """
+    Sigmoid function used for fitting shadow edges.
+
+    Parameters
+    ----------
+    x : array-like
+        Input values.
+    amp : float
+        Amplitude.
+    k : float
+        Slope.
+    x0 : float
+        Center position.
+    back : float
+        Background offset.
+
+    Returns
+    -------
+    array-like
+        Sigmoid function values.
+    """
     return amp / (1 + np.exp(-k * (x - x0))) + back
 
 
 # Model: Linear + Sigmoid
 def _linear_plus_sigmoid(x, a, b, L, k, x0):
+    """
+    Linear plus sigmoid model for fitting shadow edges.
+
+    Parameters
+    ----------
+    x : array-like
+        Input values.
+    a : float
+        Linear slope.
+    b : float
+        Linear offset.
+    L : float
+        Sigmoid amplitude.
+    k : float
+        Sigmoid slope.
+    x0 : float
+        Sigmoid center.
+
+    Returns
+    -------
+    array-like
+        Model values.
+    """
     return a * x + b + L / (1 + np.exp(-k * (x - x0)))
