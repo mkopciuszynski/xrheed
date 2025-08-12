@@ -10,9 +10,11 @@ Welcome to xRHEED's documentation!
 
    installation
    usage
+   geometry
    plugins
    api
    notebooks/getting_started.ipynb
+   notebooks/diffraction_profiles.ipynb
 
 Introduction
 ============
