@@ -163,33 +163,39 @@ class Ewald:
         tr = (gx + k) ** 2 + gy**2
         # select only the points that are inside the Ewald sphere
         ind = tr < kk
-        gxt = gx[ind]
-        gyt = gy[ind]
+        gx_in = gx[ind]
+        gy_in = gy[ind]
 
-        kr = np.sqrt(kk - (k - abs(gxt)) ** 2)
-        th = np.arcsin(kr / k)
+        # calculate the radius k_r
+        kr = np.sqrt(kk - (k - abs(gx_in)) ** 2)
 
-        rho = self.screen_sample_distance * np.tan(th)
+        # calculate theta and phi (cos) values
+        theta = np.arcsin(kr / k)
+        phi = np.arccos(gy_in / kr)
 
-        px = rho * gyt / kr
-        pz = np.sqrt(rho**2 - px**2)
+        # calculate the radius on the RHEED screen 
+        rho = self.screen_sample_distance * np.tan(theta)
+
+        # calculate the spot positions
+        sx = rho * np.sin(phi)
+        sy = rho * np.cos(phi)
 
         ind = (
-            (px > -self.screen_size_w)
-            & (px < self.screen_size_w)
-            & (pz < self.screen_size_h)
+            (sx > -self.screen_size_w)
+            & (sx < self.screen_size_w)
+            & (sy < self.screen_size_h)
         )
 
-        px = px[ind]
-        pz = pz[ind]
+        sx = sx[ind]
+        sy = sy[ind]
 
         if self.mirror:
             if alpha % 60 != 0:
-                px = np.hstack([px, -px])
-                pz = np.hstack([pz, pz])
+                sx = np.hstack([sx, -sx])
+                sy = np.hstack([sy, sy])
 
-        self.px = px
-        self.pz = -pz
+        self.sx = sx
+        self.sy = -sy
 
     def transform_to_kxky(
         self,
@@ -260,7 +266,7 @@ class Ewald:
         if "marker" not in kwargs:
             kwargs["marker"] = "|"
 
-        ax.scatter(self.px * fine_scaling, self.pz * fine_scaling, **kwargs)
+        ax.scatter(self.sx * fine_scaling, self.sy * fine_scaling, **kwargs)
         # plt.show()
 
     def calculate_match(self, normalize: bool = True) -> float:
@@ -278,8 +284,8 @@ class Ewald:
 
         spot_structure = self._spot_structure
 
-        ppx = ((self.px - center_x) * scale).astype(int)
-        ppy = (-(self.pz - center_y) * scale).astype(int)
+        ppx = ((self.sx - center_x) * scale).astype(int)
+        ppy = (-(self.sy - center_y) * scale).astype(int)
 
         mask[ppy, ppx] = True
 
