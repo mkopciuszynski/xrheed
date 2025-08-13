@@ -5,6 +5,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm
 
+import copy
 from typing import Optional
 from numpy.typing import NDArray
 
@@ -27,15 +28,15 @@ class Ewald:
             self._image_data_available = False
             self._theta = 1.0
         else:
-            self.image = image
-            self.image_data = image.R.hp_image.data
-            self.beam_energy = image.R.beam_energy
-            self.screen_sample_distance = image.R.screen_sample_distance
-            self.screen_scale = image.R.screen_scale
-            self.screen_size_w = image.R.screen_roi_width
-            self.screen_size_h = image.R.screen_roi_height
+            self.image = image.copy()
+            self.image_data = image.data
+            self.beam_energy = image.ri.beam_energy
+            self.screen_sample_distance = image.ri.screen_sample_distance
+            self.screen_scale = image.ri.screen_scale
+            self.screen_size_w = image.ri.screen_roi_width
+            self.screen_size_h = image.ri.screen_roi_height
 
-            self._theta = image.R.theta
+            self._theta = image.ri.theta
             self._image_data_available = True
 
         self._phi = 0.0
@@ -48,12 +49,13 @@ class Ewald:
 
         # Ewald sphere radius
         self.ewald_radius = np.sqrt(self.beam_energy) * 0.5123
+
         self._ewald_roi = self.ewald_radius * (
             self.screen_size_w / self.screen_sample_distance
         )
-
         # Lattice and its inverse
-        self._lattice = lattice
+        self._lattice = copy.deepcopy(lattice)
+        self._inverse_lattice = self._prepare_inverse_lattice()
         self._inverse_lattice = self._prepare_inverse_lattice()
 
         # Mirror symmetry
@@ -61,9 +63,18 @@ class Ewald:
 
         self.calculate_ewald()
 
-    def __str__(self):
-        # TODO: add more information
-        pass
+    def __repr__(self) -> str:
+        details = (
+            f"  Ewald Radius: {self.ewald_radius:.2f} 1/A,\n"
+            f"  phi: {self.phi:.2f} deg,\n"
+            f"  theta: {self.theta:.2f} deg,\n"
+            f"  lattice_scale: {self.lattice_scale:.2f},\n"
+            f"  screen_scale: {self.screen_scale:.2f} px/mm,\n"
+            f"  screen_sample_distance: {self.screen_sample_distance:.1f} mm,\n"
+            f"  b1 = [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/A,\n"
+            f"  b2 = [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/A,\n"
+        )
+        return (details)
 
     def __copy__(self):
 
@@ -185,7 +196,7 @@ class Ewald:
     ) -> xr.DataArray:
 
         # prepare hp_image dataArray
-        hp_image = self.image.R.hp_image
+        hp_image = self.image.ri.hp_image
 
         # prepare the data for calculations
         screen_sample_distance = self.screen_sample_distance
