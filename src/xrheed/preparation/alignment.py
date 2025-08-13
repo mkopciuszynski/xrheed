@@ -125,18 +125,18 @@ def find_theta(
     shadow_edge = 0.5 * (x_trans + x_mirr)
 
     # Calculate theta in radians
-    theta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
+    beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
 
     # Convert to degrees
-    theta_deg = np.degrees(theta_rad)
+    beta_deg = np.degrees(beta_rad)
 
     print(f"Transmission spot at: {x_trans:.2f}")
     print(f"Mirror spot at: {x_mirr:.2f}")
     print(f"Spot distance: {spot_distance:.2f}")
     print(f"Shadow edge: {shadow_edge:.2f}")
-    print(f"Theta angle: {theta_deg:.2f}")
+    print(f"Theta angle: {beta_deg:.2f}")
 
-    return theta_deg
+    return beta_deg
 
 
 # Define sigmoid function for fitting

@@ -26,7 +26,7 @@ class Ewald:
             self.screen_size_h = 80
 
             self._image_data_available = False
-            self._theta = 1.0
+            self._beta = 1.0
         else:
             self.image = image.copy()
             self.image_data = image.data
@@ -36,10 +36,10 @@ class Ewald:
             self.screen_size_w = image.ri.screen_roi_width
             self.screen_size_h = image.ri.screen_roi_height
 
-            self._theta = image.ri.theta
+            self._beta = image.ri.theta
             self._image_data_available = True
 
-        self._phi = 0.0
+        self._alpha = 0.0
         self._lattice_scale = 1.0
 
         self._spot_w: int = 3
@@ -66,8 +66,8 @@ class Ewald:
     def __repr__(self) -> str:
         details = (
             f"  Ewald Radius: {self.ewald_radius:.2f} 1/A,\n"
-            f"  phi: {self.phi:.2f} deg,\n"
-            f"  theta: {self.theta:.2f} deg,\n"
+            f"  phi: {self.alpha:.2f} deg,\n"
+            f"  theta: {self.beta:.2f} deg,\n"
             f"  lattice_scale: {self.lattice_scale:.2f},\n"
             f"  screen_scale: {self.screen_scale:.2f} px/mm,\n"
             f"  screen_sample_distance: {self.screen_sample_distance:.1f} mm,\n"
@@ -80,7 +80,7 @@ class Ewald:
 
         new_ewald = Ewald(self._lattice, self.image)
 
-        new_ewald.phi = self.phi
+        new_ewald.alpha = self.alpha
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
         new_ewald.spot_w = self.spot_w
@@ -99,21 +99,21 @@ class Ewald:
         self.calculate_ewald()
 
     @property
-    def phi(self) -> float:
-        return self._phi
+    def alpha(self) -> float:
+        return self._alpha
 
-    @phi.setter
-    def phi(self, value: float):
-        self._phi = value
+    @alpha.setter
+    def alpha(self, value: float):
+        self._alpha = value
         self.calculate_ewald()
 
     @property
-    def theta(self) -> float:
-        return self._theta
+    def beta(self) -> float:
+        return self._beta
 
-    @theta.setter
-    def theta(self, value: float):
-        self._theta = value
+    @beta.setter
+    def beta(self, value: float):
+        self._beta = value
         self.calculate_ewald()
 
     @property
@@ -147,19 +147,19 @@ class Ewald:
     def calculate_ewald(self, **kwargs):
 
         k = self.ewald_radius
-        phi = self._phi
+        alpha = self._alpha
         inverse_lattice = self._inverse_lattice.copy()
 
         kk = k**2
 
-        if phi != 0:
-            inverse_lattice = inverse_lattice @ rotation_matrix(phi).T
+        if alpha != 0:
+            inverse_lattice = inverse_lattice @ rotation_matrix(alpha).T
 
         gx = inverse_lattice[:, 0] / self._lattice_scale
         gy = inverse_lattice[:, 1] / self._lattice_scale
 
         # move the lattice to the crossing point of the Ewald sphere and specular revlected beam
-        gx = gx - k * (1 - np.cos(np.deg2rad(self._theta)))
+        gx = gx - k * (1 - np.cos(np.deg2rad(self._beta)))
         tr = (gx + k) ** 2 + gy**2
         # select only the points that are inside the Ewald sphere
         ind = tr < kk
@@ -168,6 +168,7 @@ class Ewald:
 
         kr = np.sqrt(kk - (k - abs(gxt)) ** 2)
         th = np.arcsin(kr / k)
+
         rho = self.screen_sample_distance * np.tan(th)
 
         px = rho * gyt / kr
@@ -183,7 +184,7 @@ class Ewald:
         pz = pz[ind]
 
         if self.mirror:
-            if phi % 60 != 0:
+            if alpha % 60 != 0:
                 px = np.hstack([px, -px])
                 pz = np.hstack([pz, pz])
 
@@ -200,8 +201,8 @@ class Ewald:
 
         # prepare the data for calculations
         screen_sample_distance = self.screen_sample_distance
-        theta = self.theta
-        phi = self.phi
+        beta = self.beta
+        alpha = self.alpha
         k = self.ewald_radius
         kk = k**2
 
@@ -212,7 +213,7 @@ class Ewald:
         KX, KY = np.meshgrid(kx, ky, indexing="ij")
 
         # take into acount the theta angle
-        KY = KY - k * (1 - np.cos(np.deg2rad(theta)))
+        KY = KY - k * (1 - np.cos(np.deg2rad(beta)))
 
         tr = (KY + k) ** 2 + KX**2
 
@@ -242,9 +243,9 @@ class Ewald:
 
             # Rotate the mask and data
             rotated_nan_mask = (
-                ndimage.rotate(nan_mask.astype(int), angle=30 - phi, reshape=False) > 0
+                ndimage.rotate(nan_mask.astype(int), angle=30 - alpha, reshape=False) > 0
             )
-            trans_image.data = ndimage.rotate(trans_image.data, 30 - phi, reshape=False)
+            trans_image.data = ndimage.rotate(trans_image.data, 30 - alpha, reshape=False)
 
             # Apply the mask to restore NaN values in the rotated DataArray
             trans_image = trans_image.where(rotated_nan_mask)
@@ -298,7 +299,7 @@ class Ewald:
         match_vector = np.zeros_like(phi_vector)
 
         for i, phi in enumerate(tqdm(phi_vector)):
-            self.phi = phi
+            self.alpha = phi
             match_vector[i] = self.calculate_match(normalize=normalize)
 
         return xr.DataArray(match_vector, dims=["phi"], coords={"phi": phi_vector})
@@ -345,8 +346,8 @@ class Ewald:
             self.calculate_ewald()
 
             match_phi = np.zeros_like(phi_vector)
-            for j, phi in enumerate(phi_vector):
-                self.phi = phi
+            for j, alpha in enumerate(phi_vector):
+                self.alpha = alpha
                 match_phi[j] = self.calculate_match(normalize=normalize)
 
             match_matrix[:, i] = match_phi

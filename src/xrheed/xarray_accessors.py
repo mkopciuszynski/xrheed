@@ -43,14 +43,14 @@ class RHEEDAccessor:
         screen_scale = self._get_attr("screen_scale")
         beam_energy = self._get_attr("beam_energy")
         screen_sample_distance = self._get_attr("screen_sample_distance")
-        theta = self._get_attr("theta", DEFAULT_THETA)
+        beta = self._get_attr("beta", DEFAULT_THETA)
 
         return (
             f"<RHEEDAccessor>\n"
             f"  Image shape: {self._obj.shape}\n"
             f"  Screen scale: {screen_scale}\n"
             f"  Screen sample distance: {screen_sample_distance:.2f}\n"
-            f"  Theta angle: {theta:.2f} deg\n"
+            f"  Theta angle: {beta:.2f} deg\n"
             f"  Beam Energy: {beam_energy} eV\n"
         )
 
@@ -60,13 +60,13 @@ class RHEEDAccessor:
         return self._get_attr("screen_sample_distance", 1.0)
 
     @property
-    def theta(self) -> float:
+    def beta(self) -> float:
         """Polar angle"""
-        return self._get_attr("theta", DEFAULT_THETA)
+        return self._get_attr("beta", DEFAULT_THETA)
 
-    @theta.setter
-    def theta(self, value: float) -> None:
-        self._set_attr("theta", value)
+    @beta.setter
+    def beta(self, value: float) -> None:
+        self._set_attr("beta", value)
 
     @property
     def screen_scale(self) -> float:

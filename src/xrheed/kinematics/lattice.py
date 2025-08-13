@@ -164,15 +164,15 @@ class Lattice:
         return cls(a1, a2)
 
 
-    def rotate(self, phi: float = 0.0) -> None:
+    def rotate(self, alpha: float = 0.0) -> None:
         """
         Rotate the lattice by a given angle (in degrees).
 
         Args:
-            phi (float): Rotation angle in degrees.
+            alpha (float): Rotation angle in degrees.
         """
-        self.a1 = np.dot(rotation_matrix(phi), self.a1)
-        self.a2 = np.dot(rotation_matrix(phi), self.a2)
+        self.a1 = np.dot(rotation_matrix(alpha), self.a1)
+        self.a2 = np.dot(rotation_matrix(alpha), self.a2)
 
         self.b1, self.b2 = Lattice._calc_inverse_vectors(self.a1, self.a2)
 
@@ -379,21 +379,21 @@ class Lattice:
         return lattice
 
 
-def rotation_matrix(phi: float = 0.0) -> NDArray[np.float64]:
+def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float64]:
     """
-    Generates a 3D rotation matrix for a given angle phi (in degrees) about the z-axis.
+    Generates a 3D rotation matrix for a given angle alpha (in degrees) about the z-axis.
 
     Args:
-        phi (float): Rotation angle in degrees.
+        alpha (float): Rotation angle in degrees.
 
     Returns:
         np.ndarray: 3x3 rotation matrix.
     """
-    phi = np.radians(phi)
+    alpha = np.radians(alpha)
     return np.array(
         [
-            [np.cos(phi), -np.sin(phi), 0.0],
-            [np.sin(phi), np.cos(phi), 0.0],
+            [np.cos(alpha), -np.sin(alpha), 0.0],
+            [np.sin(alpha), np.cos(alpha), 0.0],
             [0.0, 0.0, 1.0],
         ],
         dtype=float,
