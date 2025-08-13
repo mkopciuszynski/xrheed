@@ -36,7 +36,7 @@ class Ewald:
             self.screen_size_w = image.ri.screen_roi_width
             self.screen_size_h = image.ri.screen_roi_height
 
-            self._beta = image.ri.theta
+            self._beta = image.ri.beta
             self._image_data_available = True
 
         self._alpha = 0.0
@@ -66,8 +66,8 @@ class Ewald:
     def __repr__(self) -> str:
         details = (
             f"  Ewald Radius: {self.ewald_radius:.2f} 1/A,\n"
-            f"  phi: {self.alpha:.2f} deg,\n"
-            f"  theta: {self.beta:.2f} deg,\n"
+            f"  alpha: {self.alpha:.2f} deg,\n"
+            f"  beta: {self.beta:.2f} deg,\n"
             f"  lattice_scale: {self.lattice_scale:.2f},\n"
             f"  screen_scale: {self.screen_scale:.2f} px/mm,\n"
             f"  screen_sample_distance: {self.screen_sample_distance:.1f} mm,\n"
@@ -177,8 +177,8 @@ class Ewald:
         rho = self.screen_sample_distance * np.tan(theta)
 
         # calculate the spot positions
-        sx = rho * np.sin(phi)
-        sy = rho * np.cos(phi)
+        sx = rho * np.cos(phi)
+        sy = rho * np.sin(phi)
 
         ind = (
             (sx > -self.screen_size_w)
