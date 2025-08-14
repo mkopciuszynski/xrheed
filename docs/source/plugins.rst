@@ -1,5 +1,5 @@
 Plugins for Data Loading
-=======================
+========================
 
 xRHEED uses a plugin system to load RHEED images and provide geometry information for each experiment.
 

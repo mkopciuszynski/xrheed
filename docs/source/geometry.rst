@@ -16,8 +16,8 @@ On the RHEED screen, X-Y coordinates are defined with the Y direction pointing u
 
 Two angles are also used to define the setup conditions:
 
-- phi - azimuthal orientation of the sample
-- theta - incident angle of the electron beam (with respect to the x axis)
+- $$\alpha$$ - azimuthal orientation of the sample
+- $$\beta$$ - incident angle of the electron beam (with respect to the x axis)
 
 ## Ewald construction
 

@@ -8,22 +8,17 @@ Welcome to xRHEED's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   introduction
    installation
    usage
    geometry
    plugins
    api
-   notebooks/getting_started.ipynb
-   notebooks/diffraction_profiles.ipynb
+   notebooks/index
 
-Introduction
-============
+Welcome
+-------
 
-**xRHEED** provides xarray-based tools for working with RHEED data in Python.
+**xRHEED** is a Python toolkit for analyzing RHEED data using xarray.
 
-Features
---------
-
-- Easy manipulation of RHEED datasets using xarray
-- Utilities for data visualization and analysis
-- Jupyter notebook examples for quick start
+Explore the :doc:`introduction` to learn more about its features and capabilities.

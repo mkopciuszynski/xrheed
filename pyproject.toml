@@ -1,6 +1,6 @@
 [project]
 name = "xrheed"
-version = "1.0.0a1"  # First alpha pre-release version
+version = "1.0.0a2"  # Second alpha pre-release version
 authors = [
     {name = "Marek Kopciuszyński", email = "mkopciuszynski@gmail.com"},
 ]
