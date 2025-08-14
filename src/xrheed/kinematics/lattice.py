@@ -163,6 +163,15 @@ class Lattice:
 
         return cls(a1, a2)
 
+    @classmethod
+    def from_surface_hex(
+        cls,
+        a: float = 1.0,
+    ) -> Lattice:
+        
+        a1, a2 = Lattice.hex_lattice(a=a)
+        
+        return cls(a1, a2)
 
     def rotate(self, alpha: float = 0.0) -> None:
         """
