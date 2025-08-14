@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 
 from .lattice import Lattice
 from .lattice import rotation_matrix
+from ..plotting.base import plot_image
 
 
 class Ewald:
@@ -47,6 +48,10 @@ class Ewald:
 
         self._spot_structure = self._generate_spot_structure()
 
+        self.shift_x: float = 0.0
+        self.shift_y: float = 0.0
+        self.fine_scalling: float = 1.0
+
         # Ewald sphere radius
         self.ewald_radius = np.sqrt(self.beam_energy) * 0.5123
 
@@ -71,10 +76,12 @@ class Ewald:
             f"  lattice_scale: {self.lattice_scale:.2f},\n"
             f"  screen_scale: {self.screen_scale:.2f} px/mm,\n"
             f"  screen_sample_distance: {self.screen_sample_distance:.1f} mm,\n"
+            f"  shift_x: {self.shift_x:.2f} mm,\n"
+            f"  shift_y: {self.shift_y:.2f} mm,\n"
             f"  b1 = [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/A,\n"
             f"  b2 = [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/A,\n"
         )
-        return (details)
+        return details
 
     def __copy__(self):
 
@@ -173,7 +180,7 @@ class Ewald:
         theta = np.arcsin(kr / k)
         phi = np.arccos(gy_in / kr)
 
-        # calculate the radius on the RHEED screen 
+        # calculate the radius on the RHEED screen
         rho = self.screen_sample_distance * np.tan(theta)
 
         # calculate the spot positions
@@ -249,25 +256,51 @@ class Ewald:
 
             # Rotate the mask and data
             rotated_nan_mask = (
-                ndimage.rotate(nan_mask.astype(int), angle=30 - alpha, reshape=False) > 0
+                ndimage.rotate(nan_mask.astype(int), angle=30 - alpha, reshape=False)
+                > 0
             )
-            trans_image.data = ndimage.rotate(trans_image.data, 30 - alpha, reshape=False)
+            trans_image.data = ndimage.rotate(
+                trans_image.data, 30 - alpha, reshape=False
+            )
 
             # Apply the mask to restore NaN values in the rotated DataArray
             trans_image = trans_image.where(rotated_nan_mask)
 
         return trans_image
 
-    def plot(self, ax: Optional[plt.Axes] = None, fine_scaling: float = 1.0, **kwargs):
-
+    def plot(
+        self,
+        ax: Optional[plt.Axes] = None,
+        show_image=True,
+        auto_levels: float = 0.0,
+        show_center_lines: bool = False,
+        **kwargs,
+    ):
+        
         if ax is None:
             fig, ax = plt.subplots()
+
+        if show_image:
+            imshow_keys = {"cmap", "vmin", "vmax"}
+            plot_image_kwargs = {k: kwargs.pop(k) for k in list(kwargs.keys()) if k in imshow_keys}
+            rheed_image = self.image
+            plot_image(
+                rheed_image=rheed_image,
+                ax=ax,
+                auto_levels=auto_levels,
+                show_center_lines=show_center_lines,
+                **plot_image_kwargs
+            )
 
         if "marker" not in kwargs:
             kwargs["marker"] = "|"
 
-        ax.scatter(self.sx * fine_scaling, self.sy * fine_scaling, **kwargs)
-        # plt.show()
+        fine_scaling = self.fine_scalling
+
+        ax.scatter((self.sx + self.shift_x) * fine_scaling,
+                   (self.sy + self.shift_y) * fine_scaling, **kwargs)
+
+        return ax
 
     def calculate_match(self, normalize: bool = True) -> float:
 
