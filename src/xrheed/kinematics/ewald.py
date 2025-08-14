@@ -276,20 +276,22 @@ class Ewald:
         show_center_lines: bool = False,
         **kwargs,
     ):
-        
+
         if ax is None:
             fig, ax = plt.subplots()
 
         if show_image:
             imshow_keys = {"cmap", "vmin", "vmax"}
-            plot_image_kwargs = {k: kwargs.pop(k) for k in list(kwargs.keys()) if k in imshow_keys}
+            plot_image_kwargs = {
+                k: kwargs.pop(k) for k in list(kwargs.keys()) if k in imshow_keys
+            }
             rheed_image = self.image
             plot_image(
                 rheed_image=rheed_image,
                 ax=ax,
                 auto_levels=auto_levels,
                 show_center_lines=show_center_lines,
-                **plot_image_kwargs
+                **plot_image_kwargs,
             )
 
         if "marker" not in kwargs:
@@ -297,8 +299,11 @@ class Ewald:
 
         fine_scaling = self.fine_scalling
 
-        ax.scatter((self.sx + self.shift_x) * fine_scaling,
-                   (self.sy + self.shift_y) * fine_scaling, **kwargs)
+        ax.scatter(
+            (self.sx + self.shift_x) * fine_scaling,
+            (self.sy + self.shift_y) * fine_scaling,
+            **kwargs,
+        )
 
         return ax
 

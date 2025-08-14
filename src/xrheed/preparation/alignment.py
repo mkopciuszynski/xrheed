@@ -32,7 +32,6 @@ def find_horizontal_center(image: xr.DataArray) -> float:
 
 
 def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) -> float:
-
     """
     Find the vertical center of a RHEED image using the shadow edge and a linear+sigmoid fit.
 
