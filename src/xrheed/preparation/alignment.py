@@ -82,13 +82,13 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     return sigmoid_center - sigmoid_k * 3.0
 
 
-def find_theta(
+def find_incident_angle(
     image: xr.DataArray,
     x_range: tuple[float, float] = (-3, 3),
     y_range: tuple[float, float] = (-30, 30),
 ) -> float:
     """
-    Find incident theta angle in degrees
+    Find incident angle in degrees
     using the position of transmission and mirror spots.
 
     Parameters:
@@ -102,8 +102,8 @@ def find_theta(
 
     Returns:
     --------
-    theta_deg : float
-        Angle theta in degrees.
+    beta_deg : float
+        Angle beta in degrees.
     """
 
     screen_sample_distance = image.ri.screen_sample_distance
@@ -124,7 +124,7 @@ def find_theta(
     spot_distance = x_trans - x_mirr
     shadow_edge = 0.5 * (x_trans + x_mirr)
 
-    # Calculate theta in radians
+    # Calculate beta in radians
     beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
 
     # Convert to degrees
