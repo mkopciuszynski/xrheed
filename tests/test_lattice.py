@@ -1,11 +1,9 @@
 import unittest
 import numpy as np
-import copy
-from xrheed.kinematics.lattice import Lattice
+from xrheed.kinematics.lattice import Lattice, rotation_matrix
 
 
 class TestLattice(unittest.TestCase):
-
     def test_initialization(self):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
@@ -68,8 +66,8 @@ class TestLattice(unittest.TestCase):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
-        lattice_copy = copy.copy(lattice)
-        lattice_deepcopy = copy.deepcopy(lattice)
+        lattice_copy = lattice.__copy__()
+        lattice_deepcopy = lattice.__deepcopy__({})
         np.testing.assert_array_equal(lattice.a1, lattice_copy.a1)
         np.testing.assert_array_equal(lattice.a2, lattice_deepcopy.a2)
         # Ensure they are not the same object
@@ -97,6 +95,29 @@ class TestLattice(unittest.TestCase):
         lattice = Lattice(a1, a2)
         lattice.plot_real()
         lattice.plot_inverse()
+
+
+    def test_generate_lattice(self):
+        a1 = np.array([3.84, 0, 0])
+        a2 = np.array([1.92, 3.325, 0])
+        points = Lattice.generate_lattice(a1, a2, space_size=10.0)
+        assert points.ndim == 2
+        assert points.shape[1] == 3
+
+    def test_repr(self):
+        a1 = [3.84, 0]
+        a2 = [1.92, 3.325]
+        lattice = Lattice(a1, a2)
+        s = repr(lattice)
+        assert "a1" in s and "a2" in s
+
+    def test_rotation_matrix(self):
+        mat = rotation_matrix(90)
+        assert mat.shape == (3, 3)
+        # 90 degree rotation should swap x and y
+        v = np.array([1, 0, 0])
+        v_rot = mat @ v
+        assert np.allclose(v_rot[:2], [0, 1])
 
 
 if __name__ == "__main__":
