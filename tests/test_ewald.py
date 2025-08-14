@@ -1,11 +1,8 @@
-import xarray as xr
-import numpy as np
 from xrheed.kinematics.lattice import Lattice
 from xrheed.kinematics.ewald import Ewald
 from xrheed.io import load_data
 
 from pathlib import Path
-import matplotlib
 import unittest
 
 class TestEwald(unittest.TestCase):
