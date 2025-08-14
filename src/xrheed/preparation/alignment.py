@@ -139,13 +139,13 @@ def find_incident_angle(
 
 
 # Define sigmoid function for fitting
-def _sigmoid(x, amp, k, x0, back):
+def _sigmoid(x: np.ndarray, amp: float, k: float, x0: float, back: float) -> np.ndarray:
     """
     Sigmoid function used for fitting shadow edges.
 
     Parameters
     ----------
-    x : array-like
+    x : np.ndarray
         Input values.
     amp : float
         Amplitude.
@@ -158,20 +158,22 @@ def _sigmoid(x, amp, k, x0, back):
 
     Returns
     -------
-    array-like
+    np.ndarray
         Sigmoid function values.
     """
     return amp / (1 + np.exp(-k * (x - x0))) + back
 
 
 # Model: Linear + Sigmoid
-def _linear_plus_sigmoid(x, a, b, L, k, x0):
+def _linear_plus_sigmoid(
+    x: np.ndarray, a: float, b: float, L: float, k: float, x0: float
+) -> np.ndarray:
     """
     Linear plus sigmoid model for fitting shadow edges.
 
     Parameters
     ----------
-    x : array-like
+    x : np.ndarray
         Input values.
     a : float
         Linear slope.
@@ -186,7 +188,7 @@ def _linear_plus_sigmoid(x, a, b, L, k, x0):
 
     Returns
     -------
-    array-like
+    np.ndarray
         Model values.
     """
     return a * x + b + L / (1 + np.exp(-k * (x - x0)))

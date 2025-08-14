@@ -11,8 +11,28 @@ def plot_image(
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
     **kwargs,
-):
-    """Plot a RHEED image."""
+) -> plt.Axes:
+    """
+    Plot a RHEED image using matplotlib.
+
+    Parameters
+    ----------
+    rheed_image : xr.DataArray
+        The RHEED image to plot.
+    ax : matplotlib.axes.Axes or None, optional
+        The axes to plot on. If None, a new figure and axes are created.
+    auto_levels : float, optional
+        If > 0, automatically set vmin/vmax for contrast enhancement.
+    show_center_lines : bool, optional
+        If True, show center lines at x=0 and y=0.
+    **kwargs
+        Additional keyword arguments passed to xarray plot.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes with the plotted image.
+    """
 
     if auto_levels > 0.0:
         vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
@@ -51,14 +71,13 @@ def _set_auto_levels(
     ----------
     image : xr.DataArray
         The input image (2D xarray DataArray) with RHEED screen ROI attributes.
-    auto_levels : float
-        Percentage of pixels to clip at both low and high ends.
-        Higher values increase contrast.
+    auto_levels : float, optional
+        Percentage of pixels to clip at both low and high ends. Higher values increase contrast.
 
     Returns
     -------
-    vmin, vmax : tuple of floats
-        Suggested display levels for the image.
+    tuple[float, float]
+        Suggested display levels (vmin, vmax) for the image.
     """
 
     # Extract ROI based on screen dimensions from the xarray accessor

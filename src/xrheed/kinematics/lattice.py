@@ -61,7 +61,7 @@ class Lattice:
         Returns:
             Lattice: A shallow copy of the Lattice object.
         """
-        cls = self.__class__
+        cls: type[Lattice] = self.__class__
         new_lattice = cls.__new__(cls)
         new_lattice.a1 = self.a1.copy()
         new_lattice.a2 = self.a2.copy()
@@ -71,7 +71,7 @@ class Lattice:
         new_lattice.inverse_lattice = self.inverse_lattice.copy()
         return new_lattice
 
-    def __deepcopy__(self, memo: dict) -> Lattice:
+    def __deepcopy__(self, memo: dict[int, object]) -> Lattice:
         """
         Create a deep copy of the Lattice object.
 
@@ -81,7 +81,7 @@ class Lattice:
         Returns:
             Lattice: A deep copy of the Lattice object.
         """
-        cls = self.__class__
+        cls: type[Lattice] = self.__class__
         new_lattice = cls.__new__(cls)
         memo[id(self)] = new_lattice
         new_lattice.a1 = copy.deepcopy(self.a1, memo)
@@ -168,9 +168,16 @@ class Lattice:
         cls,
         a: float = 1.0,
     ) -> Lattice:
+        """
+        Create a 2D hexagonal lattice from the given lattice constant.
 
+        Args:
+            a (float, optional): Lattice constant, the length of the primitive vectors. Defaults to 1.0.
+
+        Returns:
+            Lattice: An instance of the Lattice class initialized with hexagonal lattice vectors.
+        """
         a1, a2 = Lattice.hex_lattice(a=a)
-
         return cls(a1, a2)
 
     def rotate(self, alpha: float = 0.0) -> None:
@@ -207,10 +214,11 @@ class Lattice:
         self, ax: Optional[Axes] = None, space_size: float = 10.0, **kwargs
     ) -> Axes:
         """
-        Plot the real-space lattice points.
+        Plot the real-space lattice points and basis vectors on a 2D matplotlib Axes.
 
         Args:
             ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+            space_size (float): Range for axis limits.
             **kwargs: Additional keyword arguments passed to plt.plot.
 
         Returns:
@@ -258,10 +266,11 @@ class Lattice:
         self, ax: Optional[Axes] = None, space_size: float = 5.0, **kwargs
     ) -> Axes:
         """
-        Plot the reciprocal-space (inverse) lattice points.
+        Plot the reciprocal-space (inverse) lattice points on a 2D matplotlib Axes.
 
         Args:
             ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+            space_size (float): Range for axis limits.
             **kwargs: Additional keyword arguments passed to plt.plot.
 
         Returns:
@@ -283,7 +292,7 @@ class Lattice:
 
     def __repr__(self) -> str:
         """
-        Return a string representation of the lattice basis vectors.
+        Return a concise string representation of the lattice basis vectors a1 and a2.
 
         Returns:
             str: String representation of a1 and a2.
@@ -392,13 +401,13 @@ class Lattice:
 
 def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float64]:
     """
-    Generates a 3D rotation matrix for a given angle alpha (in degrees) about the z-axis.
+    Generate a 3D rotation matrix for a given angle alpha (in degrees) about the z-axis.
 
     Args:
         alpha (float): Rotation angle in degrees.
 
     Returns:
-        np.ndarray: 3x3 rotation matrix.
+        np.ndarray: 3x3 rotation matrix for rotation about the z-axis.
     """
     alpha = np.radians(alpha)
     return np.array(

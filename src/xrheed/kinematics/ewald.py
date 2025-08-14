@@ -16,7 +16,17 @@ from ..plotting.base import plot_image
 
 class Ewald:
 
-    def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None):
+    def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None) -> None:
+        """
+        Initialize an Ewald object for RHEED spot calculation.
+
+        Parameters
+        ----------
+        lattice : Lattice
+            Lattice object representing the crystal structure.
+        image : Optional[xr.DataArray], optional
+            RHEED image data (default: None).
+        """
 
         if image is None:
             warning("RHEED image is not provided, default values are loaded.")
@@ -69,6 +79,9 @@ class Ewald:
         self.calculate_ewald()
 
     def __repr__(self) -> str:
+        """
+        Return a string representation of Ewald parameters and lattice vectors.
+        """
         details = (
             f"  Ewald Radius: {self.ewald_radius:.2f} 1/A,\n"
             f"  alpha: {self.alpha:.2f} deg,\n"
@@ -83,7 +96,10 @@ class Ewald:
         )
         return details
 
-    def __copy__(self):
+    def __copy__(self) -> "Ewald":
+        """
+        Create a shallow copy of the Ewald object.
+        """
 
         new_ewald = Ewald(self._lattice, self.image)
 
@@ -97,6 +113,9 @@ class Ewald:
 
     @property
     def lattice_scale(self) -> float:
+        """
+        Get the lattice scaling factor.
+        """
         return self._lattice_scale
 
     @lattice_scale.setter
@@ -107,6 +126,9 @@ class Ewald:
 
     @property
     def alpha(self) -> float:
+        """
+        Get the azimuthal angle alpha (in degrees).
+        """
         return self._alpha
 
     @alpha.setter
@@ -116,6 +138,9 @@ class Ewald:
 
     @property
     def beta(self) -> float:
+        """
+        Get the incident angle beta (in degrees).
+        """
         return self._beta
 
     @beta.setter
@@ -125,6 +150,9 @@ class Ewald:
 
     @property
     def ewald_roi(self) -> float:
+        """
+        Get the Ewald ROI (region of interest) radius.
+        """
         return self._ewald_roi
 
     @ewald_roi.setter
@@ -135,6 +163,9 @@ class Ewald:
 
     @property
     def spot_w(self) -> int:
+        """
+        Get the spot width (in pixels).
+        """
         return self._spot_w
 
     @spot_w.setter
@@ -144,6 +175,9 @@ class Ewald:
 
     @property
     def spot_h(self) -> int:
+        """
+        Get the spot height (in pixels).
+        """
         return self._spot_h
 
     @spot_h.setter
@@ -151,7 +185,11 @@ class Ewald:
         self._spot_h = value
         self._spot_structure = self._generate_spot_structure()
 
-    def calculate_ewald(self, **kwargs):
+    def calculate_ewald(self, **kwargs) -> None:
+        """
+        Calculate the Ewald construction and spot positions for the current parameters.
+        Updates self.sx and self.sy with spot coordinates.
+        """
 
         k = self.ewald_radius
         alpha = self._alpha
@@ -208,6 +246,19 @@ class Ewald:
         self,
         rotate: bool = True,
     ) -> xr.DataArray:
+        """
+        Transform the RHEED image to kx-ky coordinates.
+
+        Parameters
+        ----------
+        rotate : bool, optional
+            If True, rotate the transformed image (default: True).
+
+        Returns
+        -------
+        xr.DataArray
+            Transformed image in kx-ky coordinates.
+        """
 
         # prepare hp_image dataArray
         hp_image = self.image.ri.hp_image
@@ -271,11 +322,32 @@ class Ewald:
     def plot(
         self,
         ax: Optional[plt.Axes] = None,
-        show_image=True,
+        show_image: bool = True,
         auto_levels: float = 0.0,
         show_center_lines: bool = False,
         **kwargs,
-    ):
+    ) -> plt.Axes:
+        """
+        Plot the calculated spot positions and optionally the RHEED image.
+
+        Parameters
+        ----------
+        ax : Optional[plt.Axes], optional
+            Matplotlib axes to plot on. If None, a new figure is created.
+        show_image : bool, optional
+            If True, plot the RHEED image (default: True).
+        auto_levels : float, optional
+            Contrast enhancement for image plotting.
+        show_center_lines : bool, optional
+            If True, show center lines at x=0 and y=0.
+        **kwargs
+            Additional keyword arguments for scatter plot.
+
+        Returns
+        -------
+        plt.Axes
+            The axes with the plotted image and spots.
+        """
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -308,6 +380,19 @@ class Ewald:
         return ax
 
     def calculate_match(self, normalize: bool = True) -> float:
+        """
+        Calculate the match coefficient between calculated spots and the RHEED image.
+
+        Parameters
+        ----------
+        normalize : bool, optional
+            If True, normalize the match coefficient (default: True).
+
+        Returns
+        -------
+        float
+            The match coefficient.
+        """
 
         assert self._image_data_available, "Image data is not available"
 
@@ -338,6 +423,21 @@ class Ewald:
         return match_coef
 
     def match_phi(self, phi_vector: NDArray, normalize: bool = True) -> xr.DataArray:
+        """
+        Calculate the match coefficient for a series of phi (azimuthal) angles.
+
+        Parameters
+        ----------
+        phi_vector : NDArray
+            Array of phi angles to test.
+        normalize : bool, optional
+            If True, normalize the match coefficient (default: True).
+
+        Returns
+        -------
+        xr.DataArray
+            Match coefficients for each phi angle.
+        """
         """Here we can calculate the matching for a series of different phi angles"""
 
         match_vector = np.zeros_like(phi_vector)
@@ -351,6 +451,21 @@ class Ewald:
     def match_scale(
         self, scale_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
+        """
+        Calculate the match coefficient for a series of lattice scale values.
+
+        Parameters
+        ----------
+        scale_vector : NDArray
+            Array of scale values to test.
+        normalize : bool, optional
+            If True, normalize the match coefficient (default: True).
+
+        Returns
+        -------
+        xr.DataArray
+            Match coefficients for each scale value.
+        """
         """Here we can calculate the matching for a series of different lattice constants"""
 
         match_vector = np.zeros_like(scale_vector)
@@ -374,6 +489,23 @@ class Ewald:
     def match_phi_scale(
         self, phi_vector: NDArray, scale_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
+        """
+        Calculate the match coefficient for a grid of phi angles and scale values.
+
+        Parameters
+        ----------
+        phi_vector : NDArray
+            Array of phi angles to test.
+        scale_vector : NDArray
+            Array of scale values to test.
+        normalize : bool, optional
+            If True, normalize the match coefficient (default: True).
+
+        Returns
+        -------
+        xr.DataArray
+            Match coefficients for each (phi, scale) pair.
+        """
         """Here we can calculate the matching for a series of different phi angles and lattice constants"""
 
         match_matrix = np.zeros((len(phi_vector), len(scale_vector)))
@@ -403,7 +535,15 @@ class Ewald:
         )
         return match_matrix_xr
 
-    def _prepare_inverse_lattice(self):
+    def _prepare_inverse_lattice(self) -> NDArray:
+        """
+        Prepare the inverse lattice points for the current ROI.
+
+        Returns
+        -------
+        NDArray
+            Array of inverse lattice points.
+        """
         lattice = self._lattice
         space_size = self._ewald_roi
         inverse_lattice = Lattice.generate_lattice(
@@ -412,6 +552,14 @@ class Ewald:
         return inverse_lattice
 
     def _generate_spot_structure(self) -> np.ndarray:
+        """
+        Generate a boolean mask for the spot structure (ellipse shape).
+
+        Returns
+        -------
+        np.ndarray
+            Boolean mask for spot shape.
+        """
 
         # Define dimensions
         spot_w = self.spot_w

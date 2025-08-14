@@ -12,8 +12,28 @@ def plot_profile(
     transform_to_kx: bool = True,
     normalize: bool = True,
     **kwargs,
-):
-    """Plot a RHEED profile."""
+) -> plt.Axes:
+    """
+    Plot a RHEED intensity profile, optionally normalizing and transforming to kx.
+
+    Parameters
+    ----------
+    rheed_profile : xr.DataArray
+        The RHEED intensity profile to plot.
+    ax : matplotlib.axes.Axes or None, optional
+        The axes to plot on. If None, a new figure and axes are created.
+    transform_to_kx : bool, optional
+        If True, transform the x-axis to kx using experimental geometry.
+    normalize : bool, optional
+        If True, normalize the intensity profile.
+    **kwargs
+        Additional keyword arguments passed to matplotlib plot.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes with the plotted profile.
+    """
     if ax is None:
         fig, ax = plt.subplots(figsize=(3.5, 2))
 
