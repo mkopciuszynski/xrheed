@@ -66,7 +66,20 @@ class RHEEDAccessor:
 
     @beta.setter
     def beta(self, value: float) -> None:
-        self._set_attr("beta", value)
+        if not isinstance(value, (int, float)):
+            raise ValueError("beta must be a number.")
+        self._set_attr("beta", float(value))
+
+    @property 
+    def alpha(self) -> float:
+        """Azimuthal angle"""
+        return self._get_attr("alpha", 0.0)
+    
+    @alpha.setter
+    def alpha(self, value: float) -> None:
+        if not isinstance(value, (int, float)):
+            raise ValueError("alpha must be a number.")
+        self._set_attr("alpha", float(value))
 
     @property
     def screen_scale(self) -> float:
