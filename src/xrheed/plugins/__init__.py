@@ -8,7 +8,6 @@ import importlib
 
 
 class LoadRheedBase:
-
     TOLERATED_EXTENSIONS: ClassVar[set[str]] = {
         ".png",
         ".raw",
@@ -51,9 +50,7 @@ def load_single_image(image_path: Path, plugin_name: str, **kwargs) -> xr.DataAr
     return plugin_instance.load_single_image(image_path, **kwargs)
 
 
-def load_many_images(
-    image_paths: list[Path], plugin_name: str, **kwargs
-) -> list[xr.DataArray]:
+def load_many_images(image_paths: list[Path], plugin_name: str, **kwargs):
     pass
 
 

@@ -11,7 +11,6 @@ from xrheed.plugins import LoadRheedBase
 
 
 class LoadPlugin(LoadRheedBase):
-
     TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".raw"}
 
     ATTRS = {
@@ -21,7 +20,7 @@ class LoadPlugin(LoadRheedBase):
         "screen_center_x_px": 740,  # horizontal center of an image in px
         "screen_center_y_px": 155,  # shadow edge position in px
         "beam_energy": 18.6 * 1000,  # eV
-        "alpha": 0.0 # azimuthal angle
+        "alpha": 0.0,  # azimuthal angle
     }
 
     def load_single_image(
@@ -30,7 +29,6 @@ class LoadPlugin(LoadRheedBase):
         plugin_name: str = "",
         **kwargs,
     ) -> xr.DataArray:
-
         if not self.is_file_accepted(file_path):
             print("File not accepted")
 

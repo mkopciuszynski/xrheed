@@ -19,7 +19,6 @@ DEFAULT_THETA = 1.0
 
 @xr.register_dataarray_accessor("ri")
 class RHEEDAccessor:
-
     def __init__(self, xarray_obj: xr.DataArray) -> None:
         self._obj = xarray_obj
         self._center = None
@@ -39,7 +38,6 @@ class RHEEDAccessor:
         self._obj.attrs[attr_name] = value
 
     def __repr__(self):
-
         screen_scale = self._get_attr("screen_scale")
         beam_energy = self._get_attr("beam_energy")
         screen_sample_distance = self._get_attr("screen_sample_distance")
@@ -70,11 +68,11 @@ class RHEEDAccessor:
             raise ValueError("beta must be a number.")
         self._set_attr("beta", float(value))
 
-    @property 
+    @property
     def alpha(self) -> float:
         """Azimuthal angle"""
         return self._get_attr("alpha", 0.0)
-    
+
     @alpha.setter
     def alpha(self, value: float) -> None:
         if not isinstance(value, (int, float)):

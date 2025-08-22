@@ -5,12 +5,11 @@ from xrheed.io import load_data
 from pathlib import Path
 import unittest
 
-class TestEwald(unittest.TestCase):
 
+class TestEwald(unittest.TestCase):
     def setUp(self):
         test_data_path = Path(__file__).parent / "data" / "Si_111_7x7_112_phi_00.raw"
         self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
-
 
     def test_ewald_basic(self):
         # Create a simple lattice

@@ -96,7 +96,6 @@ class TestLattice(unittest.TestCase):
         lattice.plot_real()
         lattice.plot_inverse()
 
-
     def test_generate_lattice(self):
         a1 = np.array([3.84, 0, 0])
         a2 = np.array([1.92, 3.325, 0])
