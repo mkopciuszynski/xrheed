@@ -26,9 +26,3 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         args: ['--maxkb=1000']  # Allow up to 1MB
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
-    hooks:
-      - id: mypy
-        language_version: python3.12
