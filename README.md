@@ -1,5 +1,21 @@
 # xRHEED
 
+
+<p align="left">
+	<img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python 3.12">
+	<img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: Alpha">
+	<img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
+	<img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+	<img src="https://img.shields.io/badge/linter-ruff-0C7A5B.svg" alt="Ruff">
+	<img src="https://img.shields.io/badge/uv-compatible-blueviolet.svg" alt="UV">
+	<a href="https://xrheed.readthedocs.io/en/latest/api.html"><img src="https://img.shields.io/badge/documentation-API-blue.svg" alt="API Documentation"></a>
+</p>
+
+| Branch  | Tests Status | Docs Status |
+|---------|--------------|-------------|
+| main    | ![Tests & Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main) | ![Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main) |
+| dev     | ![Tests & Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=dev) | ![Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=dev) |
+
 An xarray-based toolkit for RHEED images analysis
 
 ## What is RHEED?
