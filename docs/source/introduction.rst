@@ -9,4 +9,3 @@ Features
 - Easy manipulation of RHEED datasets using xarray
 - Utilities for data visualization and analysis
 - Jupyter notebook examples for quick start
-

@@ -7,7 +7,7 @@ A plugin should:
 
 - **Load a particular data format** (e.g., `.raw`, `.png`, `.bmp`).
 - **Include RHEED geometry** by defining an `ATTRS` dictionary with keys such as:
-  
+
   - `"plugin"`: Name of the plugin.
   - `"screen_sample_distance"`: Distance from sample to screen (in mm).
   - `"screen_scale"`: Pixel-to-mm scaling factor.
@@ -43,4 +43,3 @@ A plugin should:
 - The image should be oriented so the shadow edge is at the top, what means that we get negative values for the image area.
 
 This ensures that all loaded images are consistent and ready for further analysis and visualization in xRHEED.
-

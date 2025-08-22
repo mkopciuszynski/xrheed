@@ -32,7 +32,6 @@ The goal of this software is to provide a flexible toolkit for RHEED image analy
 
 ## Usage
 
-This package is not a GUI application. Instead, it provides a set of tools and functions for data loading, processing, and analysis, intended to be used in scripts or interactive environments (such as Jupyter notebooks). 
+This package is not a GUI application. Instead, it provides a set of tools and functions for data loading, processing, and analysis, intended to be used in scripts or interactive environments (such as Jupyter notebooks).
 
 With xrheed, you can efficiently prepare your RHEED data for further scientific analysis and visualization.
-
