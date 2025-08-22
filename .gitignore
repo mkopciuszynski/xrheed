@@ -1,5 +1,23 @@
-# Byte-compiled / optimized / DLL files
+# Pre-commit, lint, and test caches/artifacts
+.pre-commit-cache/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
 __pycache__/
+.cache
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+cover/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Byte-compiled / optimized / DLL files
 *.py[cod]
 *$py.class
 
@@ -35,21 +53,6 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
 
 # Translations
 *.mo
