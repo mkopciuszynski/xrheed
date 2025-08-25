@@ -61,23 +61,23 @@ def transform_to_kxky(
     kx = np.linspace(-10, 10, 1024)
     ky = np.linspace(-10, 10, 1024)
 
-    KX, KY = np.meshgrid(kx, ky, indexing="ij")
+    kx_grid, ky_grid = np.meshgrid(kx, ky, indexing="ij")
 
-    # take into acount the theta angle
-    KY = KY - k * (1 - np.cos(np.deg2rad(beta)))
+    # take into account the theta angle
+    ky_grid = ky_grid - k * (1 - np.cos(np.deg2rad(beta)))
 
-    tr = (KY + k) ** 2 + KX**2
+    tr = (ky_grid + k) ** 2 + kx_grid**2
 
     # make nans points outside Ewald sphere
     ind = tr > kk
-    KX[ind] = np.nan
-    KY[ind] = np.nan
+    kx_grid[ind] = np.nan
+    ky_grid[ind] = np.nan
 
-    kr = np.sqrt(kk - (k - abs(KY)) ** 2)
+    kr = np.sqrt(kk - (k - abs(ky_grid)) ** 2)
     th = np.arcsin(kr / k)
     rho = screen_sample_distance * np.tan(th)
 
-    px_mm = rho * KX / kr
+    px_mm = rho * kx_grid / kr
     py_mm = -np.sqrt(rho**2 - px_mm**2)
 
     # relation between old and new
@@ -99,5 +99,7 @@ def transform_to_kxky(
 
         # Apply the mask to restore NaN values in the rotated DataArray
         trans_image = trans_image.where(rotated_nan_mask)
+
+    trans_image.attrs = rheed_image.attrs
 
     return trans_image
