@@ -38,6 +38,7 @@ class Ewald:
 
             self._image_data_available = False
             self._beta = 1.0
+            self._alpha = 0.0
         else:
             self.image = image.copy()
             self.image_data = image.data
@@ -48,9 +49,9 @@ class Ewald:
             self.screen_size_h = image.ri.screen_roi_height
 
             self._beta = image.ri.beta
+            self._alpha = image.ri.alpha
             self._image_data_available = True
 
-        self._alpha = 0.0
         self._lattice_scale = 1.0
 
         self._spot_w: int = 3
