@@ -1,37 +1,90 @@
-# xRHEED
+# xrheed
+📡 An **xarray-based toolkit** for **RHEED image analysis**
 
+[![CI](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml)
+[![Documentation Status](https://readthedocs.org/projects/xrheed/badge/?version=latest)](https://xrheed.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://img.shields.io/pypi/v/xrheed.svg)](https://pypi.org/project/xrheed/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Linter: ruff](https://img.shields.io/badge/linter-ruff-46a2f1.svg?logo=ruff)](https://github.com/astral-sh/ruff)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Package manager: uv](https://img.shields.io/badge/packaging-uv-blue)](https://github.com/astral-sh/uv)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxx)
 
-<p align="left">
-	<img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python 3.12">
-	<img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: Alpha">
-	<img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
-	<img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
-	<img src="https://img.shields.io/badge/linter-ruff-0C7A5B.svg" alt="Ruff">
-	<img src="https://img.shields.io/badge/uv-compatible-blueviolet.svg" alt="UV">
-	<a href="https://xrheed.readthedocs.io/en/latest/api.html"><img src="https://img.shields.io/badge/documentation-API-blue.svg" alt="API Documentation"></a>
-</p>
+---
 
-| Branch  | Tests Status | Docs Status |
-|---------|--------------|-------------|
-| main    | ![Tests & Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main) | ![Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main) |
-| dev     | ![Tests & Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=dev) | ![Docs](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=dev) |
+## 🔬 What is RHEED?
+**Reflection High Energy Electron Diffraction (RHEED)** is an experimental technique for monitoring and controlling crystal surface quality.
+A high-energy electron beam (∼20 keV) strikes the surface at a grazing angle (< 5°), making the method highly **surface-sensitive**, probing only a few atomic layers.
 
-An xarray-based toolkit for RHEED images analysis
+---
 
-## What is RHEED?
+## 🎯 Project Goals
+xrheed provides a flexible and extensible **Python toolkit** for RHEED image analysis:
+- 🖼️ Load and preprocess RHEED images
+- 📈 Generate and analyze intensity profiles
+- ✨ Overlay predicted diffraction spot positions (kinematic theory & Ewald construction)
 
-**RHEED** stands for **Reflection High Energy Electron Diffraction**. It is an experimental technique used to monitor and control the quality of crystal surfaces. In RHEED, a high-energy electron beam (typically around 20 keV) strikes the crystal surface at a very low incident angle (usually below 5 degrees). As a result, RHEED is extremely surface-sensitive and typically probes only a few atomic layers at the surface of the crystal.
+👉 **Note:** xrheed is **not a GUI application**. It is designed as an **xarray accessory library** to facilitate analysis in **interactive environments** such as Jupyter notebooks.
 
-## Project Goals
+---
 
-The goal of this software is to provide a flexible toolkit for RHEED image analysis. It is designed to help with:
+## ⚡ Installation
 
-- Loading and preparing RHEED images
-- Creating and analyzing intensity profiles
-- Overlaying theoretically predicted diffraction spot positions (using kinematic theory and Ewald construction)
+You can install **xrheed** either with [`uv`](https://github.com/astral-sh/uv) (recommended) or with `pip`.
 
-## Usage
+### Using pip (editable install for development)
 
-This package is not a GUI application. Instead, it provides a set of tools and functions for data loading, processing, and analysis, intended to be used in scripts or interactive environments (such as Jupyter notebooks).
+```bash
+git clone https://github.com/mkopciuszynski/xrheed
+cd xrheed
+pip install -e .
+```
 
-With xrheed, you can efficiently prepare your RHEED data for further scientific analysis and visualization.
+### Using uv (with a virtual environment)
+
+1. Install [`uv`](https://docs.astral.sh/uv/guides/projects/)
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/mkopciuszynski/xrheed
+   cd xrheed
+   ```
+3. Create and activate a virtual environment (depends on your shell: bash, zsh, fish, powershell).
+4. Sync dependencies:
+   ```bash
+   uv sync
+   ```
+
+---
+
+## 🚀 Quick Usage
+
+```python
+import matplotlib.pyplot as plt
+import xrheed
+from xrheed.io import load_data
+
+# Load a RHEED image
+rheed_image = load_data("rheed_image.raw", plugin="dsnp_arpes_raw")
+
+# Show image with auto-adjusted levels
+rheed_image.ri.plot_image(auto_levels=2.0)
+plt.show()
+
+# Compute intensity profile and show its origin
+profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
+                                     plot_origin=True)
+```
+
+---
+
+## 📖 Citation
+
+If you use **xrheed** in your research, please consider citing this repository:
+
+> Kopciuszynski, M. (2025). *xrheed: An xarray-based toolkit for RHEED image analysis*.
+> GitHub. https://github.com/mkopciuszynski/xrheed
+
+📌 A formal DOI will be provided in the future via [Zenodo](https://zenodo.org/).
+
+📚 👉 See the [full documentation](https://xrheed.readthedocs.io/en/latest/) for tutorials and advanced examples.
