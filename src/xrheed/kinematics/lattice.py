@@ -31,10 +31,14 @@ class Lattice:
         b2 (Vector): Second reciprocal lattice vector.
         real_lattice (NDArray): Array of real-space lattice points.
         inverse_lattice (NDArray): Array of reciprocal-space lattice points.
+        label (Optional[str]): Optional label for identifying the lattice instance in plots and analysis.
     """
 
     def __init__(
-        self, a1: Union[List[float], Vector], a2: Union[List[float], Vector]
+        self,
+        a1: Union[List[float], Vector],
+        a2: Union[List[float], Vector],
+        label: Optional[str] = None,
     ) -> None:
         """
         Initializes a Lattice object with two basis vectors.
@@ -42,10 +46,14 @@ class Lattice:
         Args:
             a1 (List[float] | Vector): The first basis vector of the lattice, as a list of floats or a Vector object.
             a2 (List[float] | Vector): The second basis vector of the lattice, as a list of floats or a Vector object.
+                label (Optional[str], optional): Label for identifying the lattice instance in plots and analysis. Defaults to None.
 
         Raises:
             ValueError: If the provided vectors are invalid or cannot be validated.
         """
+
+        self.label = label
+
         self.a1 = self._validate_vector(a1)
         self.a2 = self._validate_vector(a2)
 
@@ -98,6 +106,7 @@ class Lattice:
         a: float = 1.0,
         cubic_type: AllowedCubicTypes = "FCC",
         plane: AllowedPlanes = "111",
+        label: Optional[str] = None,
     ) -> Lattice:
         """
         Create a 2D lattice from a bulk cubic crystal.
@@ -106,6 +115,7 @@ class Lattice:
             a (float): Lattice constant.
             cubic_type (str): Type of cubic crystal ('SC', 'BCC', 'FCC').
             plane (str): Miller indices of the plane ('111', '110', '100').
+                label (Optional[str], optional): Label for identifying the lattice instance in plots and analysis. Defaults to None.
 
         Returns:
             Lattice: A Lattice object constructed from the specified cubic crystal and plane.
@@ -161,24 +171,22 @@ class Lattice:
         else:
             raise ValueError(f"Unsupported combination: {cubic_type} {plane}")
 
-        return cls(a1, a2)
+        return cls(a1, a2, label)
 
     @classmethod
-    def from_surface_hex(
-        cls,
-        a: float = 1.0,
-    ) -> Lattice:
+    def from_surface_hex(cls, a: float = 1.0, label: Optional[str] = None) -> Lattice:
         """
         Create a 2D hexagonal lattice from the given lattice constant.
 
         Args:
             a (float, optional): Lattice constant, the length of the primitive vectors. Defaults to 1.0.
+                label (Optional[str], optional): Label for identifying the lattice instance in plots and analysis. Defaults to None.
 
         Returns:
             Lattice: An instance of the Lattice class initialized with hexagonal lattice vectors.
         """
         a1, a2 = Lattice.hex_lattice(a=a)
-        return cls(a1, a2)
+        return cls(a1, a2, label)
 
     def rotate(self, alpha: float = 0.0) -> None:
         """
@@ -227,7 +235,12 @@ class Lattice:
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot(self.real_lattice[:, 0], self.real_lattice[:, 1], ".", **kwargs)
+        if "marker" not in kwargs:
+            kwargs["marker"] = "o"
+
+        ax.scatter(
+            self.real_lattice[:, 0], self.real_lattice[:, 1], label=self.label, **kwargs
+        )
         # Plot a1 and a2 vectors from origin
         ax.arrow(
             0,
@@ -279,8 +292,16 @@ class Lattice:
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot(self.inverse_lattice[:, 0], self.inverse_lattice[:, 1], ".", **kwargs)
-        ax.plot(0, 0, "or")
+        if "marker" not in kwargs:
+            kwargs["marker"] = "o"
+
+        ax.scatter(
+            self.inverse_lattice[:, 0],
+            self.inverse_lattice[:, 1],
+            label=self.label,
+            **kwargs,
+        )
+        # ax.plot(0, 0, "or")
 
         ax.set_xlabel("gx [1/A]")
         ax.set_ylabel("gy [1/A]")
