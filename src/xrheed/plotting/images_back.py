@@ -20,7 +20,6 @@ def plot_image(
     """Plot a RHEED image."""
 
     if hp_filter:
-
         hp_power = rheed_image.R.hp_threshold
         hp_sigma = rheed_image.R.hp_sigma
 
@@ -81,7 +80,6 @@ def plot_evald(
     attr=".b",
     **kwargs,
 ):
-
     px, py = lat.calculate_evald(
         phi=phi,
         theta=theta,

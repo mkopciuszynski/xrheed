@@ -14,7 +14,6 @@ class TestDataLoading(unittest.TestCase):
         self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
 
     def test_set_center(self):
-
         center_x = -0.5
         center_y = 0.5
 

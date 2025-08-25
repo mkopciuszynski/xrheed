@@ -47,7 +47,6 @@ def plot_profile(
         profile.attrs = rheed_profile.attrs.copy()
 
     if transform_to_kx:
-
         k_e = profile.ri.ewald_sphere_radius
         screen_sample_distance = profile.ri.screen_sample_distance
 
