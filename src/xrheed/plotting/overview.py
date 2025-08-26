@@ -44,7 +44,7 @@ def plot_images(
         sharex=True,
         sharey=True,
     )
-    axes = axes.flatten() if nrows > 1 else [axes]
+    axes = axes.flatten() if nrows > 1 else axes
 
     for i, image in enumerate(rheed_images):
         ax = axes[i]
