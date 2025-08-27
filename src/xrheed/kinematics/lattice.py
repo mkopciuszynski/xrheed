@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from numpy.typing import NDArray
 from typing import Optional, List, Tuple, Literal, Union
 
-Vector = NDArray[np.float64]
+Vector = NDArray[np.float32]
 
 AllowedCubicTypes = Literal["SC", "BCC", "FCC"]
 AllowedPlanes = Literal["111", "110", "100"]
@@ -388,7 +388,7 @@ class Lattice:
     @staticmethod
     def generate_lattice(
         v1: Vector, v2: Vector, space_size: float = 70.0
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.float32]:
         """
         Generate a grid of lattice points within a specified space size.
 
@@ -404,8 +404,8 @@ class Lattice:
         vec_num_y = int(space_size * 2 / max(abs(v1[1]), abs(v2[1])))
 
         # Generate a grid of coefficients for the linear combinations
-        i_vals = np.arange(-vec_num_x, vec_num_x)
-        j_vals = np.arange(-vec_num_y, vec_num_y)
+        i_vals = np.arange(-vec_num_x, vec_num_x, dtype=np.float32)
+        j_vals = np.arange(-vec_num_y, vec_num_y, dtype=np.float32)
         mi, mj = np.meshgrid(i_vals, j_vals)
         mi = mi.flatten()
         mj = mj.flatten()
