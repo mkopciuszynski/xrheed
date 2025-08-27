@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
+import xarray as xr
 
 from xrheed.plotting.base import plot_image
-
-import xarray as xr
 
 
 def plot_images(

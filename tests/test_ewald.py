@@ -1,9 +1,9 @@
-from xrheed.kinematics.lattice import Lattice
-from xrheed.kinematics.ewald import Ewald
-from xrheed.io import load_data
-
-from pathlib import Path
 import unittest
+from pathlib import Path
+
+from xrheed.io import load_data
+from xrheed.kinematics.ewald import Ewald
+from xrheed.kinematics.lattice import Lattice
 
 
 class TestEwald(unittest.TestCase):

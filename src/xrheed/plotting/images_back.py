@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from scipy import ndimage
-
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from scipy import ndimage
 
 from xrheed.kinematics.Lattice import Lattice
-import matplotlib.pyplot as plt
 
 
 def plot_image(

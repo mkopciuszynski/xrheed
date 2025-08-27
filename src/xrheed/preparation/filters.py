@@ -1,5 +1,5 @@
 import xarray as xr
-from scipy.ndimage import gaussian_filter1d, gaussian_filter
+from scipy.ndimage import gaussian_filter, gaussian_filter1d
 
 
 def gaussian_filter_profile(

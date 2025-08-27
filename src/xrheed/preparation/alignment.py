@@ -1,8 +1,6 @@
-import xarray as xr
-import numpy as np
-
 import lmfit as lf
-
+import numpy as np
+import xarray as xr
 
 from xrheed.preparation.filters import gaussian_filter_profile
 

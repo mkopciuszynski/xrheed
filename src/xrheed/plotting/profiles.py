@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import xarray as xr
-from xrheed.conversion.base import convert_x_to_kx
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
+
+from xrheed.conversion.base import convert_x_to_kx
 
 
 def plot_profile(

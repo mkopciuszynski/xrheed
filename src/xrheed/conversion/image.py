@@ -1,7 +1,9 @@
 import numpy as np
 import xarray as xr
 from scipy import ndimage
+
 from .base import convert_gx_gy_to_sx_sy
+
 
 def transform_image_to_kxky(
     rheed_image: xr.DataArray,
@@ -32,19 +34,20 @@ def transform_image_to_kxky(
     ewald_radius = np.sqrt(rheed_image.ri.beam_energy) * 0.5123
 
     # new coordinates for transformation
-    #TODO add the parameter that allows to set kx, ky
+    # TODO add the parameter that allows to set kx, ky
     kx = np.arange(-10, 10, 0.01, dtype=np.float32)
     ky = np.arange(-10, 10, 0.01, dtype=np.float32)
-    
-    gx, gy = np.meshgrid(kx, ky, indexing='ij')
+
+    gx, gy = np.meshgrid(kx, ky, indexing="ij")
 
     sx_to_kx, sy_to_ky = convert_gx_gy_to_sx_sy(
-            gx, gy, 
-            ewald_radius=ewald_radius,
-            beta=beta, 
-            screen_sample_distance=screen_sample_distance,
-            remove_outside=False,
-        )
+        gx,
+        gy,
+        ewald_radius=ewald_radius,
+        beta=beta,
+        screen_sample_distance=screen_sample_distance,
+        remove_outside=False,
+    )
 
     # relation between old and new
     x = xr.DataArray(sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
@@ -52,9 +55,10 @@ def transform_image_to_kxky(
 
     trans_image = rheed_image.interp(x=x, y=y, method="linear")
 
-
     if mirror:
-        da_mirror = trans_image.isel(kx=slice(None, None, -1)).assign_coords(kx=trans_image.kx)
+        da_mirror = trans_image.isel(kx=slice(None, None, -1)).assign_coords(
+            kx=trans_image.kx
+        )
         trans_image = trans_image.fillna(da_mirror)
 
     if rotate:

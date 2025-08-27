@@ -1,22 +1,20 @@
+import copy
 from logging import warning
-import numpy as np
-from scipy import ndimage
-import xarray as xr
+from typing import Optional
+
 import matplotlib.pyplot as plt
+import numpy as np
+import xarray as xr
+from numpy.typing import NDArray
+from scipy import ndimage
 from tqdm.notebook import tqdm
 
-import copy
-from typing import Optional
-from numpy.typing import NDArray
-
-from .lattice import Lattice
-from .lattice import rotation_matrix
-from ..plotting.base import plot_image
 from ..conversion.base import convert_gx_gy_to_sx_sy
+from ..plotting.base import plot_image
+from .lattice import Lattice, rotation_matrix
 
 
 class Ewald:
-
     def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None) -> None:
         """
         Initialize an Ewald object for RHEED spot calculation.
@@ -122,7 +120,6 @@ class Ewald:
 
     @lattice_scale.setter
     def lattice_scale(self, value: float):
-
         self._lattice_scale = value
         self.calculate_ewald()
 
@@ -159,7 +156,6 @@ class Ewald:
 
     @ewald_roi.setter
     def ewald_roi(self, value: float):
-
         self._ewald_roi = value
         self._inverse_lattice = self._prepare_inverse_lattice()
 
@@ -206,15 +202,11 @@ class Ewald:
         gx = inverse_lattice[:, 0] / self._lattice_scale
         gy = inverse_lattice[:, 1] / self._lattice_scale
 
-    
         # calculate the spot positions
         sx, sy = convert_gx_gy_to_sx_sy(
-            gx, gy, 
-            ewald_radius,
-            beta    ,
-            screen_sample_distance,
-            remove_outside=True)
-        
+            gx, gy, ewald_radius, beta, screen_sample_distance, remove_outside=True
+        )
+
         ind = (
             (sx > -self.screen_size_w)
             & (sx < self.screen_size_w)

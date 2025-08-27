@@ -1,14 +1,15 @@
-from scipy import ndimage, constants
-import xarray as xr
-import numpy as np
+import logging
+
 import matplotlib.pyplot as plt
+import numpy as np
+import xarray as xr
 from matplotlib.patches import Rectangle
+from scipy import constants, ndimage
+
+from .conversion.base import convert_x_to_kx
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
 from .preparation.alignment import find_horizontal_center, find_vertical_center
-from .conversion.base import convert_x_to_kx
-
-import logging
 
 logger = logging.getLogger(__name__)
 

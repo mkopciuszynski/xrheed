@@ -5,8 +5,9 @@ TODO: Add directory load for many files
 
 from __future__ import annotations
 
-from pathlib import Path
 import logging
+from pathlib import Path
+
 import xarray as xr
 
 from .plugins import load_single_image

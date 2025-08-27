@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+
 import numpy as np
 
 
@@ -75,12 +76,12 @@ def convert_gx_gy_to_sx_sy(
     - Points outside the Ewald sphere can be optionally removed or set as NaN
       using the `remove_outside` flag.
     """
-    
+
     # Ewald sphere radius
     k0 = ewald_radius
     # Ewald sphere radius square
     kk = k0**2
-    
+
     # calculate the shift between the center of Ewald sphere and the center of reciprocal lattice
     delta_x = k0 * np.cos(np.deg2rad(beta))
 

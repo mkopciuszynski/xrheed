@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import numpy as np
-import matplotlib.pyplot as plt
 import copy
-from matplotlib.axes import Axes
+from typing import List, Literal, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.axes import Axes
 from numpy.typing import NDArray
-from typing import Optional, List, Tuple, Literal, Union
 
 Vector = NDArray[np.float32]
 
