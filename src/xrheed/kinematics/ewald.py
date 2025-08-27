@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 from .lattice import Lattice
 from .lattice import rotation_matrix
 from ..plotting.base import plot_image
+from ..conversion.base import convert_gx_gy_to_sx_sy
 
 
 class Ewald:
@@ -192,11 +193,12 @@ class Ewald:
         Updates self.sx and self.sy with spot coordinates.
         """
 
-        k = self.ewald_radius
+        ewald_radius = self.ewald_radius
         alpha = self._alpha
-        inverse_lattice = self._inverse_lattice.copy()
+        beta = self._beta
+        screen_sample_distance = self.screen_sample_distance
 
-        kk = k**2
+        inverse_lattice = self._inverse_lattice.copy()
 
         if alpha != 0:
             inverse_lattice = inverse_lattice @ rotation_matrix(alpha).T
@@ -204,28 +206,15 @@ class Ewald:
         gx = inverse_lattice[:, 0] / self._lattice_scale
         gy = inverse_lattice[:, 1] / self._lattice_scale
 
-        # move the lattice to the crossing point of the Ewald sphere and specular revlected beam
-        gx = gx - k * (1 - np.cos(np.deg2rad(self._beta)))
-        tr = (gx + k) ** 2 + gy**2
-        # select only the points that are inside the Ewald sphere
-        ind = tr < kk
-        gx_in = gx[ind]
-        gy_in = gy[ind]
-
-        # calculate the radius k_r
-        kr = np.sqrt(kk - (k - abs(gx_in)) ** 2)
-
-        # calculate theta and phi (cos) values
-        theta = np.arcsin(kr / k)
-        phi = np.arccos(gy_in / kr)
-
-        # calculate the radius on the RHEED screen
-        rho = self.screen_sample_distance * np.tan(theta)
-
+    
         # calculate the spot positions
-        sx = rho * np.cos(phi)
-        sy = rho * np.sin(phi)
-
+        sx, sy = convert_gx_gy_to_sx_sy(
+            gx, gy, 
+            ewald_radius,
+            beta    ,
+            screen_sample_distance,
+            remove_outside=True)
+        
         ind = (
             (sx > -self.screen_size_w)
             & (sx < self.screen_size_w)
@@ -241,7 +230,7 @@ class Ewald:
                 sy = np.hstack([sy, sy])
 
         self.sx = sx
-        self.sy = -sy
+        self.sy = sy
 
     def plot(
         self,

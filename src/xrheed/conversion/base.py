@@ -1,6 +1,5 @@
+from typing import Optional, Tuple
 import numpy as np
-import xarray as xr
-from scipy import ndimage
 
 
 def convert_x_to_kx(
@@ -29,77 +28,89 @@ def convert_x_to_kx(
     return kx
 
 
-def transform_to_kxky(
-    rheed_image: xr.DataArray,
-    rotate: bool = False,
-) -> xr.DataArray:
+def convert_gx_gy_to_sx_sy(
+    gx: np.ndarray,
+    gy: np.ndarray,
+    ewald_radius: float,
+    beta: float,
+    screen_sample_distance: float,
+    remove_outside: Optional[bool] = True,
+    **kwargs,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Transform the RHEED image to kx-ky coordinates.
+    Convert reciprocal lattice coordinates (gx, gy) to RHEED screen coordinates (sx, sy)
+    using the Ewald sphere construction.
 
     Parameters
     ----------
-    rotate : bool, optional
-        If True, rotate the transformed image (default: True).
+    gx : np.ndarray
+        Array of reciprocal lattice x-coordinates.
+    gy : np.ndarray
+        Array of reciprocal lattice y-coordinates.
+    ewald_radius : float
+        Radius of the Ewald sphere in reciprocal space (1/Å or same units as gx, gy).
+    beta : float
+        Incident beam angle in degrees relative to the surface normal.
+    screen_sample_distance : float
+        Distance from the sample to the detector/screen.
+    remove_outside : Optional[bool], default=True
+        If True, points outside the Ewald sphere are removed.
+        If False, points outside are set to NaN.
+    **kwargs
+        Additional keyword arguments (currently unused).
 
     Returns
     -------
-    xr.DataArray
-        Transformed image in kx-ky coordinates.
+    sx : np.ndarray
+        Array of x-coordinates on the RHEED screen corresponding to input gx, gy.
+    sy : np.ndarray
+        Array of y-coordinates on the RHEED screen corresponding to input gx, gy.
+
+    Notes
+    -----
+    - The function assumes a simple planar screen perpendicular to the z-axis.
+    - The coordinate transformation accounts for the Ewald sphere geometry
+      and the projection of diffraction spots onto the screen.
+    - `beta` is the incident angle of the electron beam relative to the sample surface.
+    - Points outside the Ewald sphere can be optionally removed or set as NaN
+      using the `remove_outside` flag.
     """
+    
+    # Ewald sphere radius
+    k0 = ewald_radius
+    # Ewald sphere radius square
+    kk = k0**2
+    
+    # calculate the shift between the center of Ewald sphere and the center of reciprocal lattice
+    delta_x = k0 * np.cos(np.deg2rad(beta))
 
-    # prepare the data for calculations
-    screen_sample_distance = rheed_image.ri.screen_sample_distance
-    beta = rheed_image.ri.beta
-    alpha = rheed_image.ri.alpha
+    # shift the center of reciprocal lattice
+    kx = gx + delta_x
+    ky = gy
 
-    ewald_radius = np.sqrt(rheed_image.ri.beam_energy) * 0.5123
+    # Check if the kx, ky points are inside Ewald sphere
+    kxy2 = kx**2 + ky**2
+    ind = kxy2 < kk
+    # remove those outside or mark as nans
+    if remove_outside:
+        kx = kx[ind]
+        ky = ky[ind]
+    else:
+        kx[~ind] = np.nan
+        ky[~ind] = np.nan
 
-    k = ewald_radius
-    kk = k**2
+    # calculate the radius r_k
+    rk = np.sqrt(k0**2 - kx**2)
 
-    # new coordinates for transformation
-    kx = np.linspace(-10, 10, 1024)
-    ky = np.linspace(-10, 10, 1024)
+    # calculate theta and phi (cos) values
+    phi = np.arccos(ky / rk)
+    theta = np.arcsin(rk / k0)
 
-    kx_grid, ky_grid = np.meshgrid(kx, ky, indexing="ij")
+    # calculate the radius on the RHEED screen
+    rho = screen_sample_distance * np.tan(theta)
 
-    # take into account the theta angle
-    ky_grid = ky_grid - k * (1 - np.cos(np.deg2rad(beta)))
+    # calculate the spot positions
+    sx = rho * np.cos(phi)
+    sy = -rho * np.sin(phi)
 
-    tr = (ky_grid + k) ** 2 + kx_grid**2
-
-    # make nans points outside Ewald sphere
-    ind = tr > kk
-    kx_grid[ind] = np.nan
-    ky_grid[ind] = np.nan
-
-    kr = np.sqrt(kk - (k - abs(ky_grid)) ** 2)
-    th = np.arcsin(kr / k)
-    rho = screen_sample_distance * np.tan(th)
-
-    px_mm = rho * kx_grid / kr
-    py_mm = -np.sqrt(rho**2 - px_mm**2)
-
-    # relation between old and new
-    x = xr.DataArray(px_mm, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
-    y = xr.DataArray(py_mm, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
-
-    trans_image = rheed_image.interp(x=x, y=y, method="linear")
-    trans_image = trans_image.T
-
-    if rotate:
-        nan_mask = ~np.isnan(trans_image.values)
-        trans_image = trans_image.fillna(0)
-
-        # Rotate the mask and data
-        rotated_nan_mask = (
-            ndimage.rotate(nan_mask.astype(int), angle=30 - alpha, reshape=False) > 0
-        )
-        trans_image.data = ndimage.rotate(trans_image.data, 30 - alpha, reshape=False)
-
-        # Apply the mask to restore NaN values in the rotated DataArray
-        trans_image = trans_image.where(rotated_nan_mask)
-
-    trans_image.attrs = rheed_image.attrs
-
-    return trans_image
+    return sx, sy

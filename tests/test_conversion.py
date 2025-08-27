@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import xarray as xr
-from xrheed.conversion import base
+from xrheed.conversion import base, image
 from pathlib import Path
 from xrheed.io import load_data
 
@@ -25,7 +25,7 @@ class TestBaseConversion(unittest.TestCase):
         # Create a dummy RHEED image with required attributes
         rheed_image = self.rheed_image
         # Add required attributes for the function
-        result = base.transform_to_kxky(rheed_image)
+        result = image.transform_image_to_kxky(rheed_image)
         self.assertIsInstance(result, xr.DataArray)
         self.assertTrue(result.shape[0] > 0 and result.shape[1] > 0)
 
