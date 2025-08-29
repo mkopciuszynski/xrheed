@@ -8,7 +8,7 @@ from .base import convert_gx_gy_to_sx_sy
 def transform_image_to_kxky(
     rheed_image: xr.DataArray,
     rotate: bool = False,
-    mirror: bool = False,
+    point_symmetry: bool = False,
 ) -> xr.DataArray:
     """
     Transform the RHEED image to kx-ky coordinates.
@@ -55,25 +55,70 @@ def transform_image_to_kxky(
 
     trans_image = rheed_image.interp(sx=sx, sy=sy, method="linear")
 
-    if mirror:
-        da_mirror = trans_image.isel(kx=slice(None, None, -1)).assign_coords(
-            kx=trans_image.kx
-        )
-        trans_image = trans_image.fillna(da_mirror)
-
     if rotate:
-        nan_mask = ~np.isnan(trans_image.values)
-        trans_image = trans_image.fillna(0)
+        trans_image_rotated = _rotate_trans_image(trans_image, alpha)
+        trans_image = trans_image_rotated
 
-        # Rotate the mask and data
-        rotated_nan_mask = (
-            ndimage.rotate(nan_mask.astype(int), angle=30 - alpha, reshape=False) > 0
-        )
-        trans_image.data = ndimage.rotate(trans_image.data, 30 - alpha, reshape=False)
-
-        # Apply the mask to restore NaN values in the rotated DataArray
-        trans_image = trans_image.where(rotated_nan_mask)
+    if point_symmetry:
+        trans_image_rotated = _rotate_trans_image(trans_image, 180)
+        trans_image = xr.where(np.isnan(trans_image), trans_image_rotated, trans_image)
 
     trans_image.attrs = rheed_image.attrs
 
     return trans_image
+
+
+def _rotate_trans_image(
+    trans_image: xr.DataArray, angle: float, mode: str = "nearest"
+) -> xr.DataArray:
+    """
+    Rotate a 2D xarray.DataArray around its center by a given angle.
+
+    Parameters
+    ----------
+    rheed_image : xr.DataArray
+        2D image-like DataArray to rotate.
+    angle : float
+        Rotation angle in degrees (counter-clockwise).
+    mode : str
+        How to handle values outside boundaries ('constant', 'nearest', 'reflect', ...).
+
+    Returns
+    -------
+    rotated : xr.DataArray
+        Rotated DataArray with NaNs preserved.
+    """
+    if trans_image.ndim != 2:
+        raise ValueError("rotate_xarray expects a 2D DataArray")
+
+    # Assert that coordinates exist
+    if "kx" not in trans_image.coords or "ky" not in trans_image.coords:
+        raise ValueError("rotate_xarray requires coordinates 'kx' and 'ky'")
+
+    # Assert that kx and ky are identical
+    if not np.allclose(trans_image["kx"].values, trans_image["ky"].values):
+        raise ValueError("rotate_xarray requires kx and ky coordinates to be identical")
+
+    # Build mask for NaNs
+    nan_mask = ~np.isnan(trans_image.values)
+    filled = trans_image.fillna(0)
+
+    # Rotate data and mask
+    rotated_data = ndimage.rotate(
+        filled.values, angle, reshape=False, mode=mode, order=1
+    )
+    rotated_mask = (
+        ndimage.rotate(nan_mask.astype(int), angle, reshape=False, mode=mode, order=0)
+        > 0
+    )
+
+    # Wrap back into DataArray, reusing same coords/dims
+    rotated = xr.DataArray(
+        rotated_data,
+        coords=trans_image.coords,
+        dims=trans_image.dims,
+        attrs=trans_image.attrs,
+        name=trans_image.name,
+    )
+
+    return rotated.where(rotated_mask)
