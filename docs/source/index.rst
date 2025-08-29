@@ -19,36 +19,33 @@ Explore the :doc:`introduction` to learn more about its features and capabilitie
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples
+   :caption: Example notebooks
 
-   notebooks/index
+   notebooks/getting_started
+   notebooks/diffraction_profiles
+   notebooks/ewald_construction
+   notebooks/ewald_kxky_tranformation
+   notebooks/ewald_kxky_transfor_many_images
+
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Reference
+   :maxdepth: 1
+   :titlesonly:
+   :caption: API Reference
 
-   api/index
+   xrheed
+   generated/xrheed.preparation
+   generated/xrheed.plotting
+   generated/xrheed.conversion
+   generated/xrheed.kinematics
+   
+
+
+       
 
 .. toctree::
    :maxdepth: 2
    :caption: Development
 
-
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: User Guide:
-
-   introduction
-   installation
-   usage
-   geometry
-   plugins
-   notebooks/index
-
-
-
-Welcome
--------
-
+   development/changelog
+   development/contributing
