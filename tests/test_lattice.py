@@ -15,12 +15,13 @@ class TestLattice(unittest.TestCase):
 
     def test_from_bulk_cubic(self):
         a = 5.43
+        a_surf = a / np.sqrt(2)
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="FCC", plane="111")
         np.testing.assert_array_almost_equal(
-            lattice.a1, np.array([3.84, 0.0, 0.0]), decimal=3
+            lattice.a1, np.array([0.0, a_surf, 0.0]), decimal=3
         )
         np.testing.assert_array_almost_equal(
-            lattice.a2, np.array([3.84 * 0.5, 3.325, 0]), decimal=3
+            lattice.a2, np.array([a_surf * np.sqrt(3) * 0.5, a_surf * 0.5, 0.0]), decimal=3
         )
 
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="SC", plane="110")
@@ -32,9 +33,9 @@ class TestLattice(unittest.TestCase):
     def test_hex_lattice(self):
         a = 3.84
         a1, a2 = Lattice.hex_lattice(a)
-        np.testing.assert_array_almost_equal(a1, np.array([3.84, 0.0, 0.0]))
+        np.testing.assert_array_almost_equal(a1, np.array([0.0, a, 0.0]))
         np.testing.assert_array_almost_equal(
-            a2, np.array([3.84 * 0.5, 3.325, 0.0]), decimal=3
+            a2, np.array([a * np.sqrt(3) * 0.5, a * 0.5, 0.0]), decimal=3
         )
 
     def test_rotate(self):

@@ -139,8 +139,8 @@ class Lattice:
 
         elif (cubic_type, plane) == ("SC", "111"):
             a_surf = a * np.sqrt(2)
-            a1 = np.array([a_surf, 0, 0], dtype=np.float32)
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0], dtype=np.float32)
+            a1 = np.array([0,  a_surf, 0], dtype=np.float32)
+            a2 = np.array([a_surf * np.sqrt(3) * 0.5, a_surf * 0.5, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "100"):
             a1 = np.array([a, 0, 0], dtype=np.float32)
@@ -152,8 +152,8 @@ class Lattice:
 
         elif (cubic_type, plane) == ("FCC", "111"):
             a_surf = a / np.sqrt(2)
-            a1 = np.array([a_surf, 0, 0], dtype=np.float32)
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0], dtype=np.float32)
+            a1 = np.array([0,  a_surf, 0], dtype=np.float32)
+            a2 = np.array([a_surf * np.sqrt(3) * 0.5, a_surf * 0.5, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("BCC", "100"):
             a1 = np.array([a, 0, 0], dtype=np.float32)
@@ -334,8 +334,8 @@ class Lattice:
         Returns:
             Tuple[Vector, Vector]: Two basis vectors for the hexagonal lattice.
         """
-        a1 = np.array([a, 0.0, 0.0], dtype=np.float32)
-        a2 = np.array([a * 0.5, a * 0.8660, 0.0], dtype=np.float32)
+        a1 = np.array([0.0, a, 0.0], dtype=np.float32)
+        a2 = np.array([a * np.sqrt(3) * 0.5, a * 0.5, 0.0], dtype=np.float32)
 
         return a1, a2
 
