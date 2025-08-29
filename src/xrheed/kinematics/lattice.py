@@ -247,7 +247,7 @@ class Lattice:
             0,
             self.a1[0],
             self.a1[1],
-            head_width=0.5,
+            head_width=0.3,
             head_length=1,
             fc="r",
             ec="r",
@@ -259,7 +259,7 @@ class Lattice:
             0,
             self.a2[0],
             self.a2[1],
-            head_width=0.5,
+            head_width=0.3,
             head_length=1,
             fc="g",
             ec="g",
@@ -271,7 +271,7 @@ class Lattice:
         ax.set_xlim(-space_size, space_size)
         ax.set_ylim(-space_size, space_size)
         ax.set_xlabel("$x$ (Å)")
-        ax.set_ylabel("$y$ (1/Å)")
+        ax.set_ylabel("$y$ (Å)")
         ax.set_aspect(1)
         return ax
 
@@ -296,15 +296,15 @@ class Lattice:
             kwargs["marker"] = "o"
 
         ax.scatter(
-            self.reciprocal_lattice[:, 0],
             self.reciprocal_lattice[:, 1],
+            self.reciprocal_lattice[:, 0],
             label=self.label,
             **kwargs,
         )
         # ax.plot(0, 0, "or")
 
-        ax.set_xlabel("$k_x$ (1/Å)")
-        ax.set_ylabel("$k_y$ (1/Å)")
+        ax.set_xlabel("$k_y$ (1/Å)")
+        ax.set_ylabel("$k_x$ (1/Å)")
 
         ax.set_xlim(-space_size, space_size)
         ax.set_ylim(-space_size, space_size)
