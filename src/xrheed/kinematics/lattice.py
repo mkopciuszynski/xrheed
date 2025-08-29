@@ -103,7 +103,7 @@ class Lattice:
     @classmethod
     def from_bulk_cubic(
         cls,
-        a: float = 1.0,
+        a: float = np.float32(1.0),
         cubic_type: AllowedCubicTypes = "FCC",
         plane: AllowedPlanes = "111",
         label: Optional[str] = None,
@@ -130,43 +130,43 @@ class Lattice:
             raise ValueError("Unsupported plane. Use '100', '110', or '111'.")
 
         if (cubic_type, plane) == ("SC", "100"):
-            a1 = np.array([a, 0, 0])
-            a2 = np.array([0, a, 0])
+            a1 = np.array([a, 0, 0], dtype=np.float32)
+            a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("SC", "110"):
-            a1 = np.array([a * np.sqrt(2), 0, 0])
-            a2 = np.array([0, a, 0])
+            a1 = np.array([a * np.sqrt(2), 0, 0], dtype=np.float32)
+            a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("SC", "111"):
             a_surf = a * np.sqrt(2)
-            a1 = np.array([a_surf, 0, 0])
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
+            a1 = np.array([a_surf, 0, 0], dtype=np.float32)
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "100"):
-            a1 = np.array([a, 0, 0])
-            a2 = np.array([a * 0.5, a * 0.5, 0])
+            a1 = np.array([a, 0, 0], dtype=np.float32)
+            a2 = np.array([a * 0.5, a * 0.5, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "110"):
-            a1 = np.array([a * np.sqrt(2), 0, 0])
-            a2 = np.array([0, a, 0])
+            a1 = np.array([a * np.sqrt(2), 0, 0], dtype=np.float32)
+            a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "111"):
             a_surf = a / np.sqrt(2)
-            a1 = np.array([a_surf, 0, 0])
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
+            a1 = np.array([a_surf, 0, 0], dtype=np.float32)
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("BCC", "100"):
-            a1 = np.array([a, 0, 0])
-            a2 = np.array([0, a, 0])
+            a1 = np.array([a, 0, 0], dtype=np.float32)
+            a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("BCC", "110"):
-            a1 = np.array([a * np.sqrt(2), 0, 0])
-            a2 = np.array([0, a, 0])
+            a1 = np.array([a * np.sqrt(2), 0, 0], dtype=np.float32)
+            a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("BCC", "111"):
             a_surf = np.sqrt(6) * a / 3
-            a1 = np.array([a_surf, 0, 0])
-            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0])
+            a1 = np.array([a_surf, 0, 0], dtype=np.float32)
+            a2 = np.array([a_surf * 0.5, a_surf * np.sqrt(3) / 2, 0], dtype=np.float32)
 
         else:
             raise ValueError(f"Unsupported combination: {cubic_type} {plane}")
@@ -334,8 +334,8 @@ class Lattice:
         Returns:
             Tuple[Vector, Vector]: Two basis vectors for the hexagonal lattice.
         """
-        a1 = np.array([a, 0.0, 0.0])
-        a2 = np.array([a * 0.5, a * 0.8660, 0.0])
+        a1 = np.array([a, 0.0, 0.0], dtype=np.float32)
+        a2 = np.array([a * 0.5, a * 0.8660, 0.0], dtype=np.float32)
 
         return a1, a2
 
@@ -354,14 +354,14 @@ class Lattice:
             ValueError: If the input is not a list or ndarray, or has invalid shape.
         """
         if isinstance(vector, list):
-            vector = np.array(vector, dtype=float)
+            vector = np.array(vector, dtype=np.float32)
         elif isinstance(vector, np.ndarray):
-            vector = vector.astype(float)
+            vector = vector.astype(np.float32)
         else:
             raise ValueError("Vector must be a list or ndarray.")
 
         if vector.shape == (2,):
-            vector = np.append(vector, 0.0)
+            vector = np.append(vector, np.float32(0.0))
 
         if vector.shape != (3,):
             raise ValueError("Vector must be of size (2,) or (3,).")
@@ -379,15 +379,20 @@ class Lattice:
         Returns:
             Tuple[Vector, Vector]: Two reciprocal lattice vectors.
         """
-        n = np.array([0.0, 0.0, 1.0])
-        surf: float = abs(np.dot(a1, np.cross(a2, n)))
-        b1 = 2 * np.pi / surf * np.cross(a2, n)
-        b2 = 2 * np.pi / surf * np.cross(n, a1)
+        n: Vector = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        surf: np.float32 = np.float32(abs(np.dot(a1, np.cross(a2, n))))
+        
+        b1 = 2 * np.float32(np.pi) / surf * np.cross(a2, n)
+        b2 = 2 * np.float32(np.pi) / surf * np.cross(n, a1)
+
+        b1 = _validate_vector(b1)
+        b2 = _validate_vector(b2)
+        
         return b1, b2
 
     @staticmethod
     def generate_lattice(
-        v1: Vector, v2: Vector, space_size: float = 70.0
+        v1: Vector, v2: Vector, space_size: np.float32 = np.float32(70.0)
     ) -> NDArray[np.float32]:
         """
         Generate a grid of lattice points within a specified space size.
@@ -420,7 +425,7 @@ class Lattice:
         return lattice
 
 
-def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float64]:
+def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
     """
     Generate a 3D rotation matrix for a given angle alpha (in degrees) about the z-axis.
 
@@ -430,12 +435,13 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float64]:
     Returns:
         np.ndarray: 3x3 rotation matrix for rotation about the z-axis.
     """
-    alpha = np.radians(alpha)
+    alpha_rad = np.float32(np.deg2rad(alpha))
+    
     return np.array(
         [
-            [np.cos(alpha), -np.sin(alpha), 0.0],
-            [np.sin(alpha), np.cos(alpha), 0.0],
+            [np.cos(alpha_rad), -np.sin(alpha_rad), 0.0],
+            [np.sin(alpha_rad), np.cos(alpha_rad), 0.0],
             [0.0, 0.0, 1.0],
         ],
-        dtype=float,
+        dtype=np.float32,
     )
