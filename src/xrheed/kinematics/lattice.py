@@ -270,8 +270,8 @@ class Lattice:
         ax.legend()
         ax.set_xlim(-space_size, space_size)
         ax.set_ylim(-space_size, space_size)
-        ax.set_xlabel("x [A]")
-        ax.set_ylabel("y [A]")
+        ax.set_xlabel("$x$ (Å)")
+        ax.set_ylabel("$y$ (1/Å)")
         ax.set_aspect(1)
         return ax
 
@@ -303,8 +303,8 @@ class Lattice:
         )
         # ax.plot(0, 0, "or")
 
-        ax.set_xlabel("gx [1/A]")
-        ax.set_ylabel("gy [1/A]")
+        ax.set_xlabel("$k_x$ (1/Å)")
+        ax.set_ylabel("$k_y$ (1/Å)")
 
         ax.set_xlim(-space_size, space_size)
         ax.set_ylim(-space_size, space_size)
