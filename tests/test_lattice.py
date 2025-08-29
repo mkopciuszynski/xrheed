@@ -21,7 +21,9 @@ class TestLattice(unittest.TestCase):
             lattice.a1, np.array([0.0, a_surf, 0.0]), decimal=3
         )
         np.testing.assert_array_almost_equal(
-            lattice.a2, np.array([a_surf * np.sqrt(3) * 0.5, a_surf * 0.5, 0.0]), decimal=3
+            lattice.a2,
+            np.array([a_surf * np.sqrt(3) * 0.5, a_surf * 0.5, 0.0]),
+            decimal=3,
         )
 
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="SC", plane="110")
