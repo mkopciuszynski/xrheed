@@ -44,10 +44,10 @@ class TestLattice(unittest.TestCase):
         lattice = Lattice(a1, a2)
         lattice.rotate(90)
         np.testing.assert_array_almost_equal(
-            lattice.a1, np.array([0.0, 1.0, 0.0]), decimal=4
+            lattice.a1, np.array([0.0, -1.0, 0.0]), decimal=4
         )
         np.testing.assert_array_almost_equal(
-            lattice.a2, np.array([-1.0, 0.0, 0.0]), decimal=4
+            lattice.a2, np.array([1.0, 0.0, 0.0]), decimal=4
         )
         lattice.rotate(-90)
         np.testing.assert_array_almost_equal(
@@ -119,7 +119,7 @@ class TestLattice(unittest.TestCase):
         # 90 degree rotation should swap x and y
         v = np.array([1, 0, 0], dtype=np.float32)
         v_rot = mat @ v
-        assert np.allclose(v_rot[:2], [0, 1], atol=0.001)
+        assert np.allclose(v_rot[:2], [0, -1], atol=0.001)
 
 
 if __name__ == "__main__":

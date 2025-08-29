@@ -436,8 +436,8 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
 
     return np.array(
         [
-            [np.cos(alpha_rad), -np.sin(alpha_rad), 0.0],
-            [np.sin(alpha_rad), np.cos(alpha_rad), 0.0],
+            [np.cos(alpha_rad), np.sin(alpha_rad), 0.0],
+            [-np.sin(alpha_rad), np.cos(alpha_rad), 0.0],
             [0.0, 0.0, 1.0],
         ],
         dtype=np.float32,
