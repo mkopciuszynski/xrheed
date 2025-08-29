@@ -15,6 +15,7 @@ Welcome to xRHEED's documentation!
    plugins
    api
    notebooks/index
+   ../CHANGELOG.md
 
 Welcome
 -------

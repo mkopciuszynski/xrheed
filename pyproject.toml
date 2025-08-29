@@ -35,6 +35,7 @@ dev = [
     "ruff",
     "pytest",
     "sphinx",
+    "myst-parser",
     "myst-nb",
     "nbsphinx",
     "sphinx-rtd-theme",
