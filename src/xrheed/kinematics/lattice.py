@@ -20,7 +20,7 @@ class Lattice:
 
     This class provides methods for:
       - Creating a lattice from custom basis vectors or from common cubic crystal planes (e.g., FCC (111)).
-      - Generating both real-space and reciprocal-space (inverse) lattices.
+      - Generating both real-space and reciprocal-space lattices.
       - Rotating and scaling the lattice.
       - Plotting the real and reciprocal lattices.
 
@@ -30,7 +30,7 @@ class Lattice:
         b1 (Vector): First reciprocal lattice vector.
         b2 (Vector): Second reciprocal lattice vector.
         real_lattice (NDArray): Array of real-space lattice points.
-        inverse_lattice (NDArray): Array of reciprocal-space lattice points.
+        recirpocal_lattice (NDArray): Array of reciprocal-space lattice points.
         label (Optional[str]): Optional label for identifying the lattice instance in plots and analysis.
     """
 
@@ -54,13 +54,13 @@ class Lattice:
 
         self.label = label
 
-        self.a1 = self._validate_vector(a1)
-        self.a2 = self._validate_vector(a2)
+        self.a1 = Lattice._validate_vector(a1)
+        self.a2 = Lattice._validate_vector(a2)
 
-        self.b1, self.b2 = Lattice._calc_inverse_vectors(self.a1, self.a2)
+        self.b1, self.b2 = Lattice._calc_reciprocal_vectors(self.a1, self.a2)
 
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
     def __copy__(self) -> Lattice:
         """
@@ -76,7 +76,7 @@ class Lattice:
         new_lattice.b1 = self.b1.copy()
         new_lattice.b2 = self.b2.copy()
         new_lattice.real_lattice = self.real_lattice.copy()
-        new_lattice.inverse_lattice = self.inverse_lattice.copy()
+        new_lattice.reciprocal_lattice = self.reciprocal_lattice.copy()
         return new_lattice
 
     def __deepcopy__(self, memo: dict[int, object]) -> Lattice:
@@ -97,13 +97,13 @@ class Lattice:
         new_lattice.b1 = copy.deepcopy(self.b1, memo)
         new_lattice.b2 = copy.deepcopy(self.b2, memo)
         new_lattice.real_lattice = copy.deepcopy(self.real_lattice, memo)
-        new_lattice.inverse_lattice = copy.deepcopy(self.inverse_lattice, memo)
+        new_lattice.reciprocal_lattice = copy.deepcopy(self.reciprocal_lattice, memo)
         return new_lattice
 
     @classmethod
     def from_bulk_cubic(
         cls,
-        a: float = np.float32(1.0),
+        a: float = 1.0,
         cubic_type: AllowedCubicTypes = "FCC",
         plane: AllowedPlanes = "111",
         label: Optional[str] = None,
@@ -198,10 +198,10 @@ class Lattice:
         self.a1 = np.dot(rotation_matrix(alpha), self.a1)
         self.a2 = np.dot(rotation_matrix(alpha), self.a2)
 
-        self.b1, self.b2 = Lattice._calc_inverse_vectors(self.a1, self.a2)
+        self.b1, self.b2 = Lattice._calc_reciprocal_vectors(self.a1, self.a2)
 
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
     def scale(self, lattice_scale: float = 1.0) -> None:
         """
@@ -216,7 +216,7 @@ class Lattice:
         self.b2 = self.b2 / lattice_scale
 
         self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.inverse_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
 
     def plot_real(
         self, ax: Optional[Axes] = None, space_size: float = 10.0, **kwargs
@@ -275,11 +275,11 @@ class Lattice:
         ax.set_aspect(1)
         return ax
 
-    def plot_inverse(
+    def plot_reciprocal(
         self, ax: Optional[Axes] = None, space_size: float = 5.0, **kwargs
     ) -> Axes:
         """
-        Plot the reciprocal-space (inverse) lattice points on a 2D matplotlib Axes.
+        Plot the reciprocal-space lattice points on a 2D matplotlib Axes.
 
         Args:
             ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
@@ -296,8 +296,8 @@ class Lattice:
             kwargs["marker"] = "o"
 
         ax.scatter(
-            self.inverse_lattice[:, 0],
-            self.inverse_lattice[:, 1],
+            self.reciprocal_lattice[:, 0],
+            self.reciprocal_lattice[:, 1],
             label=self.label,
             **kwargs,
         )
@@ -368,7 +368,7 @@ class Lattice:
         return vector
 
     @staticmethod
-    def _calc_inverse_vectors(a1: Vector, a2: Vector) -> Tuple[Vector, Vector]:
+    def _calc_reciprocal_vectors(a1: Vector, a2: Vector) -> Tuple[Vector, Vector]:
         """
         Calculate the reciprocal lattice vectors for a 2D lattice.
 
@@ -384,9 +384,6 @@ class Lattice:
         
         b1 = 2 * np.float32(np.pi) / surf * np.cross(a2, n)
         b2 = 2 * np.float32(np.pi) / surf * np.cross(n, a1)
-
-        b1 = _validate_vector(b1)
-        b2 = _validate_vector(b2)
         
         return b1, b2
 
@@ -436,7 +433,7 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
         np.ndarray: 3x3 rotation matrix for rotation about the z-axis.
     """
     alpha_rad = np.float32(np.deg2rad(alpha))
-    
+
     return np.array(
         [
             [np.cos(alpha_rad), -np.sin(alpha_rad), 0.0],
@@ -445,3 +442,4 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
         ],
         dtype=np.float32,
     )
+
