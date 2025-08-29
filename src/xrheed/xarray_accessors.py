@@ -6,7 +6,7 @@ import xarray as xr
 from matplotlib.patches import Rectangle
 from scipy import constants, ndimage
 
-from .conversion.base import convert_x_to_kx
+from .conversion.base import convert_sx_to_kx
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
 from .preparation.alignment import find_horizontal_center, find_vertical_center
@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SCREEN_ROI_WIDTH = 50.0
 DEFAULT_SCREEN_ROI_HEIGHT = 50.0
-DEFAULT_THETA = 1.0
+DEFAULT_BETA = 1.0
+DEFAULT_ALPHA = 0.0
 
 
 @xr.register_dataarray_accessor("ri")
@@ -42,14 +43,16 @@ class RHEEDAccessor:
         screen_scale = self._get_attr("screen_scale")
         beam_energy = self._get_attr("beam_energy")
         screen_sample_distance = self._get_attr("screen_sample_distance")
-        beta = self._get_attr("beta", DEFAULT_THETA)
+        beta = self._get_attr("beta", DEFAULT_BETA)
+        alpha = self._get_attr("alpha", DEFAULT_ALPHA)
 
         return (
             f"<RHEEDAccessor>\n"
             f"  Image shape: {self._obj.shape}\n"
             f"  Screen scale: {screen_scale}\n"
             f"  Screen sample distance: {screen_sample_distance:.2f}\n"
-            f"  Theta angle: {beta:.2f} deg\n"
+            f"  Beata (incident) angle: {beta:.2f} deg\n"
+            f"  Alpha (azimuthal) angle: {alpha:.2f} deg\n"
             f"  Beam Energy: {beam_energy} eV\n"
         )
 
@@ -61,7 +64,7 @@ class RHEEDAccessor:
     @property
     def beta(self) -> float:
         """Polar angle"""
-        return self._get_attr("beta", DEFAULT_THETA)
+        return self._get_attr("beta", DEFAULT_BETA)
 
     @beta.setter
     def beta(self, value: float) -> None:
@@ -72,7 +75,7 @@ class RHEEDAccessor:
     @property
     def alpha(self) -> float:
         """Azimuthal angle"""
-        return self._get_attr("alpha", 0.0)
+        return self._get_attr("alpha", DEFAULT_ALPHA)
 
     @alpha.setter
     def alpha(self, value: float) -> None:
@@ -93,8 +96,8 @@ class RHEEDAccessor:
         self._set_attr("screen_scale", px_to_mm)
 
         image = self._obj
-        image["x"] = image.x * old_px_to_mm / px_to_mm
-        image["y"] = image.y * old_px_to_mm / px_to_mm
+        image["sx"] = image.sx * old_px_to_mm / px_to_mm
+        image["sy"] = image.sy * old_px_to_mm / px_to_mm
 
     @property
     def screen_width(self) -> float:
@@ -155,12 +158,12 @@ class RHEEDAccessor:
 
         if auto_center:
             center_x = find_horizontal_center(image)
-            image["x"] = image.x - center_x
+            image["sx"] = image.sx - center_x
             center_y = find_vertical_center(image)
-            image["y"] = image.y - center_y
+            image["sy"] = image.sy - center_y
         else:
-            image["x"] = image.x - center_x
-            image["y"] = image.y - center_y
+            image["sx"] = image.sx - center_x
+            image["sy"] = image.sy - center_y
 
         logger.info("The image was shifted to a new center.")
 
@@ -176,7 +179,7 @@ class RHEEDAccessor:
         Parameters
         ----------
         center : tuple[float, float] | None, optional
-            Center of the profile in (x, y) coordinates. If None, the center of the image will be used.
+            Center of the profile in (sx, sy) coordinates. If None, the center of the image will be used.
         width : float | None, optional
             Width of the profile. If None, the full width of the image will be used.
         height : float | None, optional
@@ -194,15 +197,15 @@ class RHEEDAccessor:
             center = (0.0, 0.0)
 
         if width is None:
-            width = rheed_image.x.size
+            width = rheed_image.sx.size
 
         if height is None:
-            height = rheed_image.y.size
+            height = rheed_image.sy.size
 
         profile = rheed_image.sel(
-            x=slice(center[0] - width / 2, center[0] + width / 2),
-            y=slice(center[1] - height / 2, center[1] + height / 2),
-        ).sum("y")
+            sx=slice(center[0] - width / 2, center[0] + width / 2),
+            sy=slice(center[1] - height / 2, center[1] + height / 2),
+        ).sum("sy")
 
         # Manually copy attrs
         profile.attrs = rheed_image.attrs.copy()
@@ -287,27 +290,29 @@ class RHEEDProfileAccessor:
         height = self._obj.attrs.get("profile_height", "N/A")
         return (
             f"<RHEEDProfileAccessor\n"
-            f"  Center: x, y [mm]: {center} \n"
+            f"  Center: sx, sy [mm]: {center} \n"
             f"  Width: {width} mm\n"
             f"  Height: {height} mm\n"
         )
 
     def convert_to_kx(self) -> xr.DataArray:
-        """Convert the profile x coordinate to kx [1/Å] using the Ewald sphere radius and screen sample distance."""
+        """Convert the profile sx coordinate to kx [1/Å] using the Ewald sphere radius and screen sample distance."""
 
-        if "x" not in self._obj.coords:
-            raise ValueError("The profile must have 'x' coordinate to convert to kx.")
+        if "sx" not in self._obj.coords:
+            raise ValueError("The profile must have 'sx' coordinate to convert to kx.")
 
         k_e = self._obj.ri.ewald_sphere_radius
         screen_sample_distance = self._obj.ri.screen_sample_distance
 
-        x = self._obj.coords["x"].data
+        sx = self._obj.coords["sx"].data
 
-        kx = convert_x_to_kx(
-            x, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance
+        kx = convert_sx_to_kx(
+            sx,
+            ewald_sphere_radius=k_e,
+            screen_sample_distance_mm=screen_sample_distance,
         )
 
-        profile_kx = self._obj.assign_coords(x=kx).rename({"x": "kx"})
+        profile_kx = self._obj.assign_coords(sx=kx).rename({"sx": "kx"})
 
         return profile_kx
 

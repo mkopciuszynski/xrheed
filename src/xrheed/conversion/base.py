@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 
-def convert_x_to_kx(
+def convert_sx_to_kx(
     x_coords_mm: np.ndarray,
     ewald_sphere_radius: float,
     screen_sample_distance_mm: float,

@@ -381,15 +381,15 @@ class Lattice:
         """
         n: Vector = np.array([0.0, 0.0, 1.0], dtype=np.float32)
         surf: np.float32 = np.float32(abs(np.dot(a1, np.cross(a2, n))))
-        
+
         b1 = 2 * np.float32(np.pi) / surf * np.cross(a2, n)
         b2 = 2 * np.float32(np.pi) / surf * np.cross(n, a1)
-        
+
         return b1, b2
 
     @staticmethod
     def generate_lattice(
-        v1: Vector, v2: Vector, space_size: np.float32 = np.float32(70.0)
+        v1: Vector, v2: Vector, space_size: float = 70.0
     ) -> NDArray[np.float32]:
         """
         Generate a grid of lattice points within a specified space size.
@@ -442,4 +442,3 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
         ],
         dtype=np.float32,
     )
-

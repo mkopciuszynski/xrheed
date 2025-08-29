@@ -6,8 +6,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 from xrheed.io import load_data
-from xrheed.preparation.alignment import (find_horizontal_center,
-                                          find_vertical_center)
+from xrheed.preparation.alignment import find_horizontal_center, find_vertical_center
 
 
 class TestDataLoading(unittest.TestCase):

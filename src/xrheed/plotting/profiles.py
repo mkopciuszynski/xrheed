@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from xrheed.conversion.base import convert_x_to_kx
+from xrheed.conversion.base import convert_sx_to_kx
 
 
 def plot_profile(
@@ -51,10 +51,12 @@ def plot_profile(
         k_e = profile.ri.ewald_sphere_radius
         screen_sample_distance = profile.ri.screen_sample_distance
 
-        x = profile.coords["x"].data
+        sx = profile.coords["sx"].data
 
-        kx = convert_x_to_kx(
-            x, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance
+        kx = convert_sx_to_kx(
+            sx,
+            ewald_sphere_radius=k_e,
+            screen_sample_distance_mm=screen_sample_distance,
         )
 
         ax.plot(
@@ -66,7 +68,7 @@ def plot_profile(
 
     else:
         profile.plot(ax=ax, **kwargs)
-        ax.set_xlabel("x (mm)")
+        ax.set_xlabel("$S_x$ (mm)")
 
     if normalize:
         ax.set_ylabel("Normalized Intensity")

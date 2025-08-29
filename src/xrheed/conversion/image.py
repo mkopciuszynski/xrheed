@@ -50,10 +50,10 @@ def transform_image_to_kxky(
     )
 
     # relation between old and new
-    x = xr.DataArray(sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
-    y = xr.DataArray(sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
+    sx = xr.DataArray(sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
+    sy = xr.DataArray(sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
 
-    trans_image = rheed_image.interp(x=x, y=y, method="linear")
+    trans_image = rheed_image.interp(sx=sx, sy=sy, method="linear")
 
     if mirror:
         da_mirror = trans_image.isel(kx=slice(None, None, -1)).assign_coords(

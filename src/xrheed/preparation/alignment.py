@@ -12,17 +12,17 @@ def find_horizontal_center(image: xr.DataArray) -> float:
     Parameters
     ----------
     image : xr.DataArray
-        RHEED image with 'x' and 'y' coordinates.
+        RHEED image with 'sx' and 'sy' coordinates.
 
     Returns
     -------
     float
-        The x-coordinate of the horizontal center.
+        The sx-coordinate of the horizontal center.
     """
 
-    profile = image.sum("y")
+    profile = image.sum("sy")
     profile_smoothed = gaussian_filter_profile(profile, sigma=1.0)
-    max_pos = profile_smoothed.x.values[np.argmax(profile_smoothed.values)]
+    max_pos = profile_smoothed.sx.values[np.argmax(profile_smoothed.values)]
 
     # TODO improve this adding additional horizontal_center search
 
@@ -36,7 +36,7 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     Parameters
     ----------
     image : xr.DataArray
-        RHEED image with 'x' and 'y' coordinates.
+        RHEED image with 'sx' and 'sy' coordinates.
     shadow_edge_width : float, optional
         Estimated width of the shadow edge (default is 5.0).
 
@@ -50,29 +50,29 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     x_mirror_spot_size = 3.0
 
     profile = image.where(
-        ((image.x >= -x_range) & (image.x <= -x_mirror_spot_size))
-        | ((image.x >= x_mirror_spot_size) & (image.x <= x_range)),
+        ((image.sx >= -x_range) & (image.sx <= -x_mirror_spot_size))
+        | ((image.sx >= x_mirror_spot_size) & (image.sx <= x_range)),
         drop=True,
-    ).sum(dim="x")
+    ).sum(dim="sx")
 
     sigma = shadow_edge_width * 0.1
     profile_smoothed = gaussian_filter_profile(profile, sigma=sigma)
 
     max_idx = profile_smoothed.argmax()
-    subprofile = profile_smoothed.isel(y=slice(max_idx.item(), None))
+    subprofile = profile_smoothed.isel(sy=slice(max_idx.item(), None))
 
     # Prepare data for fitting
-    x = subprofile["y"].values
-    y = subprofile
+    sx = subprofile["sy"].values
+    sy = subprofile
 
-    y -= y.min()
-    y /= y.max()
+    sy -= sy.min()
+    sy /= sy.max()
 
     sigmoid_model = lf.Model(_linear_plus_sigmoid)
 
     params = sigmoid_model.make_params(a=0.0, b=0.0, L=1.0, k=0.1, x0=0.0)
 
-    result = sigmoid_model.fit(y, params=params, x=x)
+    result = sigmoid_model.fit(sy, params=params, x=sx)
     sigmoid_center = result.params["x0"].value
     sigmoid_k = result.params["k"].value
 
@@ -91,7 +91,7 @@ def find_incident_angle(
     Parameters:
     -----------
     image : xarray.DataArray
-        RHEED image with 'x' and 'y' coordinates.
+        RHEED image with 'sx' and 'sy' coordinates.
     x_range : tuple(float, float)
         The range of x to select from the image.
     y_range : tuple(float, float)
@@ -107,15 +107,15 @@ def find_incident_angle(
 
     # Sum along y (or x) to get a 1D profile.
     # Here summing over 'y' to get vertical profile along x.
-    vertical_profile = image.sel(x=slice(*x_range), y=slice(*y_range)).sum("x")
+    vertical_profile = image.sel(sx=slice(*x_range), sy=slice(*y_range)).sum("sx")
 
     # Transmission spot: y > 0
-    trans_part = vertical_profile.sel(y=slice(0, 30))
-    x_trans = trans_part.y[np.argmax(trans_part.values)].item()
+    trans_part = vertical_profile.sel(sy=slice(0, 30))
+    x_trans = trans_part.sy[np.argmax(trans_part.values)].item()
 
     # Mirror spot: y < 0
-    mirr_part = vertical_profile.sel(y=slice(-30, 0))
-    x_mirr = mirr_part.y[np.argmax(mirr_part.values)].item()
+    mirr_part = vertical_profile.sel(sy=slice(-30, 0))
+    x_mirr = mirr_part.sy[np.argmax(mirr_part.values)].item()
 
     # Calculate distance and shadow edge
     spot_distance = x_trans - x_mirr

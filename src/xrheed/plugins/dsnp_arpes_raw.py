@@ -17,8 +17,8 @@ class LoadPlugin(LoadRheedBase):
         "plugin": "UMCS DSNP ARPES raw",
         "screen_sample_distance": 309.2,  # mm
         "screen_scale": 9.04,  # pixels per mm
-        "screen_center_x_px": 740,  # horizontal center of an image in px
-        "screen_center_y_px": 155,  # shadow edge position in px
+        "screen_center_sx_px": 740,  # horizontal center of an image in px
+        "screen_center_sy_px": 155,  # shadow edge position in px
         "beam_energy": 18.6 * 1000,  # eV
         "alpha": 0.0,  # azimuthal angle
         "beta": 2.0,  # incident angle
@@ -47,26 +47,26 @@ class LoadPlugin(LoadRheedBase):
 
         height, width = image_size
 
-        x_coords = np.arange(width, dtype=np.float64)
-        y_coords = np.arange(height, dtype=np.float64)
+        sx_coords = np.arange(width, dtype=np.float64)
+        sy_coords = np.arange(height, dtype=np.float64)
 
-        x_coords -= self.ATTRS["screen_center_x_px"]
-        y_coords = self.ATTRS["screen_center_y_px"] - y_coords
+        sx_coords -= self.ATTRS["screen_center_sx_px"]
+        sy_coords = self.ATTRS["screen_center_sy_px"] - sy_coords
 
-        x_coords /= px_to_mm
-        y_coords /= px_to_mm
+        sx_coords /= px_to_mm
+        sy_coords /= px_to_mm
 
-        dims = ["y", "x"]
+        dims = ["sy", "sx"]
 
         image = image.astype(np.uint8)
 
         # Flip the y_coords and image vertically to match new y_coords
-        y_coords = np.flip(y_coords)
+        sy_coords = np.flip(sy_coords)
         image = np.flipud(image)
 
         coords: dict[str, NDArray[np.floating]] = {
-            "y": y_coords,
-            "x": x_coords,
+            "sy": sy_coords,
+            "sx": sx_coords,
         }
         attrs = self.ATTRS
 

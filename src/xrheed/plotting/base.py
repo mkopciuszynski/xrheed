@@ -83,7 +83,7 @@ def _set_auto_levels(
     screen_roi_height = image.ri.screen_roi_height
 
     roi_image = image.sel(
-        x=slice(-screen_roi_width, screen_roi_width), y=slice(-screen_roi_height, 0)
+        sx=slice(-screen_roi_width, screen_roi_width), sy=slice(-screen_roi_height, 0)
     )
 
     # Flatten, exclude NaNs

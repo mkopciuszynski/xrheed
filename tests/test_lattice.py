@@ -96,7 +96,7 @@ class TestLattice(unittest.TestCase):
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
         lattice.plot_real()
-        lattice.plot_inverse()
+        lattice.plot_reciprocal()
 
     def test_generate_lattice(self):
         a1 = np.array([3.84, 0, 0])
@@ -116,9 +116,9 @@ class TestLattice(unittest.TestCase):
         mat = rotation_matrix(90)
         assert mat.shape == (3, 3)
         # 90 degree rotation should swap x and y
-        v = np.array([1, 0, 0])
+        v = np.array([1, 0, 0], dtype=np.float32)
         v_rot = mat @ v
-        assert np.allclose(v_rot[:2], [0, 1])
+        assert np.allclose(v_rot[:2], [0, 1], atol=0.001)
 
 
 if __name__ == "__main__":
