@@ -37,7 +37,20 @@ html_theme = "sphinx_rtd_theme"
 
 nb_execution_mode = "auto"  # or "off", "cache", "force"
 
-add_module_names = True
 autosummary_generate = True
+
+# Show full docstrings
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": False,
+    "show-inheritance": True,
+    "inherited-members": True,
+    "special-members": "__init__",
+}
+
+# Optional: collapse module path in references
+add_module_names = False
+
+
 
 autodoc_mock_imports = ["xarray", "cupy", "array_api_strict"]
