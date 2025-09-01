@@ -5,7 +5,8 @@ Welcome to **xRHEED** documentation!
 
 **xRHEED** is a Python toolkit for analyzing RHEED data using xarray.
 
-Explore the :doc:`introduction` to learn more about its features and capabilities.
+Explore the :doc:`introduction` to learn more about its features and capabilities.  
+See the :doc:`example-notebooks` section for hands-on tutorials.
 
 .. note::
 
@@ -24,21 +25,17 @@ Explore the :doc:`introduction` to learn more about its features and capabilitie
    :maxdepth: 2
    :caption: Example notebooks
 
-   notebooks/getting_started
-   notebooks/diffraction_profiles
-   notebooks/ewald_construction
-   notebooks/ewald_kxky_tranformation
-   notebooks/ewald_kxky_transfor_many_images
-
+   example-notebooks
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
    :caption: API Reference
 
-   api 
-
-
-       
+   xrheed
+   generated/xrheed.preparation
+   generated/xrheed.kinematics
+   generated/xrheed.plotting
 
 .. toctree::
    :maxdepth: 2

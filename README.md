@@ -1,4 +1,4 @@
-# xrheed
+# xRHEED
 📡 An **xarray-based toolkit** for **RHEED image analysis**
 
 [![CI](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml)

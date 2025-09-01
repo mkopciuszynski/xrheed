@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
     "myst_nb",
 ]
 
@@ -36,6 +37,7 @@ html_theme = "sphinx_rtd_theme"
 
 nb_execution_mode = "auto"  # or "off", "cache", "force"
 
+add_module_names = True
 autosummary_generate = True
 
 autodoc_mock_imports = ["xarray", "cupy", "array_api_strict"]

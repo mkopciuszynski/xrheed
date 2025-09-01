@@ -28,9 +28,4 @@ Import xRHEED and load your data:
              color="black", linewidth=1.0
              )
 
-For step-by-step guides, see the example notebooks:
-
-.. toctree::
-   :maxdepth: 1
-
-   notebooks/getting_started.ipynb
+For step-by-step guides, see the :doc:`example-notebooks` section.
