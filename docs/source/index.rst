@@ -33,9 +33,7 @@ See the :doc:`example-notebooks` section for hands-on tutorials.
    :caption: API Reference
 
    xrheed
-   generated/xrheed.preparation
-   generated/xrheed.kinematics
-   generated/xrheed.plotting
+
 
 .. toctree::
    :maxdepth: 2

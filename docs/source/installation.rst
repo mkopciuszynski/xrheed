@@ -5,14 +5,14 @@ Install xRHEED using pip:
 
 .. code-block:: bash
 
-    pip install xRHEED
+    pip install xrheed
 
 Or install the latest version from source:
 
 .. code-block:: bash
 
-    git clone https://github.com/mkopciuszynski/xRHEED.git
-    cd xRHEED
+    git clone https://github.com/mkopciuszynski/xrheed.git
+    cd xrheed
     pip install .
 
 Dependencies
