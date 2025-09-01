@@ -7,6 +7,9 @@ Welcome to **xRHEED** documentation!
 
 Explore the :doc:`introduction` to learn more about its features and capabilities.
 
+.. note::
+
+   This project is under active development.
 
 .. toctree::
    :maxdepth: 2
@@ -30,15 +33,9 @@ Explore the :doc:`introduction` to learn more about its features and capabilitie
 
 .. toctree::
    :maxdepth: 1
-   :titlesonly:
    :caption: API Reference
 
-   xrheed
-   generated/xrheed.preparation
-   generated/xrheed.plotting
-   generated/xrheed.conversion
-   generated/xrheed.kinematics
-   
+   api 
 
 
        

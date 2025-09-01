@@ -1,6 +1,8 @@
 import os
 import sys
 import tomllib
+from datetime import datetime
+
 
 sys.path.insert(0, os.path.abspath("../../src"))
 
@@ -14,6 +16,8 @@ release = pyproject["project"]["version"]
 version = ".".join(release.split(".")[:2])
 
 author = "Marek Kopciuszynski"
+year = datetime.now().year
+copyright = f"{year}, {author}"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -22,6 +26,8 @@ extensions = [
     "sphinx.ext.mathjax",
     "myst_nb",
 ]
+
+myst_enable_extensions = ["dollarmath"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build"]
