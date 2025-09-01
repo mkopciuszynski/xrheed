@@ -1,13 +1,16 @@
 import os
 import sys
+import tomllib
 
 sys.path.insert(0, os.path.abspath("../../src"))
 
-import xrheed
-
 project = "xRHEED"
 
-release = xrheed.__version__
+# Read version from pyproject.toml
+with open(os.path.join(os.path.dirname(__file__), "../../pyproject.toml"), "rb") as f:
+    pyproject = tomllib.load(f)
+
+release = pyproject["project"]["version"]
 version = ".".join(release.split(".")[:2])
 
 author = "Marek Kopciuszynski"
@@ -17,7 +20,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
-    "myst_nb"
+    "myst_nb",
 ]
 
 templates_path = ["_templates"]
@@ -30,4 +33,3 @@ nb_execution_mode = "auto"  # or "off", "cache", "force"
 autosummary_generate = True
 
 autodoc_mock_imports = ["xarray", "cupy", "array_api_strict"]
-

@@ -1,13 +1,19 @@
 import logging
+from importlib.metadata import version, PackageNotFoundError
 
 from . import xarray_accessors as xarray_accessors
 
+# Package version
+try:
+    __version__ = version("xrheed")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
+
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.info("xrheed package initialized successfully. Accessors registered.")
+logger.info(f"xrheed {__version__} initialized successfully. Accessors registered.")
 
-
-# Show a welcome message if running in a Jupyter notebook
+# Check if running inside a Jupyter notebook
 def _in_jupyter():
     try:
         from IPython import get_ipython
@@ -19,8 +25,9 @@ def _in_jupyter():
         pass
     return False
 
-
+# Show a welcome message in Jupyter
 if _in_jupyter():
     print(
-        "\n🎉 xrheed loaded! \nDocumentation: https://xrheed.readthedocs.io/en/latest/\n"
+        f"\n🎉 xrheed v{__version__} loaded!"
+        "\n📖 Documentation: https://xrheed.readthedocs.io/en/latest/\n"
     )
