@@ -16,6 +16,7 @@ See the :doc:`example-notebooks` section for hands-on tutorials.
    :maxdepth: 2
    :caption: User Guide
 
+   introduction
    installation
    usage
    geometry
@@ -33,6 +34,11 @@ See the :doc:`example-notebooks` section for hands-on tutorials.
    :caption: API Reference
 
    xrheed
+   generated/xrheed.preparation
+   generated/xrheed.conversion
+   generated/xrheed.kinematics
+   generated/xrheed.plotting
+
 
 
 .. toctree::

@@ -8,5 +8,5 @@ This section provides hands-on tutorials for **xRHEED**.
    notebooks/getting_started
    notebooks/diffraction_profiles
    notebooks/ewald_construction
-   notebooks/kxky_transformation
-   notebooks/kxky_multiple_images
+   notebooks/ewald_kxky_transformation
+   notebooks/ewald_kxky_transform_multiple_images

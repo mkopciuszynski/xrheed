@@ -1,11 +1,13 @@
-What is RHEED?
-===============
+Introduction
+============
+What is RHEED
+-------------
 
 **Reflection High Energy Electron Diffraction (RHEED)** is an experimental technique for monitoring and controlling crystal surface quality.
 A high-energy electron beam (~20 keV) strikes the surface at a grazing angle (< 5°), making the method highly **surface-sensitive**, probing only a few atomic layers.
 
 Project Goals
-=============
+-------------
 
 **xrheed** provides a flexible and extensible **Python toolkit** for RHEED image analysis:
 
