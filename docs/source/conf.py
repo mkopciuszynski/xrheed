@@ -3,9 +3,14 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../../src"))
 
+import xrheed
+
 project = "xRHEED"
+
+release = xrheed.__version__
+version = ".".join(release.split(".")[:2])
+
 author = "Marek Kopciuszynski"
-release = "0.1.0"
 
 extensions = [
     "sphinx.ext.autodoc",
