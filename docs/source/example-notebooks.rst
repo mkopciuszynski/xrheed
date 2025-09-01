@@ -1,7 +1,6 @@
-Example notebooks
-=================
+.. _example-notebooks:
 
-This section provides hands-on tutorials to get started with **xRHEED**.
+This section provides hands-on tutorials for **xRHEED**.
 
 .. toctree::
    :maxdepth: 2
@@ -9,5 +8,5 @@ This section provides hands-on tutorials to get started with **xRHEED**.
    notebooks/getting_started
    notebooks/diffraction_profiles
    notebooks/ewald_construction
-   notebooks/ewald_kxky_tranformation
-   notebooks/ewald_kxky_transfor_many_images
+   notebooks/kxky_transformation
+   notebooks/kxky_multiple_images

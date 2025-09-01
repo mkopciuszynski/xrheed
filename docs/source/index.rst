@@ -3,7 +3,7 @@ xRHEED
 
 Welcome to **xRHEED** documentation!
 
-**xRHEED** is a Python toolkit for analyzing RHEED data using xarray.
+**xRHEED** is **xarray-based toolkit** for **RHEED image analysis**
 
 Explore the :doc:`introduction` to learn more about its features and capabilities.  
 See the :doc:`example-notebooks` section for hands-on tutorials.
