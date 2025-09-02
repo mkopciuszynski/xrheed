@@ -24,7 +24,6 @@ Below is a minimal example to demonstrate the workflow with **xRHEED**.
        plot_origin=True
    )
 
----
 
 Working with Profiles
 ---------------------
@@ -43,7 +42,6 @@ Example:
    ax.set_ylabel("Intensity")
    plt.show()
 
----
 
 Next Steps
 ----------

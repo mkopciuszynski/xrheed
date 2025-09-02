@@ -1,5 +1,8 @@
 .. _example-notebooks:
 
+Example Notebooks
+=================
+
 This section provides hands-on tutorials for **xRHEED**.
 
 .. toctree::

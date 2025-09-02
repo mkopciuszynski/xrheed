@@ -4,7 +4,6 @@ Installation
 You can install **xRHEED** either with `pip` or with 
 `uv <https://github.com/astral-sh/uv>`_, depending on your workflow.
 
----
 
 Using pip (recommended for development)
 ---------------------------------------
@@ -19,7 +18,6 @@ For a development setup with editable installation:
 
 This allows you to make changes to the source code and immediately test them.
 
----
 
 Using uv (modern package & environment manager)
 -----------------------------------------------
@@ -42,7 +40,6 @@ Using uv (modern package & environment manager)
 
       uv sync
 
----
 
 Basic dependencies
 ------------------
