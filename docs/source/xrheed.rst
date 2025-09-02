@@ -13,8 +13,8 @@ Submodules
    :toctree: generated
    :recursive:
 
-   xrheed.preparation
-   xrheed.conversion
-   xrheed.kinematics
-   xrheed.plotting
+   preparation
+   conversion
+   kinematics
+   plotting
 
