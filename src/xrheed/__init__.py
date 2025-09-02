@@ -1,3 +1,16 @@
+"""
+xRHEED: An xarray-based toolkit for RHEED image analysis.
+
+This package provides tools to:
+- Load and preprocess RHEED images
+- Extract and analyze intensity profiles
+- Transform images to kx-ky space
+- Predict and visualize diffraction spot positions using kinematic theory and Ewald construction
+
+xRHEED is designed as an **xarray accessory library** for interactive analysis
+in environments such as Jupyter notebooks. It is **not a GUI application**.
+"""
+
 import logging
 from importlib.metadata import version, PackageNotFoundError
 
@@ -13,6 +26,7 @@ except PackageNotFoundError:
 logger = logging.getLogger(__name__)
 logger.info(f"xrheed {__version__} initialized successfully. Accessors registered.")
 
+
 # Check if running inside a Jupyter notebook
 def _in_jupyter():
     try:
@@ -24,6 +38,7 @@ def _in_jupyter():
     except Exception:
         pass
     return False
+
 
 # Show a welcome message in Jupyter
 if _in_jupyter():

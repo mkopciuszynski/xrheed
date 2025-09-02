@@ -59,11 +59,6 @@ Contents
    usage
    geometry
    plugins
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Example notebooks
-
    example-notebooks
 
 .. toctree::
