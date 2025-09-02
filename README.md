@@ -1,5 +1,8 @@
 # xRHEED
-📡 An **xarray-based toolkit** for **RHEED image analysis**
+
+📡 An **xarray-based toolkit** for RHEED image analysis.
+
+---
 
 [![CI](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/xrheed/badge/?version=latest)](https://xrheed.readthedocs.io/en/latest/?badge=latest)
@@ -13,24 +16,29 @@
 ---
 
 ## 🔬 What is RHEED?
-**Reflection High Energy Electron Diffraction (RHEED)** is an experimental technique for monitoring and controlling crystal surface quality.
-A high-energy electron beam (∼20 keV) strikes the surface at a grazing angle (< 5°), making the method highly **surface-sensitive**, probing only a few atomic layers.
+
+**Reflection High-Energy Electron Diffraction (RHEED)** is an experimental technique used to monitor and control the quality of crystal surfaces.  
+A high-energy electron beam (∼20 keV) strikes the surface at a grazing angle (< 5°), making the method highly **surface-sensitive** and probing only a few atomic layers.
 
 ---
 
 ## 🎯 Project Goals
-xrheed provides a flexible and extensible **Python toolkit** for RHEED image analysis:
-- 🖼️ Load and preprocess RHEED images
-- 📈 Generate and analyze intensity profiles
-- ✨ Overlay predicted diffraction spot positions (kinematic theory & Ewald construction)
 
-👉 **Note:** xrheed is **not a GUI application**. It is designed as an **xarray accessory library** to facilitate analysis in **interactive environments** such as Jupyter notebooks.
+**xRHEED** provides a flexible and extensible **Python toolkit** for RHEED image analysis:
+
+- 🖼️ Load and preprocess RHEED images  
+- 📈 Generate and analyze intensity profiles  
+- ✨ Overlay predicted diffraction spot positions (kinematic theory & Ewald construction)  
+- 🔄 Transform RHEED images into kx–ky space  
+- 🔍 Search for reconstruction lattice constants and rotations by calculating the matching coefficient between predicted and experimental data  
+
+👉 **Note:** xRHEED is **not a GUI application**. It is designed as an **xarray accessory library**, intended for use in **interactive environments** such as Jupyter notebooks.
 
 ---
 
 ## ⚡ Installation
 
-You can install **xrheed** either with [`uv`](https://github.com/astral-sh/uv) (recommended) or with `pip`.
+You can install **xRHEED** using either [`uv`](https://github.com/astral-sh/uv) or `pip`.
 
 ### Using pip (editable install for development)
 
@@ -42,13 +50,13 @@ pip install -e .
 
 ### Using uv (with a virtual environment)
 
-1. Install [`uv`](https://docs.astral.sh/uv/guides/projects/)
+1. Install [`uv`](https://docs.astral.sh/uv/guides/projects/).
 2. Clone the repository:
    ```bash
    git clone https://github.com/mkopciuszynski/xrheed
    cd xrheed
    ```
-3. Create and activate a virtual environment (depends on your shell: bash, zsh, fish, powershell).
+3. Create and activate a virtual environment (depending on your shell: bash, zsh, fish, PowerShell).
 4. Sync dependencies:
    ```bash
    uv sync
@@ -70,7 +78,7 @@ rheed_image = load_data("rheed_image.raw", plugin="dsnp_arpes_raw")
 rheed_image.ri.plot_image(auto_levels=2.0)
 plt.show()
 
-# Compute intensity profile and show its origin
+# Get intensity profile and plot its origin
 profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
                                      plot_origin=True)
 ```
@@ -85,5 +93,7 @@ If you use **xrheed** in your research, please consider citing this repository:
 > GitHub. https://github.com/mkopciuszynski/xrheed
 
 📌 A formal DOI will be provided in the future via [Zenodo](https://zenodo.org/).
+
+---
 
 📚 👉 See the [full documentation](https://xrheed.readthedocs.io/en/latest/) for tutorials and advanced examples.

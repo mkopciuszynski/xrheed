@@ -1,31 +1,53 @@
-Basic Usage
+Quick Usage
 ===========
 
-Import xRHEED and load your data:
+Below is a minimal example to demonstrate the workflow with **xRHEED**.
 
 .. code-block:: python
 
-    import xrheed
-    from xrheed.io import load_data
+   import matplotlib.pyplot as plt
+   import xrheed
+   from xrheed.io import load_data
 
-    # Load RHEED image (replace with your file),
-    rheed_image = load_data('rheed_image.raw', plugin="dsnp_arpes_raw")
+   # Load a RHEED image
+   rheed_image = load_data("rheed_image.raw", plugin="dsnp_arpes_raw")
 
-    # Show a summary using ri accesory
-    print(rheed_image.ri)
+   # Show the image with auto-adjusted intensity levels
+   rheed_image.ri.plot_image(auto_levels=2.0)
+   plt.show()
 
-    # Plot the image
-    rheed_image.ri.plot_image()
+   # Extract an intensity profile
+   profile = rheed_image.ri.get_profile(
+       center=(0, -5), 
+       width=40, 
+       height=4, 
+       plot_origin=True
+   )
 
-    # Get profile and print it's properties
-    profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4, plot_origin=True)
-    print(profile.rp)
+---
 
-    # Plot profile
-    profile.rp.plot_profile(
-             transform_to_kx=True,
-             normalize=True,
-             color="black", linewidth=1.0
-             )
+Working with Profiles
+---------------------
 
-For step-by-step guides, see the :doc:`example-notebooks` section.
+Intensity profiles are useful for tracking diffraction streaks or 
+quantifying reconstruction features.  
+They can be directly plotted or exported for further analysis.
+
+Example:
+
+.. code-block:: python
+
+   fig, ax = plt.subplots()
+   ax.plot(profile.coords["x"], profile.values)
+   ax.set_xlabel("Reciprocal coordinate (1/Å)")
+   ax.set_ylabel("Intensity")
+   plt.show()
+
+---
+
+Next Steps
+----------
+
+- Explore the :doc:`geometry` section for details on RHEED geometry.
+- See :ref:`example-notebooks` for interactive demonstrations.
+- Dive into the :doc:`xrheed` API reference for function-level details.
