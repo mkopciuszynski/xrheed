@@ -56,23 +56,25 @@ def high_pass_filter(
 ) -> xr.DataArray:
     """
     Apply a high-pass filter to a RHEED image using Gaussian filtering.
+
     Parameters
     ----------
     rheed_image : xr.DataArray
         RHEED image data to be filtered.
     threshold : float, optional
-        Threshold for the high-pass filter, default is 0.1.
-    This value scales the blurred image before subtraction, effectively controlling the strength of the filter.
+        Threshold for the high-pass filter (default is 0.1).
+        This value scales the blurred image before subtraction,
+        effectively controlling the strength of the filter.
         A higher value will result in a stronger high-pass effect.
     sigma : float, optional
-        Standard deviation for the Gaussian kernel, in the same units as the image coordinate (default is
-        1.0).
+        Standard deviation for the Gaussian kernel, in the same units as the image coordinate
+        (default is 1.0).
+
     Returns
     -------
     xr.DataArray
         The high-pass filtered RHEED image as a new DataArray.
     """
-
     # Validate input
     assert isinstance(
         rheed_image, xr.DataArray
