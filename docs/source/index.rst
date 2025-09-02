@@ -6,7 +6,7 @@ Welcome to **xRHEED** documentation!
 **xRHEED** is **xarray-based toolkit** for **RHEED image analysis**
 
 Explore the :doc:`introduction` to learn more about its features and capabilities.  
-See the :ref:`example-notebooks` section for hands-on tutorials.
+See the `Example notebooks` section for hands-on tutorials.
 
 
 .. note::
@@ -35,11 +35,6 @@ See the :ref:`example-notebooks` section for hands-on tutorials.
    :caption: API Reference
 
    xrheed
-   generated/xrheed.preparation
-   generated/xrheed.conversion
-   generated/xrheed.kinematics
-   generated/xrheed.plotting
-
 
 
 .. toctree::

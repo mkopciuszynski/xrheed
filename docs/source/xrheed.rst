@@ -9,34 +9,12 @@ xrheed
 Submodules
 ----------
 
-xrheed.preparation
-~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated
+   :recursive:
 
-.. automodule:: xrheed.preparation
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   xrheed.preparation
+   xrheed.conversion
+   xrheed.kinematics
+   xrheed.plotting
 
-xrheed.conversion
-~~~~~~~~~~~~~~~~~
-
-.. automodule:: xrheed.conversion
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-xrheed.kinematics
-~~~~~~~~~~~~~~~~~
-
-.. automodule:: xrheed.kinematics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-xrheed.plotting
-~~~~~~~~~~~~~~~~
-
-.. automodule:: xrheed.plotting
-   :members:
-   :undoc-members:
-   :show-inheritance:
