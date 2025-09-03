@@ -72,6 +72,7 @@ class Ewald:
         self._lattice = copy.deepcopy(lattice)
         self._inverse_lattice = self._prepare_inverse_lattice()
         self._inverse_lattice = self._prepare_inverse_lattice()
+        self.label = lattice.label
 
         # Mirror symmetry
         self.mirror = False
@@ -80,19 +81,21 @@ class Ewald:
 
     def __repr__(self) -> str:
         """
-        Return a string representation of Ewald parameters and lattice vectors.
+        Returns a formatted string representation of the Ewald object,
+        including its label, key parameters, and reciprocal lattice vectors.
         """
         details = (
-            f"  Ewald Radius: {self.ewald_radius:.2f} 1/A,\n"
-            f"  alpha: {self.alpha:.2f} deg,\n"
-            f"  beta: {self.beta:.2f} deg,\n"
-            f"  lattice_scale: {self.lattice_scale:.2f},\n"
-            f"  screen_scale: {self.screen_scale:.2f} px/mm,\n"
-            f"  screen_sample_distance: {self.screen_sample_distance:.1f} mm,\n"
-            f"  shift_x: {self.shift_x:.2f} mm,\n"
-            f"  shift_y: {self.shift_y:.2f} mm,\n"
-            f"  b1 = [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/A,\n"
-            f"  b2 = [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/A,\n"
+            f"Ewald Class Object: {self.label}\n"
+            f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
+            f"  Alpha (rotation angle) : {self.alpha:.2f}°\n"
+            f"  Beta (incident angle)  : {self.beta:.2f}°\n"
+            f"  Lattice Scale          : {self.lattice_scale:.2f}\n"
+            f"  Screen Scale           : {self.screen_scale:.2f} px/mm\n"
+            f"  Sample-Screen Distance : {self.screen_sample_distance:.1f} mm\n"
+            f"  Screen Shift X         : {self.shift_x:.2f} mm\n"
+            f"  Screen Shift Y         : {self.shift_y:.2f} mm\n"
+            f"  Reciprocal Vector b1   : [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/Å\n"
+            f"  Reciprocal Vector b2   : [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/Å\n"
         )
         return details
 
