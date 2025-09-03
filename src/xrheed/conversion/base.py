@@ -3,12 +3,12 @@ from typing import Optional, Tuple
 import numpy as np
 
 
-def convert_sx_to_kx(
+def convert_sx_to_ky(
     x_coords_mm: np.ndarray,
     ewald_sphere_radius: float,
     screen_sample_distance_mm: float,
 ) -> np.ndarray:
-    """Convert x coordinates from mm to kx [1/Å] using the Ewald sphere radius and screen-sample distance.
+    """Convert sx coordinates from mm to ky [1/Å] using the Ewald sphere radius and screen-sample distance.
     Parameters
     ----------
     x_coords_mm : np.ndarray
@@ -21,7 +21,7 @@ def convert_sx_to_kx(
     Returns
     -------
     np.ndarray
-        Converted x coordinates in kx [1/Å].
+        Converted x coordinates in ky [1/Å].
     """
 
     kx = (x_coords_mm / screen_sample_distance_mm) * ewald_sphere_radius

@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from xrheed.conversion.base import convert_sx_to_kx
+from xrheed.conversion.base import convert_sx_to_ky
 
 
 def plot_profile(
     rheed_profile: xr.DataArray,
     ax: plt.Axes | None = None,
-    transform_to_kx: bool = True,
+    transform_to_k: bool = True,
     normalize: bool = True,
     **kwargs,
 ) -> plt.Axes:
@@ -23,8 +23,8 @@ def plot_profile(
         The RHEED intensity profile to plot.
     ax : matplotlib.axes.Axes or None, optional
         The axes to plot on. If None, a new figure and axes are created.
-    transform_to_kx : bool, optional
-        If True, transform the x-axis to kx using experimental geometry.
+    transform_to_k : bool, optional
+        If True, transform the sx-axis to ky using experimental geometry.
     normalize : bool, optional
         If True, normalize the intensity profile.
     **kwargs
@@ -47,13 +47,13 @@ def plot_profile(
         profile.values = normalized.values
         profile.attrs = rheed_profile.attrs.copy()
 
-    if transform_to_kx:
+    if transform_to_k:
         k_e = profile.ri.ewald_sphere_radius
         screen_sample_distance = profile.ri.screen_sample_distance
 
         sx = profile.coords["sx"].data
 
-        kx = convert_sx_to_kx(
+        kx = convert_sx_to_ky(
             sx,
             ewald_sphere_radius=k_e,
             screen_sample_distance_mm=screen_sample_distance,
@@ -64,7 +64,7 @@ def plot_profile(
             profile,
             **kwargs,
         )
-        ax.set_xlabel("$k_x$ (1/Å)")
+        ax.set_xlabel("$k_y$ (1/Å)")
 
     else:
         profile.plot(ax=ax, **kwargs)

@@ -13,15 +13,15 @@ class TestBaseConversion(unittest.TestCase):
         test_data_path = Path(__file__).parent / "data" / "Si_111_7x7_112_phi_00.raw"
         self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
 
-    def test_convert_sx_to_kx(self):
+    def test_convert_sx_to_ky(self):
         sx_coords_mm = np.array([0, 10, 20])
         ewald_sphere_radius = 2.0
         screen_sample_distance_mm = 10.0
-        kx = base.convert_sx_to_kx(
+        ky = base.convert_sx_to_ky(
             sx_coords_mm, ewald_sphere_radius, screen_sample_distance_mm
         )
         expected = np.array([0, 2, 4])
-        np.testing.assert_array_almost_equal(kx, expected)
+        np.testing.assert_array_almost_equal(ky, expected)
 
     def test_transform_to_kxky_shape(self):
         # Create a dummy RHEED image with required attributes

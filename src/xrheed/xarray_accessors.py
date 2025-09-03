@@ -6,7 +6,7 @@ import xarray as xr
 from matplotlib.patches import Rectangle
 from scipy import constants, ndimage
 
-from .conversion.base import convert_sx_to_kx
+from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
 from .preparation.alignment import find_horizontal_center, find_vertical_center
@@ -282,9 +282,23 @@ class RHEEDAccessor:
 @xr.register_dataarray_accessor("rp")
 class RHEEDProfileAccessor:
     def __init__(self, xarray_obj: xr.DataArray):
+        """
+        Initialize the RHEEDProfileAccessor with a given xarray DataArray.
+
+        Args:
+            xarray_obj (xr.DataArray): The DataArray representing a RHEED profile.
+        """
+
         self._obj = xarray_obj
 
     def __repr__(self):
+        """
+        Return a string representation of the RHEEDProfileAccessor, summarizing key profile attributes.
+
+        Returns:
+            str: A formatted string displaying the profile center, width, and height.
+        """
+
         center = self._obj.attrs.get("profile_center", "N/A")
         width = self._obj.attrs.get("profile_width", "N/A")
         height = self._obj.attrs.get("profile_height", "N/A")
@@ -295,31 +309,41 @@ class RHEEDProfileAccessor:
             f"  Height: {height} mm\n"
         )
 
-    def convert_to_kx(self) -> xr.DataArray:
-        """Convert the profile sx coordinate to kx [1/Å] using the Ewald sphere radius and screen sample distance."""
+    def convert_to_k(self) -> xr.DataArray:
+        """
+        Permanently convert the profile's screen x-coordinate (`sx`) to the momentum space coordinate $k_y$ [1/Å].
+
+        The conversion is performed using the Ewald sphere radius and the screen-to-sample distance, based on the scattering geometry defined in the xRHEED project.
+
+        Returns:
+            xr.DataArray: A new DataArray with the `sx` coordinate replaced by `ky`.
+
+        Raises:
+            ValueError: If the profile does not contain an `sx` coordinate.
+        """
 
         if "sx" not in self._obj.coords:
-            raise ValueError("The profile must have 'sx' coordinate to convert to kx.")
+            raise ValueError("The profile must have 'sx' coordinate to convert to ky.")
 
         k_e = self._obj.ri.ewald_sphere_radius
         screen_sample_distance = self._obj.ri.screen_sample_distance
 
         sx = self._obj.coords["sx"].data
 
-        kx = convert_sx_to_kx(
+        ky = convert_sx_to_ky(
             sx,
             ewald_sphere_radius=k_e,
             screen_sample_distance_mm=screen_sample_distance,
         )
 
-        profile_kx = self._obj.assign_coords(sx=kx).rename({"sx": "kx"})
+        profile_k = self._obj.assign_coords(sx=ky).rename({"sx": "ky"})
 
-        return profile_kx
+        return profile_k
 
     def plot_profile(
         self,
         ax: plt.Axes | None = None,
-        transform_to_kx: bool = True,
+        transform_to_k: bool = True,
         normalize: bool = True,
         **kwargs,
     ) -> plt.Axes:
@@ -329,8 +353,8 @@ class RHEEDProfileAccessor:
         ----------
         ax : plt.Axes | None, optional
             Axes to plot on. If None, a new figure and axes will be created.
-        transform_to_kx : bool, optional
-            If True, convert the x coordinate to kx [1/Å].
+        transform_to_k : bool, optional
+            If True, convert the screen x coordinate to ky [1/Å].
             Default is True.
         normalize : bool, optional
             If True, normalize the profile to the range [0, 1].
@@ -349,7 +373,7 @@ class RHEEDProfileAccessor:
         return plot_profile(
             rheed_profile=rheed_profile,
             ax=ax,
-            transform_to_kx=transform_to_kx,
+            transform_to_k=transform_to_k,
             normalize=normalize,
             **kwargs,
         )
