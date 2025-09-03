@@ -100,6 +100,20 @@ class Lattice:
         new_lattice.reciprocal_lattice = copy.deepcopy(self.reciprocal_lattice, memo)
         return new_lattice
 
+    def __repr__(self) -> str:
+        """
+        Return a concise string representation of the lattice, including the label and basis vectors a1 and a2.
+
+        Returns:
+            str: String representation of the lattice label and basis vectors.
+        """
+        return (
+            f"Lattice: {self.label}\n"
+            f"a1 = [{self.a1[0]:.3f}, {self.a1[1]:.3f}] A\n"
+            f"a2 = [{self.a2[0]:.3f}, {self.a2[1]:.3f}] A"
+        )
+
+
     @classmethod
     def from_bulk_cubic(
         cls,
@@ -315,17 +329,7 @@ class Lattice:
         ax.set_aspect(1)
         return ax
 
-    def __repr__(self) -> str:
-        """
-        Return a concise string representation of the lattice basis vectors a1 and a2.
-
-        Returns:
-            str: String representation of a1 and a2.
-        """
-        return (
-            f"a1 = [{self.a1[0]:.3f}, {self.a1[1]:.3f}] A\n"
-            f"a2 = [{self.a2[0]:.3f}, {self.a2[1]:.3f}] A"
-        )
+   
 
     @staticmethod
     def hex_lattice(a: float) -> Tuple[Vector, Vector]:
