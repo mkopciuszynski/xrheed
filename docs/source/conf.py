@@ -52,5 +52,4 @@ autodoc_default_options = {
 add_module_names = False
 
 
-
 autodoc_mock_imports = ["xarray", "cupy", "array_api_strict"]

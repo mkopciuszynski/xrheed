@@ -58,6 +58,7 @@ Contents
    installation
    usage
    geometry
+   kinematic
    plugins
    example-notebooks
 
