@@ -64,5 +64,9 @@ def plot_images(
         else:
             ax.set_xlabel("")
 
+    # Hide any unused axes
+    for i in range(n_images, len(axes)):
+        axes[i].axis("off")
+
     plt.tight_layout()
     return fig
