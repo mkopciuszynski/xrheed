@@ -1,5 +1,14 @@
 # Changelog
 
+<a name="0.2.0"></a>
+## [0.2.0] – xxxx
+- A major update in the documentation
+- New example images 
+- Polished and improved markdowns in jupyter notebooks
+- Docstring added, and API ready
+- Profile methods used for transformation now use a proper geometry sx -> ky
+
+
 <a name="0.1.0"></a>
 ## [0.1.0] – 2025-08-29
 - First working release with core functionality

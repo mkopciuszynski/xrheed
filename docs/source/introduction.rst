@@ -1,8 +1,8 @@
 Introduction
 ============
 
-🔬 What is RHEED?
------------------
+What is RHEED?
+--------------
 
 **Reflection High Energy Electron Diffraction (RHEED)** is an experimental technique widely used in 
 surface science and thin film growth.  
@@ -19,8 +19,8 @@ RHEED is especially useful during **Molecular Beam Epitaxy (MBE)**, where it all
 of surface reconstructions, layer-by-layer growth, and lattice parameters.
 
 
-🎯 Project Goals
-----------------
+Project Goals
+-------------
 
 **xRHEED** is a flexible and extensible **Python toolkit** for analyzing RHEED data.  
 It is designed as an **xarray accessory library**, meaning it integrates naturally with the 
@@ -28,12 +28,12 @@ scientific Python ecosystem.
 
 Main features include:
 
-- 🖼️ **Load and preprocess** RHEED images
-- 📈 **Generate and analyze intensity profiles**
-- ✨ **Overlay predicted diffraction spot positions** 
+- **Load and preprocess** RHEED images
+- **Generate and analyze intensity profiles**
+- **Overlay predicted diffraction spot positions** 
   (kinematic theory & Ewald construction)
-- 🔄 **Transform images into reciprocal (kx-ky) space**
-- 🔍 **Search for reconstruction lattice constants and rotations** 
+- **Transform images into reciprocal (kx-ky) space**
+- **Search for reconstruction lattice constants and rotations** 
   by calculating matching coefficients between experiment and theory
 
 .. note::
