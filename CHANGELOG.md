@@ -1,7 +1,7 @@
 # Changelog
 
 <a name="0.2.0"></a>
-## [0.2.0] – xxxx
+## [0.2.0] – 2025-09-04
 - A major update in the documentation
 - New example images 
 - Polished and improved markdowns in jupyter notebooks
