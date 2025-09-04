@@ -113,7 +113,6 @@ class Lattice:
             f"a2 = [{self.a2[0]:.3f}, {self.a2[1]:.3f}] A"
         )
 
-
     @classmethod
     def from_bulk_cubic(
         cls,
@@ -328,8 +327,6 @@ class Lattice:
         ax.set_ylim(-space_size, space_size)
         ax.set_aspect(1)
         return ax
-
-   
 
     @staticmethod
     def hex_lattice(a: float) -> Tuple[Vector, Vector]:
