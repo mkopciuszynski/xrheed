@@ -8,6 +8,7 @@ def plot_image(
     ax: plt.Axes | None = None,
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
+    show_specular_spot: bool = False,
     **kwargs,
 ) -> plt.Axes:
     """
@@ -23,6 +24,8 @@ def plot_image(
         If > 0, automatically set vmin/vmax for contrast enhancement.
     show_center_lines : bool, optional
         If True, show center lines at x=0 and y=0.
+    show_specular_spot : bool, optional
+        If True, overlay the specularly reflected spot on the image.
     **kwargs
         Additional keyword arguments passed to xarray plot.
 
@@ -40,11 +43,18 @@ def plot_image(
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 4))
 
-    if show_center_lines:
-        ax.axhline(y=0.0, linewidth=0.5)
-        ax.axvline(x=0.0, linewidth=0.5)
-
     rheed_image.plot(ax=ax, add_colorbar=False, cmap="gray", **kwargs)
+
+    if show_center_lines:
+        ax.axhline(y=0.0, linewidth=1.0, linestyle="--")
+        ax.axvline(x=0.0, linewidth=1.0, linestyle="--")
+
+    if show_specular_spot:
+        specular_y = (
+            -np.tan(np.deg2rad(rheed_image.ri.beta))
+            * rheed_image.ri.screen_sample_distance
+        )
+        ax.scatter(0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100)
 
     roi_width = rheed_image.ri.screen_roi_width
     roi_height = rheed_image.ri.screen_roi_height
