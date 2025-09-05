@@ -24,10 +24,10 @@ class TestEwald(unittest.TestCase):
         ewald.calculate_ewald()
 
         # Check that spot arrays are created and not empty
-        assert hasattr(ewald, "sx")
-        assert hasattr(ewald, "sy")
-        assert len(ewald.sx) > 0
-        assert len(ewald.sy) > 0
+        assert hasattr(ewald, "ew_sx")
+        assert hasattr(ewald, "ew_sy")
+        assert len(ewald.ew_sx) > 0
+        assert len(ewald.ew_sy) > 0
 
 
 if __name__ == "__main__":
