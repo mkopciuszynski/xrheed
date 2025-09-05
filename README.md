@@ -87,9 +87,9 @@ profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
 
 ## 📖 Citation
 
-If you use **xrheed** in your research, please consider citing this repository:
+If you use **xRHEED** in your research, please consider citing this repository:
 
-> Kopciuszynski, M. (2025). *xrheed: An xarray-based toolkit for RHEED image analysis*.
+> Kopciuszynski, M. (2025). *xRHEED: An xarray-based toolkit for RHEED image analysis*.
 > GitHub. https://github.com/mkopciuszynski/xrheed
 
 📌 A formal DOI will be provided in the future via [Zenodo](https://zenodo.org/).
