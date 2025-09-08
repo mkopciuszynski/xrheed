@@ -15,6 +15,11 @@ from .lattice import Lattice, rotation_matrix
 
 
 class Ewald:
+    # Class constants
+    # Default spot size in mm
+    SPOT_WIDTH_MM = 1.5
+    SPOT_HEIGHT_MM = 5.0
+
     def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None) -> None:
         """
         Initialize an Ewald object for RHEED spot calculation.
@@ -29,33 +34,32 @@ class Ewald:
 
         if image is None:
             warning("RHEED image is not provided, default values are loaded.")
-            self.beam_energy = 18.6 * 1000
-            self.screen_sample_distance = 309.2
-            self.screen_scale = 9.5
-            self.screen_size_w = 60
-            self.screen_size_h = 80
+            self.beam_energy: float = 18.6 * 1000
+            self.screen_sample_distance: float = 309.2
+            self.screen_scale: float = 9.5
+            self.screen_roi_width: float = 60
+            self.screen_roi_height: float = 80
 
-            self._image_data_available = False
-            self._beta = 1.0
-            self._alpha = 0.0
+            self._image_data_available:bool = False
+            self._beta: float = 1.0
+            self._alpha: float = 0.0
         else:
             self.image = image.copy()
-            self.image_data = image.data
             self.beam_energy = image.ri.beam_energy
             self.screen_sample_distance = image.ri.screen_sample_distance
             self.screen_scale = image.ri.screen_scale
-            self.screen_size_w = image.ri.screen_roi_width
-            self.screen_size_h = image.ri.screen_roi_height
+            self.screen_roi_width = image.ri.screen_roi_width
+            self.screen_roi_height = image.ri.screen_roi_height
 
-            self._beta = image.ri.beta
-            self._alpha = image.ri.alpha
-            self._image_data_available = True
+            self._beta: float = image.ri.beta
+            self._alpha: float = image.ri.alpha
+            self._image_data_available:bool = True
 
         self._lattice_scale: float = 1.0
 
-        # Spot size in px used in matching calculations
-        self._spot_w_px: int = 3
-        self._spot_h_px: int = 4
+        # Default Spot size in px used in matching calculations
+        self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
+        self._spot_h_px: int = int(self.SPOT_HEIGHT_MM * self.screen_scale)
 
         self.spot_structure = self._generate_spot_structure()
 
@@ -67,7 +71,7 @@ class Ewald:
         self.ewald_radius = np.sqrt(self.beam_energy) * 0.5123
 
         self._ewald_roi = self.ewald_radius * (
-            self.screen_size_w / self.screen_sample_distance
+            self.screen_roi_width / self.screen_sample_distance
         )
         # Lattice and its inverse
         self._lattice = copy.deepcopy(lattice)
@@ -108,6 +112,7 @@ class Ewald:
         new_ewald = Ewald(self._lattice, self.image)
 
         new_ewald.alpha = self.alpha
+        new_ewald.beta = self.beta
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
         new_ewald._spot_w_px = self._spot_w_px
@@ -163,12 +168,10 @@ class Ewald:
         self._ewald_roi = value
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-
-    def set_spot_size(self, width : int=5, height: int = 10):
-        self._spot_w_px = width
-        self._spot_h_px = height
+    def set_spot_size(self, width: float, height: float):
+        self._spot_w_px = int(width * self.screen_scale)
+        self._spot_h_px = int(height * self.screen_scale)
         self.spot_structure = self._generate_spot_structure()
-
 
     def calculate_ewald(self, **kwargs) -> None:
         """
@@ -195,9 +198,9 @@ class Ewald:
         )
 
         ind = (
-            (sx > -self.screen_size_w)
-            & (sx < self.screen_size_w)
-            & (sy < self.screen_size_h)
+            (sx > -self.screen_roi_width)
+            & (sx < self.screen_roi_width)
+            & (sy < self.screen_roi_height)
         )
 
         sx = sx[ind]
@@ -215,6 +218,7 @@ class Ewald:
         self,
         ax: Optional[plt.Axes] = None,
         show_image: bool = True,
+        show_roi: bool = False,
         auto_levels: float = 0.0,
         show_center_lines: bool = False,
         **kwargs,
@@ -258,6 +262,24 @@ class Ewald:
                 **plot_image_kwargs,
             )
 
+            if show_roi:
+                ax.set_xlim(rheed_image.sx.min(), rheed_image.sx.max())
+                ax.set_ylim(rheed_image.sy.min(), rheed_image.sy.max())
+
+                # Draw vertical lines at x = ±x_width/2
+                ax.axvline(
+                    x=-self.screen_roi_width, color="red", linestyle="--", linewidth=1
+                )
+                ax.axvline(
+                    x=self.screen_roi_width, color="red", linestyle="--", linewidth=1
+                )
+
+                # Draw horizontal lines at y = ±y_width/2
+                ax.axhline(
+                    y=-self.screen_roi_height, color="red", linestyle="--", linewidth=1
+                )
+                ax.axhline(y=0.0, color="red", linestyle="--", linewidth=1)
+
         if "marker" not in kwargs:
             kwargs["marker"] = "|"
 
@@ -268,6 +290,36 @@ class Ewald:
             (self.ew_sy + self.shift_y) * fine_scaling,
             **kwargs,
         )
+
+        return ax
+
+    def plot_spots(self, ax=None, show_image: bool = False, **kwargs):
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        mask = self._generate_mask()
+        image = self.image
+
+        if "cmap" not in kwargs:
+            kwargs["cmap"] = "gray"
+
+        if show_image:
+            ax.imshow(
+                mask * image.data,
+                origin="lower",
+                extent=(image.sx.min(), image.sx.max(), image.sy.min(), image.sy.max()),
+                aspect="equal",
+                **kwargs,
+            )
+        else:
+            ax.imshow(
+                mask,
+                origin="lower",
+                extent=(image.sx.min(), image.sx.max(), image.sy.min(), image.sy.max()),
+                aspect="equal",
+                cmap="gray",
+            )
 
         return ax
 
@@ -292,45 +344,23 @@ class Ewald:
 
         assert self._image_data_available, "Image data is not available"
 
-        image = self.image
-        image_data = self.image_data
-        screen_scale = self.screen_scale
+        image = self.image.data
 
-        # Determine the physical origin of the image (top-left corner in mm)
-        origin_x = image.sx.values.min()
-        origin_y = image.sy.values.max()
-
-        # Convert physical coordinates (mm) to pixel indices (px)
-        ppx = np.round((self.ew_sx - origin_x) * screen_scale).astype(np.uint32)
-        ppy = np.round((origin_y - self.ew_sy) * screen_scale).astype(np.uint32)
-
-        # Filter out-of-bounds pixel indices
-        valid = (
-            (ppx >= 0) & (ppx < image_data.shape[1]) &
-            (ppy >= 0) & (ppy < image_data.shape[0])
-        )
-
-        # Apply mask at valid pixel positions
-        ppx = ppx[valid]
-        ppy = ppy[valid]
-        mask = np.zeros(image_data.shape, dtype=bool)
-        mask[ppy, ppx] = True
-
-        # Apply elliptical spot structure to simulate spot spread
-        spot_structure = self.spot_structure
-        mask = ndimage.binary_dilation(mask, structure=spot_structure)
+        mask = self._generate_mask()
 
         # Calculate the match coefficient as the sum of masked image intensity
-        match_coef = (mask * image_data).sum()
+        match_coef = (mask * image).sum()
 
         # Optionally normalize (if needed in future)
+        # TODO add more sophisticated normalizations 
         if normalize:
-            match_coef = match_coef / len(ppx)
+            match_coef = match_coef / len(self.ew_sx)
 
         return match_coef
 
-
-    def match_alpha(self, alpha_vector: NDArray, normalize: bool = True) -> xr.DataArray:
+    def match_alpha(
+        self, alpha_vector: NDArray, normalize: bool = True
+    ) -> xr.DataArray:
         """
         Calculate the match coefficient for a series of phi (azimuthal) angles.
 
@@ -380,7 +410,7 @@ class Ewald:
 
         self.ewald_roi = (
             self.ewald_radius
-            * (self.screen_size_w / self.screen_sample_distance)
+            * (self.screen_roi_width / self.screen_sample_distance)
             * scale_vector.max()
         )
         self._inverse_lattice = self._prepare_inverse_lattice()
@@ -420,7 +450,7 @@ class Ewald:
 
         self.ewald_roi = (
             self.ewald_radius
-            * (self.screen_size_w / self.screen_sample_distance)
+            * (self.screen_roi_width / self.screen_sample_distance)
             * scale_vector.max()
         )
         self._inverse_lattice = self._prepare_inverse_lattice()
@@ -495,3 +525,42 @@ class Ewald:
 
     # TODO prepare calculate match for a list of phi angles next we will do the same for a list of
     # lattice stalling
+
+    def _generate_mask(self):
+
+        image = self.image
+        screen_scale = self.screen_scale
+        screen_roi_width = self.screen_roi_width
+        screen_roi_height = self.screen_roi_height
+
+        # Physical origin of image
+        origin_x = image.sx.values.min()
+        origin_y = image.sy.values.min()  # bottom edge in mm
+
+        # Map physical coords to pixel indices
+        ppx = np.round((self.ew_sx - origin_x) * screen_scale).astype(np.uint32)
+        ppy = np.round((self.ew_sy - origin_y) * screen_scale).astype(np.uint32)
+
+        # Filter within bounds
+        valid = (
+            (ppx >= 0)
+            & (ppx < image.shape[1])
+            & (ppy >= 0)
+            & (ppy < image.shape[0])
+            & (self.ew_sx >= -screen_roi_width)
+            & (self.ew_sx <= screen_roi_width)
+            & (self.ew_sy >= -screen_roi_height)
+            & (self.ew_sy <= 0)
+        )
+
+        ppx = ppx[valid]
+        ppy = ppy[valid]
+
+        # Build mask
+        mask = np.zeros(image.shape, dtype=bool)
+        mask[ppy, ppx] = True
+
+        # Apply dilation
+        mask = ndimage.binary_dilation(mask, structure=self.spot_structure)
+
+        return mask
