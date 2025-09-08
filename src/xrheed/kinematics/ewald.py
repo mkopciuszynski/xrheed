@@ -11,9 +11,8 @@ from tqdm.notebook import tqdm
 
 from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
-from .lattice import Lattice, rotation_matrix
-
 from .cache_utils import smart_cache
+from .lattice import Lattice, rotation_matrix
 
 
 class Ewald:
@@ -334,7 +333,6 @@ class Ewald:
         return ax
 
     def plot_spots(self, ax=None, show_image: bool = False, **kwargs):
-
         if ax is None:
             fig, ax = plt.subplots()
 

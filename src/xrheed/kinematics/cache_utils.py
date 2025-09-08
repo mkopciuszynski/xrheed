@@ -1,6 +1,7 @@
-from pathlib import Path
-import dill
 import functools
+from pathlib import Path
+
+import dill
 
 
 def smart_cache(method):

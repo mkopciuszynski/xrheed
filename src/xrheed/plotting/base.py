@@ -54,7 +54,9 @@ def plot_image(
             -np.tan(np.deg2rad(rheed_image.ri.beta))
             * rheed_image.ri.screen_sample_distance
         )
-        ax.scatter(0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100)
+        ax.scatter(
+            0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100
+        )
 
     roi_width = rheed_image.ri.screen_roi_width
     roi_height = rheed_image.ri.screen_roi_height
