@@ -323,7 +323,7 @@ class Ewald:
 
         return ax
 
-    def calculate_match(self, normalize: bool = True) -> float:
+    def calculate_match(self, normalize: bool = True) -> np.uint32:
         """
         Calculate the match coefficient between calculated spot positions and the RHEED data.
 
@@ -347,14 +347,14 @@ class Ewald:
         image = self.image.data
 
         mask = self._generate_mask()
-
+       
         # Calculate the match coefficient as the sum of masked image intensity
-        match_coef = (mask * image).sum()
+        match_coef = (mask * image).sum(dtype=np.uint32)
 
         # Optionally normalize (if needed in future)
         # TODO add more sophisticated normalizations 
         if normalize:
-            match_coef = match_coef / len(self.ew_sx)
+            match_coef = match_coef // len(self.ew_sx)
 
         return match_coef
 
@@ -378,13 +378,13 @@ class Ewald:
         """
         """Here we can calculate the matching for a series of different phi angles"""
 
-        match_vector = np.zeros_like(alpha_vector)
+        match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
-        for i, phi in enumerate(tqdm(alpha_vector)):
-            self.alpha = phi
+        for i, alpha in enumerate(tqdm(alpha_vector)):
+            self.alpha = alpha
             match_vector[i] = self.calculate_match(normalize=normalize)
 
-        return xr.DataArray(match_vector, dims=["phi"], coords={"phi": alpha_vector})
+        return xr.DataArray(match_vector, dims=["alpha"], coords={"alpha": alpha_vector})
 
     def match_scale(
         self, scale_vector: NDArray, normalize: bool = True
@@ -406,7 +406,7 @@ class Ewald:
         """
         """Here we can calculate the matching for a series of different lattice constants"""
 
-        match_vector = np.zeros_like(scale_vector)
+        match_vector = np.zeros_like(scale_vector, dtype=np.uint32)
 
         self.ewald_roi = (
             self.ewald_radius
@@ -421,10 +421,10 @@ class Ewald:
             match_vector[i] = self.calculate_match(normalize=normalize)
 
         return xr.DataArray(
-            match_vector, dims=["scale"], coords={"scale": scale_vector}
+            match_vector, dims=["scale"], coords={"scale": scale_vector}, 
         )
 
-    def match_phi_scale(
+    def match_alpha_scale(
         self, phi_vector: NDArray, scale_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
         """
