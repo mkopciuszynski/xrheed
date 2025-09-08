@@ -13,6 +13,8 @@ from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .lattice import Lattice, rotation_matrix
 
+from .cache_utils import smart_cache
+
 
 class Ewald:
     # Class constants
@@ -40,7 +42,7 @@ class Ewald:
             self.screen_roi_width: float = 60
             self.screen_roi_height: float = 80
 
-            self._image_data_available:bool = False
+            self._image_data_available: bool = False
             self._beta: float = 1.0
             self._alpha: float = 0.0
         else:
@@ -53,9 +55,12 @@ class Ewald:
 
             self._beta: float = image.ri.beta
             self._alpha: float = image.ri.alpha
-            self._image_data_available:bool = True
+            self._image_data_available: bool = True
 
         self._lattice_scale: float = 1.0
+
+        # If set to true, the decorated functions will first try to load cached data
+        self.use_cache: bool = True
 
         # Default Spot size in px used in matching calculations
         self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
@@ -323,7 +328,7 @@ class Ewald:
 
         return ax
 
-    def calculate_match(self, normalize: bool = True) -> np.uint32:
+    def calculate_match(self, normalize: bool) -> np.uint32:
         """
         Calculate the match coefficient between calculated spot positions and the RHEED data.
 
@@ -347,17 +352,17 @@ class Ewald:
         image = self.image.data
 
         mask = self._generate_mask()
-       
+
         # Calculate the match coefficient as the sum of masked image intensity
         match_coef = (mask * image).sum(dtype=np.uint32)
 
-        # Optionally normalize (if needed in future)
-        # TODO add more sophisticated normalizations 
+        # Optionally normalize
         if normalize:
-            match_coef = match_coef // len(self.ew_sx)
+            match_coef = np.uint32(match_coef // len(self.ew_sx))
 
         return match_coef
 
+    @smart_cache
     def match_alpha(
         self, alpha_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
@@ -384,8 +389,11 @@ class Ewald:
             self.alpha = alpha
             match_vector[i] = self.calculate_match(normalize=normalize)
 
-        return xr.DataArray(match_vector, dims=["alpha"], coords={"alpha": alpha_vector})
+        return xr.DataArray(
+            match_vector, dims=["alpha"], coords={"alpha": alpha_vector}
+        )
 
+    @smart_cache
     def match_scale(
         self, scale_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
@@ -421,11 +429,14 @@ class Ewald:
             match_vector[i] = self.calculate_match(normalize=normalize)
 
         return xr.DataArray(
-            match_vector, dims=["scale"], coords={"scale": scale_vector}, 
+            match_vector,
+            dims=["scale"],
+            coords={"scale": scale_vector},
         )
 
+    @smart_cache
     def match_alpha_scale(
-        self, phi_vector: NDArray, scale_vector: NDArray, normalize: bool = True
+        self, alpha_vector: NDArray, scale_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
         """
         Calculate the match coefficient for a grid of phi angles and scale values.
@@ -446,7 +457,7 @@ class Ewald:
         """
         """Here we can calculate the matching for a series of different phi angles and lattice constants"""
 
-        match_matrix = np.zeros((len(phi_vector), len(scale_vector)))
+        match_matrix = np.zeros((len(alpha_vector), len(scale_vector)), dtype=np.uint32)
 
         self.ewald_roi = (
             self.ewald_radius
@@ -459,8 +470,8 @@ class Ewald:
             self.lattice_scale = scale
             self.calculate_ewald()
 
-            match_phi = np.zeros_like(phi_vector)
-            for j, alpha in enumerate(phi_vector):
+            match_phi = np.zeros_like(alpha_vector)
+            for j, alpha in enumerate(alpha_vector):
                 self.alpha = alpha
                 match_phi[j] = self.calculate_match(normalize=normalize)
 
@@ -468,8 +479,8 @@ class Ewald:
 
         match_matrix_xr = xr.DataArray(
             match_matrix,
-            dims=["phi", "scale"],
-            coords={"phi": phi_vector, "scale": scale_vector},
+            dims=["alpha", "scale"],
+            coords={"alpha": alpha_vector, "scale": scale_vector},
         )
         return match_matrix_xr
 
