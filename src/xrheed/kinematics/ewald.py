@@ -17,10 +17,17 @@ from .cache_utils import smart_cache
 
 
 class Ewald:
+    """
+    Class for calculating and analyzing the Ewald sphere construction in RHEED.
+
+    This class provides functionality for generating reciprocal lattice spots,
+    simulating their appearance on a RHEED screen, and matching them with
+    experimental data.
+    """
+
     # Class constants
-    # Default spot size in mm
-    SPOT_WIDTH_MM = 1.5
-    SPOT_HEIGHT_MM = 5.0
+    SPOT_WIDTH_MM: float = 1.5  #: Default spot width in mm
+    SPOT_HEIGHT_MM: float = 5.0  #: Default spot height in mm
 
     def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None) -> None:
         """
@@ -31,20 +38,30 @@ class Ewald:
         lattice : Lattice
             Lattice object representing the crystal structure.
         image : Optional[xr.DataArray], optional
-            RHEED image data (default: None).
+            RHEED image data. If None, default values are used.
         """
+
+        self.image: xr.DataArray
+        self.beam_energy: float
+        self.screen_sample_distance: float
+        self.screen_scale: float
+        self.screen_roi_width: float
+        self.screen_roi_height: float
+        self._beta: float
+        self._alpha: float
+        self._image_data_available: bool
 
         if image is None:
             warning("RHEED image is not provided, default values are loaded.")
-            self.beam_energy: float = 18.6 * 1000
-            self.screen_sample_distance: float = 309.2
-            self.screen_scale: float = 9.5
-            self.screen_roi_width: float = 60
-            self.screen_roi_height: float = 80
+            self.beam_energy = 18.6 * 1000
+            self.screen_sample_distance = 309.2
+            self.screen_scale = 9.5
+            self.screen_roi_width = 60
+            self.screen_roi_height = 80
 
-            self._image_data_available: bool = False
-            self._beta: float = 1.0
-            self._alpha: float = 0.0
+            self._image_data_available = False
+            self._beta = 1.0
+            self._alpha = 0.0
         else:
             self.image = image.copy()
             self.beam_energy = image.ri.beam_energy
@@ -53,9 +70,9 @@ class Ewald:
             self.screen_roi_width = image.ri.screen_roi_width
             self.screen_roi_height = image.ri.screen_roi_height
 
-            self._beta: float = image.ri.beta
-            self._alpha: float = image.ri.alpha
-            self._image_data_available: bool = True
+            self._beta = image.ri.beta
+            self._alpha = image.ri.alpha
+            self._image_data_available = True
 
         self._lattice_scale: float = 1.0
 
@@ -91,8 +108,12 @@ class Ewald:
 
     def __repr__(self) -> str:
         """
-        Returns a formatted string representation of the Ewald object,
-        including its label, key parameters, and reciprocal lattice vectors.
+        Return a formatted string representation of the Ewald object.
+
+        Returns
+        -------
+        str
+            Summary of the Ewald parameters and lattice vectors.
         """
         details = (
             f"Ewald Class Object: {self.label}\n"
@@ -112,6 +133,11 @@ class Ewald:
     def __copy__(self) -> "Ewald":
         """
         Create a shallow copy of the Ewald object.
+
+        Returns
+        -------
+        Ewald
+            A new instance with the same parameters.
         """
 
         new_ewald = Ewald(self._lattice, self.image)
@@ -127,9 +153,7 @@ class Ewald:
 
     @property
     def lattice_scale(self) -> float:
-        """
-        Get the lattice scaling factor.
-        """
+        """float: Scaling factor applied to the lattice vectors."""
         return self._lattice_scale
 
     @lattice_scale.setter
@@ -139,9 +163,7 @@ class Ewald:
 
     @property
     def alpha(self) -> float:
-        """
-        Get the azimuthal angle alpha (in degrees).
-        """
+        """float: Incident beam angle (degrees)."""
         return self._alpha
 
     @alpha.setter
@@ -151,9 +173,7 @@ class Ewald:
 
     @property
     def beta(self) -> float:
-        """
-        Get the incident angle beta (in degrees).
-        """
+        """float: Region of interest radius on the Ewald sphere."""
         return self._beta
 
     @beta.setter
@@ -163,9 +183,6 @@ class Ewald:
 
     @property
     def ewald_roi(self) -> float:
-        """
-        Get the Ewald ROI (region of interest) radius.
-        """
         return self._ewald_roi
 
     @ewald_roi.setter
@@ -174,14 +191,30 @@ class Ewald:
         self._inverse_lattice = self._prepare_inverse_lattice()
 
     def set_spot_size(self, width: float, height: float):
+        """
+        Set the spot size used for mask generation.
+
+        Parameters
+        ----------
+        width : float
+            Spot width in mm.
+        height : float
+            Spot height in mm.
+        """
         self._spot_w_px = int(width * self.screen_scale)
         self._spot_h_px = int(height * self.screen_scale)
         self.spot_structure = self._generate_spot_structure()
 
     def calculate_ewald(self, **kwargs) -> None:
         """
-        Calculate the Ewald construction and spot positions for the current parameters.
-        Updates self.sx and self.sy with spot coordinates.
+        Calculate the Ewald construction and update spot positions.
+
+        Updates
+        -------
+        self.ew_sx : np.ndarray
+            Spot x-coordinates (mm).
+        self.ew_sy : np.ndarray
+            Spot y-coordinates (mm).
         """
 
         ewald_radius = self.ewald_radius
@@ -237,17 +270,19 @@ class Ewald:
             Matplotlib axes to plot on. If None, a new figure is created.
         show_image : bool, optional
             If True, plot the RHEED image (default: True).
+        show_roi : bool, optional
+            If True, overlay the ROI boundary (default: False).
         auto_levels : float, optional
-            Contrast enhancement for image plotting.
+            Contrast enhancement factor for image plotting.
         show_center_lines : bool, optional
-            If True, show center lines at x=0 and y=0.
+            If True, plot center cross lines (default: False).
         **kwargs
-            Additional keyword arguments for scatter plot.
+            Additional keyword arguments for the scatter plot.
 
         Returns
         -------
         plt.Axes
-            The axes with the plotted image and spots.
+            The axes with the plotted data.
         """
 
         if ax is None:
@@ -330,21 +365,17 @@ class Ewald:
 
     def calculate_match(self, normalize: bool) -> np.uint32:
         """
-        Calculate the match coefficient between calculated spot positions and the RHEED data.
-
-        This method converts physical coordinates (in mm) of expected spot positions into pixel indices
-        using the known screen scale, applies a binary mask with elliptical spot dilation, and computes
-        the match coefficient by summing the masked image intensity.
+        Calculate the match coefficient between predicted and observed spots.
 
         Parameters
         ----------
-        normalize : bool, optional
-            If True, normalize the match coefficient (default: True).
+        normalize : bool
+            If True, normalize the coefficient by the number of spots.
 
         Returns
         -------
-        float
-            The match coefficient indicating how well the calculated spots match the image.
+        np.uint32
+            Match coefficient.
         """
 
         assert self._image_data_available, "Image data is not available"
@@ -358,7 +389,10 @@ class Ewald:
 
         # Optionally normalize
         if normalize:
-            match_coef = np.uint32(match_coef // len(self.ew_sx))
+            norm_coef = np.uint32(
+                np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
+            )
+            match_coef = np.uint32(match_coef // norm_coef)
 
         return match_coef
 
@@ -367,21 +401,20 @@ class Ewald:
         self, alpha_vector: NDArray, normalize: bool = True
     ) -> xr.DataArray:
         """
-        Calculate the match coefficient for a series of phi (azimuthal) angles.
+        Calculate match coefficients over a range of azimuthal angles.
 
         Parameters
         ----------
-        alpha_vector : NDArray
-            Array of alpha (azimuthal) angles to test.
+        alpha_vector : NDArray[np.float64]
+            Array of alpha (azimuthal) angles in degrees.
         normalize : bool, optional
-            If True, normalize the match coefficient (default: True).
+            If True, normalize the coefficients (default: True).
 
         Returns
         -------
         xr.DataArray
-            Match coefficients for each phi angle.
+            Match coefficients with alpha as coordinate.
         """
-        """Here we can calculate the matching for a series of different phi angles"""
 
         match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
@@ -486,12 +519,12 @@ class Ewald:
 
     def _prepare_inverse_lattice(self) -> NDArray:
         """
-        Prepare the inverse lattice points for the current ROI.
+        Generate reciprocal lattice points for the current ROI.
 
         Returns
         -------
-        NDArray
-            Array of inverse lattice points.
+        NDArray[np.float64]
+            Inverse lattice points as an array of shape (N, 2).
         """
         lattice = self._lattice
         space_size = self._ewald_roi
@@ -502,12 +535,12 @@ class Ewald:
 
     def _generate_spot_structure(self) -> NDArray:
         """
-        Generate a boolean mask for the spot structure (ellipse shape).
+        Generate a binary elliptical spot structure.
 
         Returns
         -------
-        np.ndarray
-            Boolean mask for spot shape.
+        NDArray[np.bool_]
+            Boolean array mask for the spot shape.
         """
 
         # Define dimensions
@@ -538,7 +571,14 @@ class Ewald:
     # lattice stalling
 
     def _generate_mask(self):
+        """
+        Generate a mask for predicted spot positions in the image.
 
+        Returns
+        -------
+        NDArray[np.bool_]
+            Boolean mask of the same shape as the RHEED image.
+        """
         image = self.image
         screen_scale = self.screen_scale
         screen_roi_width = self.screen_roi_width
