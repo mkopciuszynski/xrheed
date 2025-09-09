@@ -387,9 +387,8 @@ class Ewald:
 
         # Optionally normalize
         if normalize:
-            norm_coef = np.uint32(
-                np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
-            )
+            norm_coef = np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
+            norm_coef = np.uint32(norm_coef)
             match_coef = np.uint32(match_coef // norm_coef)
 
         return match_coef
@@ -467,26 +466,33 @@ class Ewald:
 
     @smart_cache
     def match_alpha_scale(
-        self, alpha_vector: NDArray, scale_vector: NDArray, normalize: bool = True
+        self,
+        alpha_vector: NDArray,
+        scale_vector: NDArray,
+        normalize: bool = True,
+        flatten: bool = True,
     ) -> xr.DataArray:
         """
-        Calculate the match coefficient for a grid of phi angles and scale values.
+        Calculate the match coefficient for a grid of alpha angles and scale values.
 
         Parameters
         ----------
-        phi_vector : NDArray
-            Array of phi angles to test.
+        alpha_vector : NDArray
+            Array of azimuthal angles to test.
         scale_vector : NDArray
             Array of scale values to test.
         normalize : bool, optional
             If True, normalize the match coefficient (default: True).
+        flatten : bool, optional
+            If True, the result map is flatten by subtracting quadratic
+            background fitted along scale direction
+              (default: True).
 
         Returns
         -------
         xr.DataArray
-            Match coefficients for each (phi, scale) pair.
+            Match coefficients for each (alpha, scale) pair.
         """
-        """Here we can calculate the matching for a series of different phi angles and lattice constants"""
 
         match_matrix = np.zeros((len(alpha_vector), len(scale_vector)), dtype=np.uint32)
 
@@ -507,6 +513,20 @@ class Ewald:
                 match_phi[j] = self.calculate_match(normalize=normalize)
 
             match_matrix[:, i] = match_phi
+
+        if flatten:
+            # Step 1: Mean over alpha
+            mean_profile = match_matrix.mean(axis=0)
+
+            # Step 2: Fit quadratic
+            scale_vals = np.arange(match_matrix.shape[1])  # or use actual scale values
+            coeffs = np.polyfit(scale_vals, mean_profile, deg=2)
+            background_fit = np.poly1d(coeffs)(scale_vals)
+
+            # Step 3: Subtract background
+            match_matrix = match_matrix - background_fit
+
+        match_matrix -= match_matrix.min()
 
         match_matrix_xr = xr.DataArray(
             match_matrix,
