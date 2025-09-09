@@ -1,3 +1,4 @@
+import numpy as np
 import xarray as xr
 from scipy.ndimage import gaussian_filter, gaussian_filter1d
 
@@ -96,6 +97,9 @@ def high_pass_filter(
 
     high_pass_image_values = rheed_image_values - threshold * blurred_image_values
     high_pass_image_values -= high_pass_image_values.min()
+
+    # Clip to valid uint8 range and cast
+    high_pass_image_values = np.clip(high_pass_image_values, 0, 255).astype(np.uint8)
 
     high_pass_image.values = high_pass_image_values
 

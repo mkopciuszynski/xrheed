@@ -1,5 +1,17 @@
 # Changelog
 
+<a name="0.3.0"></a>
+## [0.3.0] – 2025-09-09
+- New argument: show_specular_spot available in plot_image
+- New example notebook showing how to search for lattice constant and azimuthal orientation for a given RHEED data.
+- A major update in the Ewald class including:
+    - Ewald matching functions rewritten
+    - Added decorator that saves the matching results to cache dill files
+    - New constants
+    - Type hints
+    - Better docstring
+
+
 <a name="0.2.0"></a>
 ## [0.2.0] – 2025-09-04
 - A major update in the documentation

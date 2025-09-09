@@ -244,6 +244,7 @@ class RHEEDAccessor:
         ax: plt.Axes | None = None,
         auto_levels: float = 0.0,
         show_center_lines: bool = True,
+        show_specular_spot: bool = True,
         **kwargs,
     ) -> plt.Axes:
         """Plot RHEED image.
@@ -259,6 +260,8 @@ class RHEEDAccessor:
         show_center_lines : bool, optional
             If True, draw horizontal and vertical lines at the center of the image.
             Default is True.
+        show_specular_spot : bool, optional
+            If True, overlay the specularly reflected spot on the image.
         **kwargs : dict
             Additional keyword arguments passed to the plotting function.
         Returns
@@ -275,6 +278,7 @@ class RHEEDAccessor:
             ax=ax,
             auto_levels=auto_levels,
             show_center_lines=show_center_lines,
+            show_specular_spot=show_specular_spot,
             **kwargs,
         )
 
