@@ -12,7 +12,7 @@ in environments such as Jupyter notebooks. It is **not a GUI application**.
 """
 
 import logging
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 from . import xarray_accessors as xarray_accessors
 

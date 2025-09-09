@@ -180,5 +180,6 @@ cython_debug/
 # VS Code directory
 .vscode/
 
-# Treat all raw files as binary
+# Treat raw and dill files as binary
 *.raw binary
+*.dill binary

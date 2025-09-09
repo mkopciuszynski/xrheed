@@ -13,3 +13,4 @@ This section provides hands-on tutorials for **xRHEED**.
    notebooks/ewald_construction
    notebooks/ewald_kxky_transformation
    notebooks/ewald_kxky_transformation_advanced
+   notebooks/ewald_spot_matching
