@@ -361,7 +361,7 @@ class Ewald:
 
         return ax
 
-    def calculate_match(self, normalize: bool) -> np.uint32:
+    def calculate_match(self, normalize: bool = True) -> np.uint32:
         """
         Calculate the match coefficient between predicted and observed spots.
 
@@ -387,8 +387,7 @@ class Ewald:
 
         # Optionally normalize
         if normalize:
-            norm_coef = np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
-            norm_coef = np.uint32(norm_coef)
+            norm_coef = np.uint32(np.count_nonzero(mask) // np.count_nonzero(self.spot_structure))
             match_coef = np.uint32(match_coef // norm_coef)
 
         return match_coef
