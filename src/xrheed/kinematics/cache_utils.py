@@ -1,7 +1,7 @@
 import functools
 from pathlib import Path
 
-import dill
+import dill  # type: ignore
 
 
 def smart_cache(method):
@@ -29,8 +29,8 @@ def smart_cache(method):
             return method(self, *args, **kwargs)
 
         # Build filename: cache_function_name.dill
-        filename = f"cache_{method.__name__}.dill"
-        cache_dir = Path(getattr(self, "cache_dir", "cache"))
+        filename: str = f"cache_{method.__name__}.dill"
+        cache_dir: Path = Path(getattr(self, "cache_dir", "cache"))
 
         cache_dir.mkdir(exist_ok=True)
 
