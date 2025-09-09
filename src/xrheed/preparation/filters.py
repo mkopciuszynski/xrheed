@@ -1,12 +1,13 @@
 import numpy as np
 import xarray as xr
-from scipy.ndimage import gaussian_filter, gaussian_filter1d
+from numpy.typing import NDArray
+from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
 
 def gaussian_filter_profile(
     profile: xr.DataArray,
     sigma: float = 1.0,
-):
+) -> xr.DataArray:
     """
     Apply a 1D Gaussian filter to a 1D xarray.DataArray profile.
 
@@ -25,23 +26,23 @@ def gaussian_filter_profile(
     assert isinstance(profile, xr.DataArray), "profile must be an xarray.DataArray"
     assert profile.ndim == 1, "profile must have only one dimension"
 
-    values = profile.values
+    values: NDArray = profile.values
 
     # Calculate the spacing between coordinates
-    coords = profile.coords[profile.dims[0]].values
+    coords: NDArray = profile.coords[profile.dims[0]].values
     if len(coords) < 2:
         raise ValueError(
             "profile coordinate must have at least two points to determine spacing"
         )
-    spacing = float(coords[1] - coords[0])
-    if spacing == 0:
+    spacing: float = float(coords[1] - coords[0])
+    if abs(spacing) < 1e-5:
         raise ValueError("profile coordinate spacing cannot be zero")
 
-    sigma_px = sigma / spacing
+    sigma_px: float = sigma / spacing
 
-    filtered_values = gaussian_filter1d(values, sigma=sigma_px)
+    filtered_values: NDArray = gaussian_filter1d(values, sigma=sigma_px)
 
-    filtered_profile = xr.DataArray(
+    filtered_profile: xr.DataArray = xr.DataArray(
         filtered_values,
         coords=profile.coords,
         dims=profile.dims,
@@ -86,16 +87,18 @@ def high_pass_filter(
     ), "rheed_image must have 'screen_scale' attribute"
 
     # Create a copy of the input image to avoid modifying the original
-    high_pass_image = rheed_image.copy()
+    high_pass_image: xr.DataArray = rheed_image.copy()
 
-    sigma_px = sigma * rheed_image.ri.screen_scale
+    sigma_px: float = sigma * rheed_image.ri.screen_scale
 
-    rheed_image_values = rheed_image.values
+    rheed_image_values: NDArray = rheed_image.values
 
     # Apply Gaussian filter to the image
-    blurred_image_values = gaussian_filter(rheed_image_values, sigma=sigma_px)
+    blurred_image_values: NDArray = gaussian_filter(rheed_image_values, sigma=sigma_px)
 
-    high_pass_image_values = rheed_image_values - threshold * blurred_image_values
+    high_pass_image_values: NDArray = (
+        rheed_image_values - threshold * blurred_image_values
+    )
     high_pass_image_values -= high_pass_image_values.min()
 
     # Clip to valid uint8 range and cast
