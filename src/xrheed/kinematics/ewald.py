@@ -387,7 +387,9 @@ class Ewald:
 
         # Optionally normalize
         if normalize:
-            norm_coef = np.uint32(np.count_nonzero(mask) // np.count_nonzero(self.spot_structure))
+            norm_coef = np.uint32(
+                np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
+            )
             match_coef = np.uint32(match_coef // norm_coef)
 
         return match_coef
