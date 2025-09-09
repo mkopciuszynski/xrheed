@@ -14,16 +14,8 @@ def smart_cache(method):
 
     Attributes expected on the class:
     - use_cache (bool): If True, enables caching behavior.
-    - cache_dir (str or Path): Directory where cache files are stored. Defaults to 'calculated_data'.
+    - cache_dir (str or Path): Directory where cache files are stored. Defaults to 'cache'.
 
-    Example usage:
-        class MyClass:
-            use_cache = True
-            cache_dir = "calculated_data"
-
-            @smart_cache
-            def expensive_computation(self, x):
-                return x ** 2
 
     Notes:
     - The cache filename is deterministic: `cache_<method_name>.dill`
