@@ -182,4 +182,5 @@ cython_debug/
 
 # Treat raw and dill files as binary
 *.raw binary
+*.BPM binary
 *.dill binary
