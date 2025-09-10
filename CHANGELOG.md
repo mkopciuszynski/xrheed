@@ -1,5 +1,15 @@
 # Changelog
 
+<a name="0.4.0"></a>
+## [0.4.0] – 2025-09-11
+- Refactored LoadRheedBase to use an abstract base class with __init_subclass__ validation.
+- Enforced presence of required ATTRS keys in all plugins.
+- Added dsnp_arpes_bmp plugin to support BMP image loading via Pillow.
+- Implemented automatic plugin discovery in xrheed/__init__.py.
+- Refactored test suite to dynamically validate all supported plugins and file types.
+- Updated CONTRIBUTING.md
+
+
 <a name="0.3.0"></a>
 ## [0.3.0] – 2025-09-09
 - New argument: show_specular_spot available in plot_image
