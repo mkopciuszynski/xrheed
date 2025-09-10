@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np

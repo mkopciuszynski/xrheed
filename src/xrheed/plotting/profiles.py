@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 
 import matplotlib.pyplot as plt
-import numpy as np
 import xarray as xr
 from matplotlib.axes import Axes
 from numpy.typing import NDArray
