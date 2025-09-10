@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
-from scipy import ndimage
+from numpy.typing import NDArray
+from scipy import ndimage  # type: ignore
 
 from .base import convert_gx_gy_to_sx_sy
 
@@ -27,18 +28,24 @@ def transform_image_to_kxky(
     """
 
     # prepare the data for calculations
-    screen_sample_distance = rheed_image.ri.screen_sample_distance
-    beta = rheed_image.ri.beta
-    alpha = rheed_image.ri.alpha
+    screen_sample_distance: float = rheed_image.ri.screen_sample_distance
+    beta: float = rheed_image.ri.beta
+    alpha: float = rheed_image.ri.alpha
 
-    ewald_radius = np.sqrt(rheed_image.ri.beam_energy) * 0.5123
+    ewald_radius: float = np.sqrt(rheed_image.ri.beam_energy) * 0.5123
 
     # new coordinates for transformation
     # TODO add the parameter that allows to set kx, ky
-    kx = np.arange(-10, 10, 0.01, dtype=np.float32)
-    ky = np.arange(-10, 10, 0.01, dtype=np.float32)
+    kx: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
+    ky: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
+
+    gx: NDArray[np.float32]
+    gy: NDArray[np.float32]
 
     gx, gy = np.meshgrid(kx, ky, indexing="ij")
+
+    sx_to_kx: NDArray[np.float32]
+    sy_to_ky: NDArray[np.float32]
 
     sx_to_kx, sy_to_ky = convert_gx_gy_to_sx_sy(
         gx,
@@ -50,10 +57,14 @@ def transform_image_to_kxky(
     )
 
     # relation between old and new
-    sx = xr.DataArray(sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
-    sy = xr.DataArray(sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
+    sx: xr.DataArray = xr.DataArray(
+        sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky}
+    )
+    sy: xr.DataArray = xr.DataArray(
+        sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky}
+    )
 
-    trans_image = rheed_image.interp(sx=sx, sy=sy, method="linear")
+    trans_image: xr.DataArray = rheed_image.interp(sx=sx, sy=sy, method="linear")
 
     if rotate:
         trans_image_rotated = _rotate_trans_image(trans_image, alpha)
@@ -100,17 +111,20 @@ def _rotate_trans_image(
         raise ValueError("rotate_xarray requires kx and ky coordinates to be identical")
 
     # Build mask for NaNs
-    nan_mask = ~np.isnan(trans_image.values)
-    filled = trans_image.fillna(0)
+    nan_mask: NDArray[np.bool_] = ~np.isnan(trans_image.values)
+    filled: xr.DataArray = trans_image.fillna(0)
 
     # Rotate data and mask
-    rotated_data = ndimage.rotate(
+    rotated_data: NDArray[np.uint8] = ndimage.rotate(
         filled.values, angle, reshape=False, mode=mode, order=1
-    )
-    rotated_mask = (
-        ndimage.rotate(nan_mask.astype(int), angle, reshape=False, mode=mode, order=0)
+    ).astype(np.uint8)
+
+    rotated_mask: NDArray[np.bool_] = (
+        ndimage.rotate(
+            nan_mask.astype(np.uint8), angle, reshape=False, mode=mode, order=0
+        )
         > 0
-    )
+    ).astype(np.bool)
 
     # Wrap back into DataArray, reusing same coords/dims
     rotated = xr.DataArray(

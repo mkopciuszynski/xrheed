@@ -1,16 +1,20 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from matplotlib.axes import Axes
+from numpy.typing import NDArray
 
 
 def plot_image(
     rheed_image: xr.DataArray,
-    ax: plt.Axes | None = None,
+    ax: Optional[Axes] = None,
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
     show_specular_spot: bool = False,
     **kwargs,
-) -> plt.Axes:
+) -> Axes:
     """
     Plot a RHEED image using matplotlib.
 
@@ -58,8 +62,8 @@ def plot_image(
             0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100
         )
 
-    roi_width = rheed_image.ri.screen_roi_width
-    roi_height = rheed_image.ri.screen_roi_height
+    roi_width: float = rheed_image.ri.screen_roi_width
+    roi_height: float = rheed_image.ri.screen_roi_height
 
     ax.set_aspect(1)
     ax.set_xlim(-roi_width, roi_width)
@@ -91,22 +95,22 @@ def _set_auto_levels(
     """
 
     # Extract ROI based on screen dimensions from the xarray accessor
-    screen_roi_width = image.ri.screen_roi_width
-    screen_roi_height = image.ri.screen_roi_height
+    screen_roi_width: float = image.ri.screen_roi_width
+    screen_roi_height: float = image.ri.screen_roi_height
 
     roi_image = image.sel(
         sx=slice(-screen_roi_width, screen_roi_width), sy=slice(-screen_roi_height, 0)
     )
 
     # Flatten, exclude NaNs
-    values = roi_image.values.ravel()
+    values: NDArray[np.uint8] = roi_image.values.ravel()
     values = values[~np.isnan(values)]
 
     # Compute clipped percentiles
-    low_percentile = auto_levels
-    high_percentile = 100 - auto_levels
+    low_percentile: float = auto_levels
+    high_percentile: float = 100 - auto_levels
 
-    vmin = np.percentile(values, low_percentile)
-    vmax = np.percentile(values, high_percentile)
+    vmin: float = float(np.percentile(values, low_percentile))
+    vmax: float = float(np.percentile(values, high_percentile))
 
-    return float(vmin), float(vmax)
+    return vmin, vmax

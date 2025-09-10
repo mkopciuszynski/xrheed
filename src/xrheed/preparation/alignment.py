@@ -1,6 +1,7 @@
-import lmfit as lf
+import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
+from numpy.typing import NDArray
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
@@ -20,9 +21,9 @@ def find_horizontal_center(image: xr.DataArray) -> float:
         The sx-coordinate of the horizontal center.
     """
 
-    profile = image.sum("sy")
-    profile_smoothed = gaussian_filter_profile(profile, sigma=1.0)
-    max_pos = profile_smoothed.sx.values[np.argmax(profile_smoothed.values)]
+    profile: xr.DataArray = image.sum("sy")
+    profile_smoothed: xr.DataArray = gaussian_filter_profile(profile, sigma=1.0)
+    max_pos: float = profile_smoothed.sx.values[np.argmax(profile_smoothed.values)]
 
     # TODO improve this adding additional horizontal_center search
 
@@ -46,35 +47,35 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
         The y-coordinate of the vertical center.
     """
 
-    x_range = 20.0
-    x_mirror_spot_size = 3.0
+    x_range: float = 20.0
+    x_mirror_spot_size: float = 3.0
 
-    profile = image.where(
+    profile: xr.DataArray = image.where(
         ((image.sx >= -x_range) & (image.sx <= -x_mirror_spot_size))
         | ((image.sx >= x_mirror_spot_size) & (image.sx <= x_range)),
         drop=True,
     ).sum(dim="sx")
 
-    sigma = shadow_edge_width * 0.1
-    profile_smoothed = gaussian_filter_profile(profile, sigma=sigma)
+    sigma: float = shadow_edge_width * 0.1
+    profile_smoothed: xr.DataArray = gaussian_filter_profile(profile, sigma=sigma)
+    max_idx: int = int(np.argmax(profile_smoothed.values))
 
-    max_idx = profile_smoothed.argmax()
-    subprofile = profile_smoothed.isel(sy=slice(max_idx.item(), None))
+    subprofile: xr.DataArray = profile_smoothed.isel(sy=slice(max_idx, None))
 
     # Prepare data for fitting
-    sx = subprofile["sy"].values
-    sy = subprofile
+    sx: NDArray = subprofile["sy"].values
+    sy: NDArray = subprofile.values
 
     sy -= sy.min()
     sy /= sy.max()
 
-    sigmoid_model = lf.Model(_linear_plus_sigmoid)
+    sigmoid_model: lf.Model = lf.Model(_linear_plus_sigmoid)
 
     params = sigmoid_model.make_params(a=0.0, b=0.0, L=1.0, k=0.1, x0=0.0)
 
     result = sigmoid_model.fit(sy, params=params, x=sx)
-    sigmoid_center = result.params["x0"].value
-    sigmoid_k = result.params["k"].value
+    sigmoid_center: float = result.params["x0"].value
+    sigmoid_k: float = result.params["k"].value
 
     return sigmoid_center - sigmoid_k * 3.0
 
@@ -103,29 +104,31 @@ def find_incident_angle(
         Angle beta in degrees.
     """
 
-    screen_sample_distance = image.ri.screen_sample_distance
+    screen_sample_distance: float = image.ri.screen_sample_distance
 
     # Sum along y (or x) to get a 1D profile.
     # Here summing over 'y' to get vertical profile along x.
-    vertical_profile = image.sel(sx=slice(*x_range), sy=slice(*y_range)).sum("sx")
+    vertical_profile: xr.DataArray = image.sel(
+        sx=slice(*x_range), sy=slice(*y_range)
+    ).sum("sx")
 
     # Transmission spot: y > 0
-    trans_part = vertical_profile.sel(sy=slice(0, 30))
-    x_trans = trans_part.sy[np.argmax(trans_part.values)].item()
+    trans_part: xr.DataArray = vertical_profile.sel(sy=slice(0, 30))
+    x_trans: NDArray = trans_part.sy[np.argmax(trans_part.values)].item()
 
     # Mirror spot: y < 0
-    mirr_part = vertical_profile.sel(sy=slice(-30, 0))
-    x_mirr = mirr_part.sy[np.argmax(mirr_part.values)].item()
+    mirr_part: xr.DataArray = vertical_profile.sel(sy=slice(-30, 0))
+    x_mirr: NDArray = mirr_part.sy[np.argmax(mirr_part.values)].item()
 
     # Calculate distance and shadow edge
-    spot_distance = x_trans - x_mirr
-    shadow_edge = 0.5 * (x_trans + x_mirr)
+    spot_distance: float = float(x_trans - x_mirr)
+    shadow_edge: float = float(0.5 * (x_trans + x_mirr))
 
     # Calculate beta in radians
-    beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
+    beta_rad: float = np.arctan(0.5 * spot_distance / screen_sample_distance)
 
     # Convert to degrees
-    beta_deg = np.degrees(beta_rad)
+    beta_deg: float = np.degrees(beta_rad)
 
     print(f"Transmission spot at: {x_trans:.2f}")
     print(f"Mirror spot at: {x_mirr:.2f}")
@@ -137,13 +140,13 @@ def find_incident_angle(
 
 
 # Define sigmoid function for fitting
-def _sigmoid(x: np.ndarray, amp: float, k: float, x0: float, back: float) -> np.ndarray:
+def _sigmoid(x: NDArray, amp: float, k: float, x0: float, back: float) -> NDArray:
     """
     Sigmoid function used for fitting shadow edges.
 
     Parameters
     ----------
-    x : np.ndarray
+    x : NDArray
         Input values.
     amp : float
         Amplitude.
@@ -156,7 +159,7 @@ def _sigmoid(x: np.ndarray, amp: float, k: float, x0: float, back: float) -> np.
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Sigmoid function values.
     """
     return amp / (1 + np.exp(-k * (x - x0))) + back
@@ -164,14 +167,14 @@ def _sigmoid(x: np.ndarray, amp: float, k: float, x0: float, back: float) -> np.
 
 # Model: Linear + Sigmoid
 def _linear_plus_sigmoid(
-    x: np.ndarray, a: float, b: float, L: float, k: float, x0: float
-) -> np.ndarray:
+    x: NDArray, a: float, b: float, L: float, k: float, x0: float
+) -> NDArray:
     """
     Linear plus sigmoid model for fitting shadow edges.
 
     Parameters
     ----------
-    x : np.ndarray
+    x : NDArray
         Input values.
     a : float
         Linear slope.
@@ -186,7 +189,7 @@ def _linear_plus_sigmoid(
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Model values.
     """
     return a * x + b + L / (1 + np.exp(-k * (x - x0)))

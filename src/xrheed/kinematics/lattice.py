@@ -52,15 +52,21 @@ class Lattice:
             ValueError: If the provided vectors are invalid or cannot be validated.
         """
 
-        self.label = label
+        self.label: Optional[str] = label
 
-        self.a1 = Lattice._validate_vector(a1)
-        self.a2 = Lattice._validate_vector(a2)
+        self.a1: Vector = Lattice._validate_vector(a1)
+        self.a2: Vector = Lattice._validate_vector(a2)
 
+        self.b1: Vector
+        self.b2: Vector
         self.b1, self.b2 = Lattice._calc_reciprocal_vectors(self.a1, self.a2)
 
-        self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self.real_lattice: NDArray[np.float32] = Lattice.generate_lattice(
+            self.a1, self.a2
+        )
+        self.reciprocal_lattice: NDArray[np.float32] = Lattice.generate_lattice(
+            self.b1, self.b2
+        )
 
     def __copy__(self) -> Lattice:
         """
@@ -435,7 +441,7 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
         alpha (float): Rotation angle in degrees.
 
     Returns:
-        np.ndarray: 3x3 rotation matrix for rotation about the z-axis.
+        NDArray[np.float32]: 3x3 rotation matrix for rotation about the z-axis.
     """
     alpha_rad = np.float32(np.deg2rad(alpha))
 

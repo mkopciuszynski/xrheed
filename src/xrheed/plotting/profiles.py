@@ -1,19 +1,22 @@
 from __future__ import annotations
 
+from typing import Optional
+
 import matplotlib.pyplot as plt
-import numpy as np
 import xarray as xr
+from matplotlib.axes import Axes
+from numpy.typing import NDArray
 
 from xrheed.conversion.base import convert_sx_to_ky
 
 
 def plot_profile(
     rheed_profile: xr.DataArray,
-    ax: plt.Axes | None = None,
+    ax: Optional[Axes] = None,
     transform_to_k: bool = True,
     normalize: bool = True,
     **kwargs,
-) -> plt.Axes:
+) -> Axes:
     """
     Plot a RHEED intensity profile, optionally normalizing and transforming to kx.
 
@@ -38,20 +41,21 @@ def plot_profile(
     if ax is None:
         fig, ax = plt.subplots(figsize=(3.5, 2))
 
-    profile = rheed_profile.copy()
+    profile: xr.DataArray = rheed_profile.copy()
 
     if normalize:
         # Normalize the profile
-        normalized = profile - np.min(profile)
-        normalized = normalized / np.max(normalized)
+        normalized: xr.DataArray = profile - profile.min()
+        normalized = normalized / normalized.max()
+
         profile.values = normalized.values
         profile.attrs = rheed_profile.attrs.copy()
 
     if transform_to_k:
-        k_e = profile.ri.ewald_sphere_radius
-        screen_sample_distance = profile.ri.screen_sample_distance
+        k_e: float = profile.ri.ewald_sphere_radius
+        screen_sample_distance: float = profile.ri.screen_sample_distance
 
-        sx = profile.coords["sx"].data
+        sx: NDArray = profile.coords["sx"].values
 
         kx = convert_sx_to_ky(
             sx,

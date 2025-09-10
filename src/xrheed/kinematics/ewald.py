@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
-from scipy import ndimage
+from scipy import ndimage  # type: ignore
 from tqdm.notebook import tqdm
 
 from ..conversion.base import convert_gx_gy_to_sx_sy
@@ -89,19 +89,21 @@ class Ewald:
         self.fine_scalling: float = 1.0
 
         # Ewald sphere radius
-        self.ewald_radius = np.sqrt(self.beam_energy) * 0.5123
+        self.ewald_radius: float = np.sqrt(self.beam_energy) * 0.5123
 
-        self._ewald_roi = self.ewald_radius * (
+        self._ewald_roi: float = self.ewald_radius * (
             self.screen_roi_width / self.screen_sample_distance
         )
         # Lattice and its inverse
-        self._lattice = copy.deepcopy(lattice)
-        self._inverse_lattice = self._prepare_inverse_lattice()
-        self._inverse_lattice = self._prepare_inverse_lattice()
-        self.label = lattice.label
+        self._lattice: Lattice = copy.deepcopy(lattice)
+        self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
+        self.label: Optional[str] = lattice.label
 
         # Mirror symmetry
-        self.mirror = False
+        self.mirror: bool = False
+
+        self.ew_sx: NDArray[np.float32]
+        self.ew_sy: NDArray[np.float32]
 
         self.calculate_ewald()
 
@@ -210,31 +212,34 @@ class Ewald:
 
         Updates
         -------
-        self.ew_sx : np.ndarray
+        self.ew_sx : NDArray
             Spot x-coordinates (mm).
-        self.ew_sy : np.ndarray
+        self.ew_sy : NDArray
             Spot y-coordinates (mm).
         """
 
-        ewald_radius = self.ewald_radius
-        alpha = self._alpha
-        beta = self._beta
-        screen_sample_distance = self.screen_sample_distance
+        ewald_radius: float = self.ewald_radius
+        alpha: float = self._alpha
+        beta: float = self._beta
+        screen_sample_distance: float = self.screen_sample_distance
 
-        inverse_lattice = self._inverse_lattice.copy()
+        inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
 
         if alpha != 0:
             inverse_lattice = inverse_lattice @ rotation_matrix(alpha).T
 
-        gx = inverse_lattice[:, 0] / self._lattice_scale
-        gy = inverse_lattice[:, 1] / self._lattice_scale
+        gx: NDArray[np.float32] = inverse_lattice[:, 0] / self._lattice_scale
+        gy: NDArray[np.float32] = inverse_lattice[:, 1] / self._lattice_scale
 
         # calculate the spot positions
+        sx: NDArray[np.float32]
+        sy: NDArray[np.float32]
+
         sx, sy = convert_gx_gy_to_sx_sy(
             gx, gy, ewald_radius, beta, screen_sample_distance, remove_outside=True
         )
 
-        ind = (
+        ind: NDArray[np.bool_] = (
             (sx > -self.screen_roi_width)
             & (sx < self.screen_roi_width)
             & (sy < self.screen_roi_height)
@@ -322,7 +327,7 @@ class Ewald:
         if "marker" not in kwargs:
             kwargs["marker"] = "|"
 
-        fine_scaling = self.fine_scalling
+        fine_scaling: float = self.fine_scalling
 
         ax.scatter(
             (self.ew_sx + self.shift_x) * fine_scaling,
@@ -495,9 +500,11 @@ class Ewald:
             Match coefficients for each (alpha, scale) pair.
         """
 
-        match_matrix = np.zeros((len(alpha_vector), len(scale_vector)), dtype=np.uint32)
+        match_matrix: NDArray[np.uint32] = np.zeros(
+            (len(alpha_vector), len(scale_vector)), dtype=np.uint32
+        )
 
-        self.ewald_roi = (
+        self._ewald_roi = (
             self.ewald_radius
             * (self.screen_roi_width / self.screen_sample_distance)
             * scale_vector.max()
@@ -536,13 +543,13 @@ class Ewald:
         )
         return match_matrix_xr
 
-    def _prepare_inverse_lattice(self) -> NDArray:
+    def _prepare_inverse_lattice(self) -> NDArray[np.float32]:
         """
         Generate reciprocal lattice points for the current ROI.
 
         Returns
         -------
-        NDArray[np.float64]
+        NDArray[np.float32]
             Inverse lattice points as an array of shape (N, 2).
         """
         lattice = self._lattice
@@ -552,7 +559,7 @@ class Ewald:
         )
         return inverse_lattice
 
-    def _generate_spot_structure(self) -> NDArray:
+    def _generate_spot_structure(self) -> NDArray[np.bool_]:
         """
         Generate a binary elliptical spot structure.
 
@@ -589,7 +596,7 @@ class Ewald:
     # TODO prepare calculate match for a list of phi angles next we will do the same for a list of
     # lattice stalling
 
-    def _generate_mask(self):
+    def _generate_mask(self) -> NDArray[np.bool_]:
         """
         Generate a mask for predicted spot positions in the image.
 
@@ -627,10 +634,12 @@ class Ewald:
         ppy = ppy[valid]
 
         # Build mask
-        mask = np.zeros(image.shape, dtype=bool)
+        mask: NDArray[np.bool_] = np.zeros_like(image, dtype=np.bool_)
         mask[ppy, ppx] = True
 
         # Apply dilation
-        mask = ndimage.binary_dilation(mask, structure=self.spot_structure)
+        mask = ndimage.binary_dilation(mask, structure=self.spot_structure).astype(
+            np.bool_
+        )
 
         return mask

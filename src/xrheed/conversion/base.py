@@ -1,17 +1,18 @@
 from typing import Optional, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def convert_sx_to_ky(
-    x_coords_mm: np.ndarray,
+    x_coords_mm: NDArray,
     ewald_sphere_radius: float,
     screen_sample_distance_mm: float,
-) -> np.ndarray:
+) -> NDArray:
     """Convert sx coordinates from mm to ky [1/Å] using the Ewald sphere radius and screen-sample distance.
     Parameters
     ----------
-    x_coords_mm : np.ndarray
+    x_coords_mm : NDArray
         Array of x coordinates in millimeters (mm).
     ewald_sphere_radius : float
         Radius of the Ewald sphere in reciprocal space (1/Å).
@@ -20,33 +21,33 @@ def convert_sx_to_ky(
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Converted x coordinates in ky [1/Å].
     """
 
-    kx = (x_coords_mm / screen_sample_distance_mm) * ewald_sphere_radius
+    kx: NDArray = (x_coords_mm / screen_sample_distance_mm) * ewald_sphere_radius
 
     return kx
 
 
 def convert_gx_gy_to_sx_sy(
-    gx: np.ndarray,
-    gy: np.ndarray,
+    gx: NDArray[np.float32],
+    gy: NDArray[np.float32],
     ewald_radius: float,
     beta: float,
     screen_sample_distance: float,
     remove_outside: Optional[bool] = True,
     **kwargs,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NDArray[np.float32], NDArray[np.float32]]:
     """
     Convert reciprocal lattice coordinates (gx, gy) to RHEED screen coordinates (sx, sy)
     using the Ewald sphere construction.
 
     Parameters
     ----------
-    gx : np.ndarray
+    gx : NDArray
         Array of reciprocal lattice x-coordinates.
-    gy : np.ndarray
+    gy : NDArray
         Array of reciprocal lattice y-coordinates.
     ewald_radius : float
         Radius of the Ewald sphere in reciprocal space (1/Å or same units as gx, gy).
@@ -62,9 +63,9 @@ def convert_gx_gy_to_sx_sy(
 
     Returns
     -------
-    sx : np.ndarray
+    sx : NDArray
         Array of x-coordinates on the RHEED screen corresponding to input gx, gy.
-    sy : np.ndarray
+    sy : NDArray
         Array of y-coordinates on the RHEED screen corresponding to input gx, gy.
 
     Notes
@@ -78,20 +79,22 @@ def convert_gx_gy_to_sx_sy(
     """
 
     # Ewald sphere radius
-    k0 = ewald_radius
+    k0: np.float32 = np.float32(ewald_radius)
     # Ewald sphere radius square
-    kk = k0**2
+    kk: np.float32 = np.float32(k0**2)
 
     # calculate the shift between the center of Ewald sphere and the center of reciprocal lattice
-    delta_x = k0 * np.cos(np.deg2rad(beta))
+    delta_x: np.float32 = np.float32(k0 * np.cos(np.deg2rad(beta)))
 
     # shift the center of reciprocal lattice
-    kx = gx + delta_x
-    ky = gy
+    kx: NDArray[np.float32] = gx + delta_x
+    ky: NDArray[np.float32] = gy
 
     # Check if the kx, ky points are inside Ewald sphere
-    kxy2 = kx**2 + ky**2
-    ind = kxy2 < kk
+    kxy2: NDArray[np.float32] = kx**2 + ky**2
+
+    ind: NDArray[np.bool_] = kxy2 < kk
+
     # remove those outside or mark as nans
     if remove_outside:
         kx = kx[ind]
@@ -101,17 +104,17 @@ def convert_gx_gy_to_sx_sy(
         ky[~ind] = np.nan
 
     # calculate the radius r_k
-    rk = np.sqrt(k0**2 - kx**2)
+    rk: NDArray[np.float32] = np.sqrt(k0**2 - kx**2)
 
     # calculate theta and phi (cos) values
-    phi = np.arccos(ky / rk)
-    theta = np.arcsin(rk / k0)
+    phi: NDArray[np.float32] = np.arccos(ky / rk)
+    theta: NDArray[np.float32] = np.arcsin(rk / k0)
 
     # calculate the radius on the RHEED screen
-    rho = screen_sample_distance * np.tan(theta)
+    rho: NDArray[np.float32] = screen_sample_distance * np.tan(theta)
 
     # calculate the spot positions
-    sx = rho * np.cos(phi)
-    sy = -rho * np.sin(phi)
+    sx: NDArray[np.float32] = rho * np.cos(phi)
+    sy: NDArray[np.float32] = -rho * np.sin(phi)
 
     return sx, sy
