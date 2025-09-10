@@ -19,6 +19,27 @@ class LoadRheedBase(ABC):
     # Central registry: plugin name -> plugin class
     PLUGINS: ClassVar[Dict[str, Type["LoadRheedBase"]]] = {}
 
+    # Attribute keys required in every plugin
+    REQUIRED_ATTR_KEYS: ClassVar[set[str]] = {
+        "plugin",
+        "screen_sample_distance",
+        "screen_scale",
+        "beam_energy",
+    }
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        # Validate ATTRS
+        attrs = getattr(cls, "ATTRS", None)
+        if not isinstance(attrs, dict):
+            raise TypeError(f"{cls.__name__} must define ATTRS as a dictionary.")
+
+        missing = cls.REQUIRED_ATTR_KEYS - attrs.keys()
+        if missing:
+            raise ValueError(f"{cls.__name__} is missing required ATTRS keys: {missing}")
+
+
     @classmethod
     def register_plugin(cls, name: str, plugin_cls: Type["LoadRheedBase"]):
         """Register a plugin class under a given name."""
