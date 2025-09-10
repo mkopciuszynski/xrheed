@@ -50,7 +50,7 @@ class TestEwald(unittest.TestCase):
     def test_inverse_lattice_generation(self):
         ewald = Ewald(self.lattice, self.rheed_image)
         inv_lattice = ewald._prepare_inverse_lattice()
-        self.assertIsInstance(inv_lattice, NDArray)
+        self.assertIsInstance(inv_lattice, np.ndarray)
         # self.assertEqual(inv_lattice.shape[1], 2)
 
     def test_generate_mask(self):
