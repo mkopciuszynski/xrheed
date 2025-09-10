@@ -1,19 +1,16 @@
 """
 RHEED Data Loader
 
-This module provides functions to load RHEED images from files or directories
-using specified plugins. Currently, only single-file loading is implemented.
+This module provides functions to load RHEED images from files using registered plugins.
 
 Functions
 ---------
-- load_data(path, plugin=None, **kwargs): Load a RHEED image from a file or directory.
+- load_data(path, plugin, **kwargs): Load a RHEED image from a file.
 
 TODO
 ----
-- Implement loading from directories containing multiple files.
+- Implement loading from directories or multiple files.
 """
-
-from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -23,7 +20,7 @@ import xarray as xr
 
 from .plugins import load_single_image
 
-__all__ = ("load_data",)
+__all__ = ["load_data"]
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +31,21 @@ def load_data(
     **kwargs,
 ) -> xr.DataArray:
     """
-    Load RHEED data from a file.
+    Load a single RHEED image using the specified plugin.
 
     Parameters
     ----------
     path : str or Path
-        Path to a file containing RHEED data.
+        Path to the file containing RHEED data.
     plugin : str
-        Plugin to use for loading the data. Must be provided.
+        Name of the plugin to use for loading.
     **kwargs : dict
         Additional arguments passed to the plugin loader.
 
     Returns
     -------
     xr.DataArray
-        The loaded RHEED data.
+        The loaded RHEED image.
 
     Raises
     ------
