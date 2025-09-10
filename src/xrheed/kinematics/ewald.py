@@ -102,6 +102,9 @@ class Ewald:
         # Mirror symmetry
         self.mirror: bool = False
 
+        self.ew_sx: NDArray[np.float32]
+        self.ew_sy: NDArray[np.float32]
+
         self.calculate_ewald()
 
     def __repr__(self) -> str:
@@ -209,9 +212,9 @@ class Ewald:
 
         Updates
         -------
-        self.ew_sx : np.ndarray
+        self.ew_sx : NDArray
             Spot x-coordinates (mm).
-        self.ew_sy : np.ndarray
+        self.ew_sy : NDArray
             Spot y-coordinates (mm).
         """
 
@@ -229,11 +232,14 @@ class Ewald:
         gy: NDArray[np.float32] = inverse_lattice[:, 1] / self._lattice_scale
 
         # calculate the spot positions
+        sx: NDArray[np.float32]
+        sy: NDArray[np.float32]
+
         sx, sy = convert_gx_gy_to_sx_sy(
             gx, gy, ewald_radius, beta, screen_sample_distance, remove_outside=True
         )
 
-        ind: NDArray[np.bool] = (
+        ind: NDArray[np.bool_] = (
             (sx > -self.screen_roi_width)
             & (sx < self.screen_roi_width)
             & (sy < self.screen_roi_height)
@@ -498,7 +504,7 @@ class Ewald:
             (len(alpha_vector), len(scale_vector)), dtype=np.uint32
         )
 
-        self.ewald_roi: float = (
+        self._ewald_roi = (
             self.ewald_radius
             * (self.screen_roi_width / self.screen_sample_distance)
             * scale_vector.max()
@@ -553,7 +559,7 @@ class Ewald:
         )
         return inverse_lattice
 
-    def _generate_spot_structure(self) -> NDArray[np.bool]:
+    def _generate_spot_structure(self) -> NDArray[np.bool_]:
         """
         Generate a binary elliptical spot structure.
 
@@ -590,7 +596,7 @@ class Ewald:
     # TODO prepare calculate match for a list of phi angles next we will do the same for a list of
     # lattice stalling
 
-    def _generate_mask(self) -> NDArray[np.bool]:
+    def _generate_mask(self) -> NDArray[np.bool_]:
         """
         Generate a mask for predicted spot positions in the image.
 
@@ -628,10 +634,12 @@ class Ewald:
         ppy = ppy[valid]
 
         # Build mask
-        mask = np.zeros(image.shape, dtype=bool)
+        mask: NDArray[np.bool_] = np.zeros_like(image, dtype=np.bool_)
         mask[ppy, ppx] = True
 
         # Apply dilation
-        mask = ndimage.binary_dilation(mask, structure=self.spot_structure)
+        mask = ndimage.binary_dilation(mask, structure=self.spot_structure).astype(
+            np.bool_
+        )
 
         return mask

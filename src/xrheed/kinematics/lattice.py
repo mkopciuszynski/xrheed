@@ -441,7 +441,7 @@ def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
         alpha (float): Rotation angle in degrees.
 
     Returns:
-        np.ndarray[np.float32]: 3x3 rotation matrix for rotation about the z-axis.
+        NDArray[np.float32]: 3x3 rotation matrix for rotation about the z-axis.
     """
     alpha_rad = np.float32(np.deg2rad(alpha))
 

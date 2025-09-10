@@ -1,7 +1,7 @@
 import lmfit as lf  # type: ignore
 import numpy as np
-from numpy.typing import NDArray
 import xarray as xr
+from numpy.typing import NDArray
 
 from xrheed.preparation.filters import gaussian_filter_profile
 

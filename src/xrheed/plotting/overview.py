@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import xarray as xr
+from matplotlib.figure import Figure
 
 from xrheed.plotting.base import plot_image
 
@@ -10,7 +11,7 @@ def plot_images(
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
     **kwargs,
-) -> plt.Figure:
+) -> Figure:
     """Plot a list of RHEED images in a grid layout.
     Parameters
     ----------
@@ -30,12 +31,13 @@ def plot_images(
         The figure containing the plotted images.
     """
 
-    n_images = len(rheed_images)
+    n_images: int = len(rheed_images)
 
     if n_images < 2:
         raise ValueError("At least two images are required to plot in a grid layout.")
 
-    nrows = (n_images + ncols - 1) // ncols  # Calculate number of rows needed
+    nrows: int = (n_images + ncols - 1) // ncols  # Calculate number of rows needed
+
     fig, axes = plt.subplots(
         nrows=nrows,
         ncols=ncols,
@@ -69,4 +71,5 @@ def plot_images(
         axes[i].axis("off")
 
     plt.tight_layout()
+
     return fig
