@@ -1,8 +1,8 @@
 import unittest
 from pathlib import Path
 
-import xarray as xr
 import numpy as np
+import xarray as xr
 from xrheed.io import load_data
 
 
@@ -25,27 +25,38 @@ class TestDataLoading(unittest.TestCase):
             with self.subTest(plugin=plugin):
                 attrs = image.attrs
                 for attr in required_attrs:
-                    self.assertIn(attr, attrs, msg=f"[{plugin}] Missing attribute: {attr}")
+                    self.assertIn(
+                        attr, attrs, msg=f"[{plugin}] Missing attribute: {attr}"
+                    )
                     self.assertIsInstance(
-                        attrs[attr], (float, int),
-                        msg=f"[{plugin}] {attr} is not a number"
+                        attrs[attr],
+                        (float, int),
+                        msg=f"[{plugin}] {attr} is not a number",
                     )
 
     def test_dataarray_structure(self):
         for plugin, image in self.loaded_images.items():
             with self.subTest(plugin=plugin):
                 # Check it's a DataArray
-                self.assertIsInstance(image, xr.DataArray, msg=f"[{plugin}] Not a DataArray")
+                self.assertIsInstance(
+                    image, xr.DataArray, msg=f"[{plugin}] Not a DataArray"
+                )
 
                 # Check dimensions
-                self.assertIn("sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension")
-                self.assertIn("sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension")
+                self.assertIn(
+                    "sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension"
+                )
+                self.assertIn(
+                    "sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension"
+                )
 
                 # Check shape is 2D
                 self.assertEqual(len(image.shape), 2, msg=f"[{plugin}] Data is not 2D")
 
                 # Check dtype is uint8
-                self.assertEqual(image.dtype, np.uint8, msg=f"[{plugin}] Data is not uint8")
+                self.assertEqual(
+                    image.dtype, np.uint8, msg=f"[{plugin}] Data is not uint8"
+                )
 
     def test_sy_asymmetry(self):
         for plugin, image in self.loaded_images.items():
@@ -53,7 +64,9 @@ class TestDataLoading(unittest.TestCase):
                 sy_coords = image.coords["sy"].values
 
                 if not np.any(sy_coords < 0) or not np.any(sy_coords > 0):
-                    self.skipTest(f"[{plugin}] sy axis does not span both negative and positive values")
+                    self.skipTest(
+                        f"[{plugin}] sy axis does not span both negative and positive values"
+                    )
 
                 # Integrate over sx to get intensity profile along sy
                 sy_profile = image.sum(dim="sx")
@@ -62,15 +75,20 @@ class TestDataLoading(unittest.TestCase):
                 negative_sy_mask = sy_coords < 0
                 positive_sy_mask = sy_coords > 0
 
-                neg_sy_total = sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
-                pos_sy_total = sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
+                neg_sy_total = (
+                    sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
+                )
+                pos_sy_total = (
+                    sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
+                )
 
                 self.assertGreater(
-                    neg_sy_total, pos_sy_total,
+                    neg_sy_total,
+                    pos_sy_total,
                     msg=(
                         f"[{plugin}] Bright region expected at bottom (negative sy), "
                         f"but integrated intensity is not greater than top (positive sy)"
-                    )
+                    ),
                 )
 
 

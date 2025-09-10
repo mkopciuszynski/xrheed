@@ -37,8 +37,9 @@ class LoadRheedBase(ABC):
 
         missing = cls.REQUIRED_ATTR_KEYS - attrs.keys()
         if missing:
-            raise ValueError(f"{cls.__name__} is missing required ATTRS keys: {missing}")
-
+            raise ValueError(
+                f"{cls.__name__} is missing required ATTRS keys: {missing}"
+            )
 
     @classmethod
     def register_plugin(cls, name: str, plugin_cls: Type["LoadRheedBase"]):
