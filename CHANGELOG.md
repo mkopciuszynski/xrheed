@@ -1,5 +1,19 @@
 # Changelog
 
+<a name="0.5.0"></a>
+## [0.5.0] – 2025-09-11
+
+### 🚀 Highlights
+- PyPI-ready release with automatic publishing via GitHub Actions.
+- Full Sphinx documentation with myst-nb and API reference.
+
+### 🛠 Updates
+- Added `.readthedocs.yaml` for Read the Docs builds.
+- Updated `docs/source/conf.py` for autodoc, autosummary, and notebook support.
+- Updated CI workflow (`ci.yml`) to build docs, run tests, lint code, and publish releases.
+- Added `CITATION.cff` for formal citation and Zenodo DOI integration.
+
+
 <a name="0.4.0"></a>
 ## [0.4.0] – 2025-09-11
 - Refactored LoadRheedBase to use an abstract base class with __init_subclass__ validation.
