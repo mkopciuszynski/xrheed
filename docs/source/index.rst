@@ -29,8 +29,8 @@ xRHEED
    :target: https://opensource.org/licenses/MIT
    :alt: License: MIT
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxx.svg
-   :target: https://doi.org/10.5281/zenodo.xxxxx
+.. image:: https://zenodo.org/badge/963155496.svg
+   :target: https://doi.org/10.5281/zenodo.17099751
    :alt: DOI
 
 Welcome to the **xRHEED** documentation!
@@ -41,11 +41,6 @@ Welcome to the **xRHEED** documentation!
 Explore the :doc:`introduction` to learn about the method and project goals.  
 Check out the :doc:`usage` guide for a fast start.  
 See the :ref:`example-notebooks` section for interactive tutorials.
-
-.. note::
-
-   This project is under active development.  
-   Features and APIs may change between releases.
 
 Contents
 --------
