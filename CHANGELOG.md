@@ -1,13 +1,20 @@
 # Changelog
+<a name="1.0.0"></a>
+## [1.0.0] – 2025-09-11
+
+**First stable release of xRHEED.**
+
+- Project is now officially public and stable.
+- Automatically uploaded to PyPI.
+- Documentation hosted on Read the Docs.
+- Zenodo DOI assigned: [10.5281/zenodo.17099752](https://doi.org/10.5281/zenodo.17099752)
+- No significant changes to core code since v0.5.x.
 
 <a name="0.5.0"></a>
 ## [0.5.0] – 2025-09-11
 
-### 🚀 Highlights
 - PyPI-ready release with automatic publishing via GitHub Actions.
 - Full Sphinx documentation with myst-nb and API reference.
-
-### 🛠 Updates
 - Added `.readthedocs.yaml` for Read the Docs builds.
 - Updated `docs/source/conf.py` for autodoc, autosummary, and notebook support.
 - Updated CI workflow (`ci.yml`) to build docs, run tests, lint code, and publish releases.

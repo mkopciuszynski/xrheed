@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the following metadata."
 title: "xRHEED"
-version: "0.5.14"
+version: "1.0.0"
 doi: "10.5281/zenodo.17099752"
 authors:
   - family-names: "Kopciuszynski"
