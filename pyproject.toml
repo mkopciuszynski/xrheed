@@ -41,4 +41,5 @@ dev = [
     "myst-nb",
     "nbsphinx",
     "sphinx-rtd-theme",
+    "build",
 ]
