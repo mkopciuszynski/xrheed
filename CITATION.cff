@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "xRHEED: An xarray-based toolkit for RHEED image analysis"
+abstract: >
+  xRHEED is a flexible and extensible Python toolkit for analyzing Reflection High-Energy
+  Electron Diffraction (RHEED) images. It provides tools for loading and preprocessing data,
+  generating intensity profiles, visualizing diffraction spots, and searching lattice
+  constants and orientations.
+authors:
+  - family-names: "Kopciuszynski"
+    given-names: "Marek"
+    orcid: "https://orcid.org/0000-0001-7360-6829"
+version: "0.4.0"
+date-released: "2025-09-11"
+url: "https://github.com/mkopciuszynski/xrheed"
+repository-code: "https://github.com/mkopciuszynski/xrheed"
+license: "MIT"
+keywords:
+  - RHEED
+  - diffraction
+  - crystallography
+  - microscopy
+  - xarray
+preferred-citation:
+  type: software
+  title: "xRHEED: An xarray-based toolkit for RHEED image analysis"
+  authors:
+    - family-names: "Kopciuszynski"
+      given-names: "Marek"
+  version: "0.4.0"
+  date-released: "2025-09-11"
+  repository-code: "https://github.com/mkopciuszynski/xrheed"
+  doi: "10.5281/zenodo.xxxxx"
