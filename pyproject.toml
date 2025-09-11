@@ -1,6 +1,6 @@
 [project]
 name = "xrheed"
-version = "0.5.8"
+version = "0.5.9"
 authors = [
     {name = "Marek Kopciuszynski", email = "mkopciuszynski@gmail.com"},
 ]
