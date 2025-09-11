@@ -1,12 +1,11 @@
 [project]
 name = "xrheed"
-version = "0.5.13"
+version = "0.5.12"
 authors = [
     {name = "Marek Kopciuszynski", email = "mkopciuszynski@gmail.com"},
 ]
 description = "An xarray-based toolkit for RHEED image analysis"
 readme = "README.md"
-readme-content-type = "text/markdown"
 requires-python = ">=3.12"
 keywords = ["RHEED", "diffraction", "xarray", "analysis"]
 license = "MIT"
