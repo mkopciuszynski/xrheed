@@ -67,7 +67,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Build source & wheel
-        run: python -m build
+        run: uv run python -m build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.6.4
