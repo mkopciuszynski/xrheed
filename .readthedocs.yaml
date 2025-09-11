@@ -1,4 +1,4 @@
-# .readthedocs.yaml
+# Read the Docs configuration file
 version: 2
 
 build:
@@ -11,12 +11,7 @@ sphinx:
 
 python:
   install:
-    - method: system
+    - method: pip
       path: .
       extra_requirements:
         - dev
-
-build:
-  commands:
-    - pip install uv  # install uv in RTD build environment
-    - uv sync         # sync dependencies as in your dev setup
