@@ -11,7 +11,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Linter: ruff](https://img.shields.io/badge/linter-ruff-46a2f1.svg?logo=ruff)](https://github.com/astral-sh/ruff)
 [![Package manager: uv](https://img.shields.io/badge/packaging-uv-blue)](https://github.com/astral-sh/uv)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxx)
+[![DOI](https://zenodo.org/badge/963155496.svg)](https://doi.org/10.5281/zenodo.17099751)
 
 ---
 
@@ -36,9 +36,13 @@ A high-energy electron beam (∼20 keV) strikes the surface at a grazing angle (
 
 ---
 
-## ⚡ Installation
+## Installation
 
-You can install **xRHEED** using either [`uv`](https://github.com/astral-sh/uv) or `pip`.
+### Using PyPI
+
+```bash
+pip install xrheed
+```
 
 ### Using pip (editable install for development)
 
@@ -48,20 +52,19 @@ cd xrheed
 pip install -e .
 ```
 
-### Using uv (with a virtual environment)
+### Using uv (with virtual environment)
 
 1. Install [`uv`](https://docs.astral.sh/uv/guides/projects/).
 2. Clone the repository:
-   ```bash
-   git clone https://github.com/mkopciuszynski/xrheed
-   cd xrheed
-   ```
-3. Create and activate a virtual environment (depending on your shell: bash, zsh, fish, PowerShell).
+```bash
+git clone https://github.com/mkopciuszynski/xrheed
+cd xrheed
+```
+3. Create and activate a virtual environment.
 4. Sync dependencies:
-   ```bash
-   uv sync
-   ```
-
+```bash
+uv sync
+```
 ---
 
 ## 🚀 Quick Usage
@@ -87,12 +90,11 @@ profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
 
 ## 📖 Citation
 
-If you use **xRHEED** in your research, please consider citing this repository:
+If you use **xRHEED** in your research, please cite it:
 
-> Kopciuszynski, M. (2025). *xRHEED: An xarray-based toolkit for RHEED image analysis*.
-> GitHub. https://github.com/mkopciuszynski/xrheed
-
-📌 A formal DOI will be provided in the future via [Zenodo](https://zenodo.org/).
+> Kopciuszynski, M. [ORCID](https://orcid.org/0000-0001-7360-6829) (2025). *xRHEED: An xarray-based toolkit for RHEED image analysis*.  
+> GitHub. https://github.com/mkopciuszynski/xrheed  
+> DOI: [10.5281/zenodo.17099752](https://doi.org/10.5281/zenodo.17099752)
 
 ---
 
