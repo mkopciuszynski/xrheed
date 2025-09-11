@@ -1,8 +1,8 @@
 [project]
-name = "xRHEED"
-version = "0.3.0"
+name = "xrheed"
+version = "0.5.3"
 authors = [
-    {name = "Marek Kopciuszyński", email = "mkopciuszynski@gmail.com"},
+    {name = "Marek Kopciuszynski", email = "mkopciuszynski@gmail.com"},
 ]
 description = "An xarray-based toolkit for RHEED image analysis"
 readme = "README.rst"
