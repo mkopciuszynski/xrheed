@@ -35,9 +35,3 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -vv
-
-      - name: Install pandoc (for notebooks)
-        run: sudo apt-get update && sudo apt-get install -y pandoc
-
-      - name: Build documentation
-        run: uv run sphinx-build -b html docs/source docs/build
