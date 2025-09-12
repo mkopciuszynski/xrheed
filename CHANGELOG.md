@@ -1,9 +1,17 @@
 # Changelog
+
+<a name="1.1.0"></a>
+## [1.1.0] – 2025-09-xx
+
+- Fixes in documentation: 
+    - Example Notebook section
+    - update the badges,
+    - plugins and xarray_accesorys in API reference
+
 <a name="1.0.0"></a>
 ## [1.0.0] – 2025-09-11
 
 **First stable release of xRHEED.**
-
 - Project is now officially public and stable.
 - Automatically uploaded to PyPI.
 - Documentation hosted on Read the Docs.
