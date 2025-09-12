@@ -47,5 +47,5 @@ Next Steps
 ----------
 
 - Explore the :doc:`geometry` section for details on RHEED geometry.
-- See :ref:`example-notebooks` for interactive demonstrations.
+- See :doc:`notebooks/getting_started` and other :ref:`example-notebooks` for interactive demonstrations.
 - Dive into the :doc:`xrheed` API reference for function-level details.

@@ -2,10 +2,6 @@
 
 Welcome! Whether you're here to fix a bug, improve documentation, or suggest a new feature—thank you for your interest in contributing.
 
-## 🚧 Project Status
-
-This project is currently in **pre-release** and actively developed by a single maintainer. Contributions are welcome, but please note that the codebase may evolve rapidly.
-
 ## 🛠 Getting Started
 
 To contribute:

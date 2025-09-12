@@ -1,14 +1,21 @@
 Installation
 ============
 
-You can install **xRHEED** either with `pip` or with 
-`uv <https://github.com/astral-sh/uv>`_, depending on your workflow.
+You can install **xRHEED** in several ways:
 
+Using pip (from PyPI)
+---------------------
 
-Using pip (recommended for development)
----------------------------------------
+The easiest way to install the latest release from PyPI:
 
-For a development setup with editable installation:
+.. code-block:: bash
+
+   pip install xrheed
+
+Using pip (editable install for development)
+--------------------------------------------
+
+If you want to work with the development version:
 
 .. code-block:: bash
 
@@ -16,16 +23,10 @@ For a development setup with editable installation:
    cd xrheed
    pip install -e .
 
-This allows you to make changes to the source code and immediately test them.
+Using uv (with a virtual environment)
+-------------------------------------
 
-
-Using uv (modern package & environment manager)
------------------------------------------------
-
-`uv` simplifies dependency management and virtual environments.
-
-1. Install `uv` following the 
-   `official guide <https://docs.astral.sh/uv/guides/projects/>`_.
+1. Install `uv <https://docs.astral.sh/uv/guides/projects/>`_.
 2. Clone the repository:
 
    .. code-block:: bash
@@ -33,19 +34,21 @@ Using uv (modern package & environment manager)
       git clone https://github.com/mkopciuszynski/xrheed
       cd xrheed
 
-3. Create and activate a virtual environment (command depends on your shell).
-4. Synchronize dependencies:
+3. Create and activate a virtual environment (depending on your shell: bash, zsh, fish, PowerShell).
+4. Sync dependencies:
 
    .. code-block:: bash
 
       uv sync
 
+Dependencies
+------------
 
-Basic dependencies
-------------------
+**xRHEED** builds on the scientific Python ecosystem and requires:
 
-- `xarray` for labeled array structures
-- `numpy` and `scipy` for numerical operations
-- `matplotlib` for plotting
+- `xarray`
+- `numpy`
+- `scipy`
+- `matplotlib`
 
-Optional packages may be required for plugins or specialized workflows.
+For working with example notebooks and documentation, `jupyter` is also recommended.

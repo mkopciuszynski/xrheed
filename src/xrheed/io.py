@@ -2,14 +2,6 @@
 RHEED Data Loader
 
 This module provides functions to load RHEED images from files using registered plugins.
-
-Functions
----------
-- load_data(path, plugin, **kwargs): Load a RHEED image from a file.
-
-TODO
-----
-- Implement loading from directories or multiple files.
 """
 
 import logging
