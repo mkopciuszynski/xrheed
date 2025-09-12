@@ -5,8 +5,8 @@ xRHEED
    :target: https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml
    :alt: CI
 
-.. image:: https://readthedocs.org/projects/xrheed/badge/?version=latest
-   :target: https://xrheed.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/xrheed/badge/
+   :target: https://xrheed.readthedocs.io/
    :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/xrheed.svg

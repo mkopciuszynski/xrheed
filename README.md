@@ -5,7 +5,7 @@
 ---
 
 [![CI](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mkopciuszynski/xrheed/actions/workflows/ci.yml)
-[![Documentation Status](https://readthedocs.org/projects/xrheed/badge/?version=latest)](https://xrheed.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/xrheed/badge/)](https://xrheed.readthedocs.io/)
 [![PyPI version](https://img.shields.io/pypi/v/xrheed.svg)](https://pypi.org/project/xrheed/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
