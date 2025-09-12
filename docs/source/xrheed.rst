@@ -13,6 +13,7 @@ Submodules
    :toctree: generated
    :recursive:
 
+   plugins
    preparation
    conversion
    kinematics

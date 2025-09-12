@@ -40,7 +40,7 @@ Welcome to the **xRHEED** documentation!
 
 Explore the :doc:`introduction` to learn about the method and project goals.  
 Check out the :doc:`usage` guide for a fast start.  
-See the :ref:`example-notebooks` section for interactive tutorials.
+See the :ref:`example-notebooks` for interactive tutorials.
 
 Contents
 --------
@@ -55,7 +55,18 @@ Contents
    geometry
    kinematic
    plugins
-   example-notebooks
+
+.. _example-notebooks:
+.. toctree::
+   :maxdepth: 2
+   :caption: Example Notebooks
+   
+   notebooks/getting_started
+   notebooks/diffraction_profiles
+   notebooks/ewald_construction
+   notebooks/ewald_kxky_transformation
+   notebooks/ewald_kxky_transformation_advanced
+   notebooks/ewald_spot_matching
 
 .. toctree::
    :maxdepth: 1
