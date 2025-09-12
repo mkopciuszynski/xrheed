@@ -448,7 +448,6 @@ class Ewald:
         xr.DataArray
             Match coefficients for each scale value.
         """
-        """Here we can calculate the matching for a series of different lattice constants"""
 
         match_vector = np.zeros_like(scale_vector, dtype=np.uint32)
 

@@ -4,9 +4,9 @@ import tomllib
 from datetime import datetime
 
 
-sys.path.insert(0, os.path.abspath("../../src"))
+sys.path.insert(0, os.path.abspath("../../."))
 
-project = "xRHEED"
+project = "xrheed"
 
 # Read version from pyproject.toml
 with open(os.path.join(os.path.dirname(__file__), "../../pyproject.toml"), "rb") as f:
@@ -51,5 +51,5 @@ autodoc_default_options = {
 # Optional: collapse module path in references
 add_module_names = False
 
-
-autodoc_mock_imports = ["xarray", "cupy", "array_api_strict"]
+autodoc_typehints = "none"
+autodoc_mock_imports = ["cupy", "array_api_strict"]

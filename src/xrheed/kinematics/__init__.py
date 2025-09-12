@@ -5,6 +5,5 @@ spot positions based on kinematic theory.
 """
 
 from .ewald import Ewald
-from .lattice import Lattice
 
-__all__ = ["Ewald", "Lattice"]
+__all__ = ["Ewald"]

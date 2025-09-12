@@ -1,13 +1,5 @@
 """
 xRHEED: An xarray-based toolkit for RHEED image analysis.
-
-This package provides tools to:
-- Load and preprocess RHEED images
-- Extract and analyze intensity profiles
-- Transform images to kx-ky space
-- Predict and visualize diffraction spot positions using kinematic theory and Ewald construction
-xRHEED is designed as an **xarray accessory library** for interactive analysis
-in environments such as Jupyter notebooks. It is **not a GUI application**.
 """
 
 import importlib

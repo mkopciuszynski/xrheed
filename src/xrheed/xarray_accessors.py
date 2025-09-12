@@ -1,3 +1,15 @@
+"""
+This module defines xarray accessors for RHEED (Reflection High-Energy Electron Diffraction) data.
+
+Accessors
+---------
+
+- **ri**: for manipulating and analyzing RHEED images, including plotting and image centering.
+- **rp**: for manipulating RHEED intensity profiles.
+
+These accessors extend xarray's `DataArray` objects with domain-specific methods for RHEED analysis.
+"""
+
 import logging
 from typing import Optional, Tuple
 
@@ -336,8 +348,8 @@ class RHEEDAccessor:
         self,
         ax: Optional[Axes] = None,
         auto_levels: float = 0.0,
-        show_center_lines: bool = True,
-        show_specular_spot: bool = True,
+        show_center_lines: bool = False,
+        show_specular_spot: bool = False,
         **kwargs,
     ) -> Axes:
         """Plot RHEED image.
@@ -352,9 +364,10 @@ class RHEEDAccessor:
             Default is 0.0 (no auto autolevels).
         show_center_lines : bool, optional
             If True, draw horizontal and vertical lines at the center of the image.
-            Default is True.
+            Default is False.
         show_specular_spot : bool, optional
             If True, overlay the specularly reflected spot on the image.
+            Default is False.
         **kwargs : dict
             Additional keyword arguments passed to the plotting function.
         Returns
