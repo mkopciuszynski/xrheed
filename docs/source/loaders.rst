@@ -50,9 +50,9 @@ While writing and using a dedicated plugin is the recommended approach, it is al
 
 In this mode, the user must provide the essential calibration parameters directly:
 
-- **``screen_sample_distance``** *(float)* — Distance from sample to screen [mm].  
-- **``screen_scale``** *(float)* — Pixel-to-mm scaling factor.  
-- **``beam_energy``** *(float)* — Beam energy [eV].
+- ``screen_sample_distance``: Distance from sample to screen [mm].  
+- ``screen_scale``: Pixel-to-mm scaling factor.
+- ``beam_energy``: Beam energy [eV].
 
 Optional parameters include ``screen_center_sx_px``, ``screen_center_sy_px``, ``alpha``, and ``beta``.  
 The resulting ``xarray.DataArray`` follows the same conventions as plugin-loaded images (coordinates in mm, shadow edge at the top).

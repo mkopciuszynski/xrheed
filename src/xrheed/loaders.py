@@ -1,5 +1,5 @@
 """
-RHEED Data Loader
+RHEED Data Loaders
 
 This module provides functions to load RHEED images from files using registered plugins.
 """
