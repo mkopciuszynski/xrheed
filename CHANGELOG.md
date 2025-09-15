@@ -1,7 +1,7 @@
 # Changelog
 
-<a name="1.1.0"></a>
-## [1.1.0] – 2025-09-15
+<a name="1.1.1"></a>
+## [1.1.1] – 2025-09-15
 
 - **Add** `load_data_manual()` to load RHEED images when no plugin is available.
 - **Refactor** `io.py` → `loaders.py`  
