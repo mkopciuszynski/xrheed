@@ -12,8 +12,8 @@ class TestDataLoading(unittest.TestCase):
             "dsnp_arpes_raw": "Si_111_7x7_112_phi_00.raw",
             "dsnp_arpes_bmp": "Test_image_UMCS_DSNP_ARPES.BMP",
         }
-        
-        self.manual_load_file = "Test_image_UMCS_DSNP_ARPES.BMP" 
+
+        self.manual_load_file = "Test_image_UMCS_DSNP_ARPES.BMP"
 
         # Load plugin-based images
         self.loaded_images = {}
@@ -44,8 +44,12 @@ class TestDataLoading(unittest.TestCase):
                 self.assertIsInstance(
                     image, xr.DataArray, msg=f"[{plugin}] Not a DataArray"
                 )
-                self.assertIn("sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension")
-                self.assertIn("sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension")
+                self.assertIn(
+                    "sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension"
+                )
+                self.assertIn(
+                    "sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension"
+                )
                 self.assertEqual(len(image.shape), 2, msg=f"[{plugin}] Data is not 2D")
 
                 # Check dtype is uint8
@@ -70,8 +74,12 @@ class TestDataLoading(unittest.TestCase):
                 negative_sy_mask = sy_coords < 0
                 positive_sy_mask = sy_coords > 0
 
-                neg_sy_total = sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
-                pos_sy_total = sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
+                neg_sy_total = (
+                    sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
+                )
+                pos_sy_total = (
+                    sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
+                )
 
                 self.assertGreater(
                     neg_sy_total,

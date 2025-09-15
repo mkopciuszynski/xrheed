@@ -61,7 +61,7 @@ class LoadPlugin(LoadRheedBase):
 
         # Allow custom image size via kwargs
         image_size = kwargs.get("image_size", [1038, 1388])
-        
+
         height: int
         width: int
         height, width = image_size
