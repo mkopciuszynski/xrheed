@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-from xrheed.io import load_data
+from xrheed.loaders import load_data, load_data_manual
 
 
 class TestDataLoading(unittest.TestCase):
@@ -12,7 +12,10 @@ class TestDataLoading(unittest.TestCase):
             "dsnp_arpes_raw": "Si_111_7x7_112_phi_00.raw",
             "dsnp_arpes_bmp": "Test_image_UMCS_DSNP_ARPES.BMP",
         }
+        
+        self.manual_load_file = "Test_image_UMCS_DSNP_ARPES.BMP" 
 
+        # Load plugin-based images
         self.loaded_images = {}
         for plugin, filename in self.plugin_file_map.items():
             file_path = Path(__file__).parent / "data" / filename
@@ -41,16 +44,8 @@ class TestDataLoading(unittest.TestCase):
                 self.assertIsInstance(
                     image, xr.DataArray, msg=f"[{plugin}] Not a DataArray"
                 )
-
-                # Check dimensions
-                self.assertIn(
-                    "sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension"
-                )
-                self.assertIn(
-                    "sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension"
-                )
-
-                # Check shape is 2D
+                self.assertIn("sx", image.dims, msg=f"[{plugin}] Missing 'sx' dimension")
+                self.assertIn("sy", image.dims, msg=f"[{plugin}] Missing 'sy' dimension")
                 self.assertEqual(len(image.shape), 2, msg=f"[{plugin}] Data is not 2D")
 
                 # Check dtype is uint8
@@ -75,12 +70,8 @@ class TestDataLoading(unittest.TestCase):
                 negative_sy_mask = sy_coords < 0
                 positive_sy_mask = sy_coords > 0
 
-                neg_sy_total = (
-                    sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
-                )
-                pos_sy_total = (
-                    sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
-                )
+                neg_sy_total = sy_profile.sel(sy=sy_coords[negative_sy_mask]).sum().item()
+                pos_sy_total = sy_profile.sel(sy=sy_coords[positive_sy_mask]).sum().item()
 
                 self.assertGreater(
                     neg_sy_total,
@@ -90,6 +81,29 @@ class TestDataLoading(unittest.TestCase):
                         f"but integrated intensity is not greater than top (positive sy)"
                     ),
                 )
+
+    def test_manual_loader(self):
+        file_path = Path(__file__).parent / "data" / self.manual_load_file
+
+        # Provide required manual parameters
+        da_manual = load_data_manual(
+            file_path,
+            screen_sample_distance=309.2,
+            screen_scale=9.04,
+            beam_energy=18_600,  # eV
+        )
+
+        # Basic checks (same as plugin)
+        self.assertIsInstance(da_manual, xr.DataArray)
+        self.assertIn("sx", da_manual.dims)
+        self.assertIn("sy", da_manual.dims)
+        self.assertEqual(len(da_manual.shape), 2)
+        self.assertEqual(da_manual.dtype, np.uint8)
+
+        # Check essential attributes
+        for attr in ["screen_sample_distance", "screen_scale", "beam_energy"]:
+            self.assertIn(attr, da_manual.attrs)
+            self.assertIsInstance(da_manual.attrs[attr], (float, int))
 
 
 if __name__ == "__main__":
