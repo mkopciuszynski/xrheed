@@ -134,7 +134,7 @@ def find_incident_angle(
     print(f"Mirror spot at: {x_mirr:.2f}")
     print(f"Spot distance: {spot_distance:.2f}")
     print(f"Shadow edge: {shadow_edge:.2f}")
-    print(f"Theta angle: {beta_deg:.2f}")
+    print(f"Polar angle: {beta_deg:.2f}")
 
     return beta_deg
 
