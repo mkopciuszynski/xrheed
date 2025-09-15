@@ -94,7 +94,7 @@ If you use **xRHEED** in your research, please cite it:
 
 > Kopciuszynski, M. [ORCID](https://orcid.org/0000-0001-7360-6829) (2025). *xRHEED: An xarray-based toolkit for RHEED image analysis*.  
 > GitHub. https://github.com/mkopciuszynski/xrheed  
-> DOI: [10.5281/zenodo.17099752](https://doi.org/10.5281/zenodo.17099752)
+> DOI: [10.5281/zenodo.17099751](https://doi.org/10.5281/zenodo.17099751)
 
 ---
 
