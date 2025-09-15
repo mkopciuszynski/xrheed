@@ -72,7 +72,7 @@ uv sync
 ```python
 import matplotlib.pyplot as plt
 import xrheed
-from xrheed.io import load_data
+from xrheed.loaders import load_data
 
 # Load a RHEED image
 rheed_image = load_data("rheed_image.raw", plugin="dsnp_arpes_raw")
