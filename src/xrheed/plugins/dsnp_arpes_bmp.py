@@ -46,11 +46,13 @@ class LoadPlugin(LoadRheedBase):
         image = Image.open(file_path).convert("L")  # Convert to grayscale
         image_np: NDArray[np.uint8] = np.array(image)
 
+        height: int
+        width: int
         height, width = image_np.shape
 
         # Generate coordinates
-        sx_coords = np.arange(width, dtype=np.float64)
-        sy_coords = np.arange(height, dtype=np.float64)
+        sx_coords: NDArray[np.float64] = np.arange(width, dtype=np.float64)
+        sy_coords: NDArray[np.float64] = np.arange(height, dtype=np.float64)
 
         # Shift coordinates to center
         sx_coords -= float(self.ATTRS["screen_center_sx_px"])
@@ -63,8 +65,12 @@ class LoadPlugin(LoadRheedBase):
         sy_coords = np.flip(sy_coords)
         image_np = np.flipud(image_np)
 
-        coords = {"sy": sy_coords, "sx": sx_coords}
+        coords: dict[str, NDArray[np.floating]] = {
+            "sy": sy_coords,
+            "sx": sx_coords,
+        }
         dims = ["sy", "sx"]
+
         attrs = self.ATTRS.copy()
 
         logger.info(f"Loaded BMP image {file_path} with shape {image_np.shape}")
