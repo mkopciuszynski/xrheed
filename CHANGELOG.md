@@ -1,12 +1,18 @@
 # Changelog
 
 <a name="1.1.0"></a>
-## [1.1.0] – 2025-09-xx
+## [1.1.0] – 2025-09-15
 
-- Fixes in documentation: 
-    - Example Notebook section
-    - update the badges,
-    - plugins and xarray_accesorys in API reference
+- **Add** `load_data_manual()` to load RHEED images when no plugin is available.
+- **Refactor** `io.py` → `loaders.py`  
+  - Breaking change: code using `from xrheed.io import ...` must now use `from xrheed.loaders import ...`  
+  - Resolves the naming conflict with Python's standard library `io` and clarifies the module’s purpose (data loading only).
+
+- **Documentation fixes and updates:**  
+  - Updated example notebook sections.  
+  - Updated badges.
+  - Updated plugin and xarray_accessors references in the API documentation.
+
 
 <a name="1.0.0"></a>
 ## [1.0.0] – 2025-09-11

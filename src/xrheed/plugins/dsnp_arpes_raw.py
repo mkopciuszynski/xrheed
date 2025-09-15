@@ -61,6 +61,9 @@ class LoadPlugin(LoadRheedBase):
 
         # Allow custom image size via kwargs
         image_size = kwargs.get("image_size", [1038, 1388])
+
+        height: int
+        width: int
         height, width = image_size
 
         # Load raw data
@@ -70,7 +73,7 @@ class LoadPlugin(LoadRheedBase):
             )
 
         # Convert to 8-bit for memory efficiency
-        image = (image_16bit / 256).astype(np.uint8)
+        image: NDArray[np.uint8] = (image_16bit / 256).astype(np.uint8)
 
         # Generate coordinates
         sx_coords: NDArray[np.float64] = np.arange(width, dtype=np.float64)
