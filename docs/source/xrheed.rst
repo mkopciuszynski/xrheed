@@ -13,7 +13,7 @@ Submodules
    :toctree: generated
    :recursive:
    
-   io
+   loaders
    plugins
    preparation
    conversion

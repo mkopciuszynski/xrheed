@@ -54,7 +54,7 @@ Contents
    usage
    geometry
    kinematic
-   plugins
+   loaders
 
 .. _example-notebooks:
 .. toctree::
