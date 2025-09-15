@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from xrheed.conversion import base, image
-from xrheed.io import load_data
+from xrheed.loaders import load_data
 
 
 class TestBaseConversion(unittest.TestCase):
