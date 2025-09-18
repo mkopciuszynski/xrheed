@@ -17,10 +17,6 @@ xRHEED
    :target: https://github.com/astral-sh/uv
    :alt: Package manager: uv
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
-   :alt: Code style: black
-
 .. image:: https://img.shields.io/badge/linter-ruff-46a2f1.svg?logo=ruff
    :target: https://github.com/astral-sh/ruff
    :alt: Linter: ruff
