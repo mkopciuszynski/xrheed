@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
-   sodipodi:docname="Ewald_construction.svg"
+   sodipodi:docname="Figure_2_Ewald_construction.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -24,13 +24,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
-     inkscape:zoom="6.0364197"
-     inkscape:cx="592.40414"
-     inkscape:cy="215.7736"
+     inkscape:zoom="1.0670983"
+     inkscape:cx="484.96"
+     inkscape:cy="424.98427"
      inkscape:window-width="1920"
-     inkscape:window-height="1013"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
+     inkscape:window-height="1027"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer4"
      showgrid="false"
@@ -989,7 +989,7 @@
          x="62.612423"
          y="38.270382">k<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan46">z</tspan></tspan></text>
+   id="tspan46">y</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.26667px;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:0.19;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
@@ -1041,7 +1041,7 @@
          x="23.554771"
          y="37.973988">k<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan45-6">y</tspan></tspan></text>
+   id="tspan45-6">z</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.26667px;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:0.19;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
