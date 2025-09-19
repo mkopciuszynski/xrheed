@@ -1,5 +1,11 @@
 # Changelog
 
+<a name="1.1.2"></a>
+## [1.1.2] – 2025-09-19
+- Fix quick usage in README (use xrheed.loaders)
+- Minor fixes in example notebooks
+- Update citation
+
 <a name="1.1.1"></a>
 ## [1.1.1] – 2025-09-15
 

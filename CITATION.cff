@@ -1,13 +1,13 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the following metadata."
 title: "xRHEED"
-version: "1.1.1"
+version: "1.1.2"
 doi: "10.5281/zenodo.17099751"
 authors:
   - family-names: "Kopciuszynski"
     given-names: "Marek"
     orcid: "https://orcid.org/0000-0001-7360-6829"
-    email: "mkopciuszynski@gmail.com"
+    email: "m.kopciuszynski@umcs.pl"
 date-released: "2025-09-15"
 url: "https://github.com/mkopciuszynski/xrheed"
 license: "MIT"
@@ -15,4 +15,5 @@ keywords:
   - RHEED
   - xarray
   - diffraction
+  - reconstruction
   - surface science
