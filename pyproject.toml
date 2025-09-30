@@ -1,6 +1,5 @@
 [project]
 name = "xrheed"
-version = "1.2.1"
 authors = [
     {name = "Marek Kopciuszynski", email = "mkopciuszynski@gmail.com"},
 ]
@@ -31,7 +30,12 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel", "build"]
+requires = [
+    "setuptools>=61", 
+    "wheel",
+    "build",
+    "setuptools_scm[toml]>=6.4"
+]
 build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
