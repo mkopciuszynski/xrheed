@@ -1,6 +1,5 @@
 import os
 import sys
-import tomllib
 from datetime import datetime
 
 
@@ -8,11 +7,15 @@ sys.path.insert(0, os.path.abspath("../../."))
 
 project = "xrheed"
 
-# Read version from pyproject.toml
-with open(os.path.join(os.path.dirname(__file__), "../../pyproject.toml"), "rb") as f:
-    pyproject = tomllib.load(f)
+# Import the package to get version
+try:
+    import xrheed
 
-release = pyproject["project"]["version"]
+    release = xrheed.__version__
+except ImportError:
+    release = "0.0.0"
+
+# Short X.Y version
 version = ".".join(release.split(".")[:2])
 
 author = "Marek Kopciuszynski"
