@@ -37,8 +37,8 @@ Example plugin attributes:
         "screen_center_sx_px": 740,  # horizontal center of an image in px
         "screen_center_sy_px": 155,  # shadow edge position in px
         "beam_energy": 18_600,  # eV
-        "alpha": 0.0,  # azimuthal angle
-        "beta": 2.0,   # incident angle
+        "alpha": 0.0,  # default azimuthal angle
+        "beta": 2.0,   # default incident angle
     }
 
 
@@ -62,9 +62,8 @@ Example usage:
 .. code-block:: python
 
     import xrheed
-    from xrheed.loaders import load_data_manual
 
-    rheed_image = load_data_manual(
+    rheed_image = xrheed.load_data_manual(
         "example.bmp",
         screen_sample_distance=309.2,
         screen_scale=9.04,
