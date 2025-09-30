@@ -8,7 +8,10 @@ import pkgutil
 from importlib.metadata import PackageNotFoundError, version
 
 # Import xarray accessors
-from . import xarray_accessors as xarray_accessors
+from . import xarray_accessors  # noqa: F401
+from .loaders import load_data, load_data_manual
+
+__all__ = ["load_data", "load_data_manual"]
 
 # Package version
 try:
