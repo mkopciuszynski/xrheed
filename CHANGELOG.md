@@ -1,7 +1,14 @@
 # Changelog
 
+<a name="1.2.0"></a>
+## [1.2.0] – 2025-09-30
+
+- Expose `load_data` and `load_data_manual` at the package root (`xrheed.load_data`) for simpler imports
+- Update documentation and examples to reflect the new recommended loading approach
+
 <a name="1.1.2"></a>
 ## [1.1.2] – 2025-09-19
+
 - Fix quick usage in README (use xrheed.loaders)
 - Minor fixes in example notebooks
 - Update citation
