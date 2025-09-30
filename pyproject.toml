@@ -29,9 +29,11 @@ dependencies = [
     "Pillow>=9.0.0",
 ]
 
+dynamic = ["version"]
+
 [build-system]
 requires = [
-    "setuptools>=61", 
+    "setuptools>=61",
     "wheel",
     "build",
     "setuptools_scm[toml]>=6.4"
@@ -49,3 +51,7 @@ dev = [
     "sphinx-rtd-theme",
     "build",
 ]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "dirty-tag"
