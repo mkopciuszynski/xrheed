@@ -1,10 +1,14 @@
 # Changelog
 
-<a name="1.2.0"></a>
-## [1.2.0] – 2025-09-30
+<a name="1.3.0"></a>
+## [1.3.0] – 2025-09-30
 
 - Expose `load_data` and `load_data_manual` at the package root (`xrheed.load_data`) for simpler imports
 - Update documentation and examples to reflect the new recommended loading approach
+- Adopt setuptools_scm for dynamic versioning from git tags
+- Expose `__version__` in package root
+- Auto-update CITATION.cff version during release
+- Simplify workflow for building and publishing to PyPI
 
 <a name="1.1.2"></a>
 ## [1.1.2] – 2025-09-19
