@@ -22,6 +22,7 @@ except PackageNotFoundError:
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 # Auto-discover plugins
 def _discover_plugins():
     try:
@@ -33,16 +34,20 @@ def _discover_plugins():
     except Exception as e:
         logger.warning(f"Plugin discovery failed: {e}")
 
+
 _discover_plugins()
+
 
 # Optional: friendly message in notebooks
 def _in_jupyter() -> bool:
     try:
         from IPython import get_ipython
+
         shell = get_ipython()
         return shell is not None and shell.__class__.__name__ == "ZMQInteractiveShell"
     except Exception:
         return False
+
 
 if _in_jupyter():
     print(f"\n🎉 xrheed v{__version__} loaded!")

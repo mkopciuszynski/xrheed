@@ -6,7 +6,7 @@ Provides a unified API to load RHEED images either via plugins or manually.
 
 import logging
 from pathlib import Path
-from typing import Optional, Union, Sequence, cast
+from typing import Optional, Sequence, Union, cast
 
 import numpy as np
 import xarray as xr
@@ -102,7 +102,6 @@ def load_data(
 
     # --- Single-file case - manual mode ---
     else:
-    
         assert screen_scale is not None, "screen_scale must be provided in manual mode"
         assert (
             screen_sample_distance is not None

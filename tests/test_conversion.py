@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+
 import xrheed
 from xrheed.conversion import base, image
-
 
 
 class TestBaseConversion(unittest.TestCase):
