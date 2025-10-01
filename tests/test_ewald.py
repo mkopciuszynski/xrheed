@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-from xrheed.loaders import load_data
+import xrheed
 from xrheed.kinematics.ewald import Ewald
 from xrheed.kinematics.lattice import Lattice
 
@@ -15,7 +15,7 @@ class TestEwald(unittest.TestCase):
 
         # Prepare test image
         test_data_path = Path(__file__).parent / "data" / "Si_111_7x7_112_phi_00.raw"
-        self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
+        self.rheed_image = xrheed.load_data(test_data_path, plugin="dsnp_arpes_raw")
         self.rheed_image.ri.apply_image_center(auto_center=True)
         self.rheed_image.ri.beta = 2.8
 

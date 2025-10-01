@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-from xrheed.loaders import load_data, load_data_manual
+import xrheed
 
 
 class TestDataLoading(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestDataLoading(unittest.TestCase):
         self.loaded_images = {}
         for plugin, filename in self.plugin_file_map.items():
             file_path = Path(__file__).parent / "data" / filename
-            self.loaded_images[plugin] = load_data(file_path, plugin=plugin)
+            self.loaded_images[plugin] = xrheed.load_data(file_path, plugin=plugin)
 
     def test_plugin_attributes(self):
         required_attrs = ["screen_scale", "beam_energy", "screen_sample_distance"]
@@ -94,7 +94,7 @@ class TestDataLoading(unittest.TestCase):
         file_path = Path(__file__).parent / "data" / self.manual_load_file
 
         # Provide required manual parameters
-        da_manual = load_data_manual(
+        da_manual = xrheed.load_data(
             file_path,
             screen_sample_distance=309.2,
             screen_scale=9.04,
