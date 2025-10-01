@@ -36,6 +36,16 @@ class TestDataLoading(unittest.TestCase):
                         (float, int),
                         msg=f"[{plugin}] {attr} is not a number",
                     )
+                # Check 'fname' attribute exists and matches the file path
+                file_name = self.plugin_file_map[plugin]
+                self.assertIn(
+                    "file_name", attrs, msg=f"[{plugin}] Missing 'file_name' attribute"
+                )
+                self.assertEqual(
+                    attrs["file_name"],
+                    file_name,
+                    msg=f"[{plugin}] 'file_name' attribute does not real file name",
+                )
 
     def test_dataarray_structure(self):
         for plugin, image in self.loaded_images.items():
