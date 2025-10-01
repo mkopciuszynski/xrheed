@@ -20,7 +20,7 @@ class DsnpArpesBmpPlugin(LoadRheedBase):
         "screen_scale": 9.04,  # pixels per mm
         "screen_center_sx_px": 749,  # horizontal center of an image in px
         "screen_center_sy_px": 70,  # vertical center (shadow edge) in px
-        "beam_energy": 18.6 * 1000,  # eV
+        "beam_energy": 18_600,  # eV
         "alpha": 0.0,  # azimuthal angle
         "beta": 2.0,  # incident angle
     }
