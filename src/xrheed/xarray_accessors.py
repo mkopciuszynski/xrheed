@@ -101,22 +101,25 @@ class RHEEDAccessor:
     def __repr__(self) -> str:
         """
         Return a human-readable summary of the DataArray and key RHEED metadata.
-        Missing attributes are shown as 'N/A'.
         """
         screen_scale = self._get_attr("screen_scale", None)
         beam_energy = self._get_attr("beam_energy", None)
         screen_sample_distance = self._get_attr("screen_sample_distance", None)
         beta = self._get_attr("beta", DEFAULT_BETA)
         alpha = self._get_attr("alpha", DEFAULT_ALPHA)
+        file_name = self._obj.attrs.get("file_name", "N/A")
+        file_ctime = self._obj.attrs.get("file_ctime", "N/A")
 
         return (
             f"<RHEEDAccessor>\n"
+            f"  File name: {file_name}\n"
+            f"  File creation time: {file_ctime}\n"
             f"  Image shape: {self._obj.shape}\n"
-            f"  Screen scale: {screen_scale if screen_scale is not None else 'N/A'}\n"
-            f"  Screen sample distance: {screen_sample_distance if screen_sample_distance is not None else 'N/A'}\n"
+            f"  Screen scale: {screen_scale} px/mm\n"
+            f"  Screen sample distance: {screen_sample_distance} mm\n"
             f"  Beta (incident) angle: {beta:.2f} deg\n"
             f"  Alpha (azimuthal) angle: {alpha:.2f} deg\n"
-            f"  Beam Energy: {beam_energy if beam_energy is not None else 'N/A'} eV\n"
+            f"  Beam Energy: {beam_energy} eV\n"
         )
 
     @property
