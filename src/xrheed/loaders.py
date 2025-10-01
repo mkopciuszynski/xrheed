@@ -1,185 +1,143 @@
 """
-RHEED Data Loaders
+RHEED Data Loader
 
-This module provides functions to load RHEED images from files using registered plugins.
+Provides a unified API to load RHEED images either via plugins or manually.
 """
 
 import logging
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Sequence, Union, cast
 
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from PIL import Image
 
-from .plugins import load_single_image
+from .plugins import PLUGINS
 
-__all__ = ["load_data", "load_data_manual"]
+CANONICAL_STACK_DIMS = {"alpha", "beta", "coverage", "time", "temperature"}
+
+__all__ = ["load_data"]
 
 logger = logging.getLogger(__name__)
 
 
 def load_data(
-    path: Union[str, Path],
-    plugin: str,
-    **kwargs,
-) -> xr.DataArray:
-    """
-    Load a single RHEED image using the specified plugin.
-
-    Parameters
-    ----------
-    path : str or Path
-        Path to the file containing RHEED data.
-    plugin : str
-        Name of the plugin to use for loading.
-    **kwargs : dict
-        Additional arguments passed to the plugin loader.
-
-    Returns
-    -------
-    xr.DataArray
-        The loaded RHEED image.
-
-    Raises
-    ------
-    ValueError
-        If the path is invalid or does not exist.
-    NotImplementedError
-        If the path is a directory (directory loading not yet implemented).
-    """
-    if not path:
-        raise ValueError("You must provide a valid path.")
-
-    path = Path(path).absolute()
-    logger.info(f"Loading data from: {path}")
-    logger.debug(f"Using plugin: {plugin}")
-
-    if path.is_file():
-        logger.info(f"Detected file: {path}")
-        return load_single_image(path, plugin, **kwargs)
-
-    elif path.is_dir():
-        logger.warning(f"Directory loading is not implemented yet: {path}")
-        raise NotImplementedError(
-            "Loading data from directories is not implemented yet."
-        )
-
-    else:
-        logger.error(f"Path does not exist: {path}")
-        raise ValueError(f"The specified path does not exist: {path}")
-
-
-def load_data_manual(
-    path: Union[str, Path],
+    path: Union[str, Path, Sequence[Union[str, Path]]],
+    plugin: Optional[str] = None,
     *,
-    screen_sample_distance: float,
-    screen_scale: float,
-    beam_energy: float,
+    screen_sample_distance: Optional[float] = None,
+    screen_scale: Optional[float] = None,
+    beam_energy: Optional[float] = None,
     screen_center_sx_px: Optional[int] = None,
     screen_center_sy_px: Optional[int] = None,
     alpha: float = 0.0,
     beta: float = 2.0,
+    stack_dim: Optional[str] = None,
+    stack_coords: Optional[Sequence[float]] = None,
+    **kwargs,
 ) -> xr.DataArray:
     """
-    Manually load a RHEED image without using a plugin.
-
-    This is the fallback loader for cases where no plugin is available.
-    The user must provide the essential parameters.
+    Load a RHEED image (or a stack of images) using either a plugin or manual parameters.
 
     Parameters
     ----------
-    path : str | Path
-        Path to the image file (BMP, PNG, TIFF, etc.).
-    screen_sample_distance : float
-        Distance from sample to screen [mm].
-    screen_scale : float
-        Scaling factor [pixels per mm].
-    beam_energy : float
-        Beam energy [eV].
-    screen_center_sx_px : int, optional
-        Horizontal center of the image in pixels.
-        Defaults to image midpoint if not provided.
-    screen_center_sy_px : int, optional
-        Vertical center of the image in pixels.
-        Defaults to image midpoint if not provided.
-    alpha : float, optional
-        Azimuthal angle, by default 0.0.
-    beta : float, optional
-        Incident angle, by default 2.0.
+    path : str | Path | list[str|Path]
+        File path (single image) or list of files (stacked images).
+    plugin : str, optional
+        Name of plugin to use. If None, manual mode is assumed.
+    screen_sample_distance, screen_scale, beam_energy : float
+        Required in manual mode.
+    screen_center_sx_px, screen_center_sy_px : int, optional
+        Optional centers in px (default: image midpoints).
+    alpha, beta : float
+        Optional angles.
+    stack_dim : str, optional
+        New dimension name when stacking multiple files.
+    stack_coords : array-like, optional
+        Coordinates for the new dimension.
 
     Returns
     -------
     xarray.DataArray
-        Image data with physical coordinates and attributes.
-
-    Raises
-    ------
-    ValueError
-        If any of the required calibration parameters are missing.
+        Image data with coordinates and attributes.
     """
+
+    # --- Multi-file case ---
+    if isinstance(path, (list, tuple)):
+        print("This is not fully implemented now!")
+
+        if plugin is None:
+            raise ValueError("Multi-file loading is only supported with plugins.")
+        logger.info(f"Loading {len(path)} files with plugin={plugin}")
+        arrays = [load_data(p, plugin=plugin, **kwargs) for p in path]
+
+        if stack_dim is None:
+            raise ValueError("stack_dim must be provided when loading multiple files.")
+
+        if stack_dim not in CANONICAL_STACK_DIMS:
+            logger.warning(
+                f"Non-standard stack dimension '{stack_dim}'. "
+                f"Consider using one of {sorted(CANONICAL_STACK_DIMS)} for consistency."
+            )
+
+        da = xr.concat(arrays, dim=stack_dim)
+        if stack_coords is not None:
+            da = da.assign_coords({stack_dim: stack_coords})
+        return da
+
+    # --- Single-file case ---
+    path = cast(str | Path, path)
     path = Path(path)
 
-    # Ensure required parameters are present
-    for key, val in {
-        "screen_sample_distance": screen_sample_distance,
-        "screen_scale": screen_scale,
-        "beam_energy": beam_energy,
-    }.items():
-        if val is None:
-            raise ValueError(f"Missing required parameter: '{key}'")
+    if plugin is not None:
+        plugin_cls = PLUGINS[plugin]
+        plugin_instance = plugin_cls()
+        if not plugin_instance.is_file_accepted(path):
+            raise ValueError(
+                f"File {path} not accepted by plugin '{plugin}'. "
+                f"Allowed extensions: {plugin_cls.TOLERATED_EXTENSIONS}"
+            )
+        return plugin_instance.load_single_image(path, **kwargs)
 
-    # Load image using Pillow (convert to grayscale, ensure np.uint8)
-    try:
+    # --- Single-file case - manual mode ---
+    else:
+        assert screen_scale is not None, "screen_scale must be provided in manual mode"
+        assert (
+            screen_sample_distance is not None
+        ), "screen_scale must be provided in manual mode"
+        assert beam_energy is not None, "screen_scale must be provided in manual mode"
+
+        # Load image (bmp/png/tiff/…)
         image = Image.open(path).convert("L")
-    except Exception as e:
-        raise ValueError(f"Cannot load image file '{path}': {e}")
+        image_np: NDArray[np.uint8] = np.array(image, dtype=np.uint8)
 
-    image_np: NDArray[np.uint8] = np.array(image, dtype=np.uint8)
+        h: int
+        w: int
+        h, w = image_np.shape
 
-    height: int
-    width: int
-    height, width = image_np.shape
+        if screen_center_sx_px is None:
+            screen_center_sx_px = w // 2
+        if screen_center_sy_px is None:
+            screen_center_sy_px = h // 2
 
-    # Default centers if not given
-    if screen_center_sx_px is None:
-        screen_center_sx_px = width // 2
-    if screen_center_sy_px is None:
-        screen_center_sy_px = height // 2
+        sx = (np.arange(w) - screen_center_sx_px) / screen_scale
+        sy = (screen_center_sy_px - np.arange(h)) / screen_scale
 
-    # Coordinates in mm
-    sx_coords: NDArray[np.float64] = (
-        np.arange(width, dtype=np.float64) - screen_center_sx_px
-    ) / screen_scale
-    sy_coords: NDArray[np.float64] = (
-        screen_center_sy_px - np.arange(height, dtype=np.float64)
-    ) / screen_scale
+        sy = np.flip(sy)
+        image_np = np.flipud(image_np)
 
-    # Flip vertically to match coordinate orientation
-    sy_coords = np.flip(sy_coords)
-    image_np = np.flipud(image_np)
+        coords = {"sy": sy, "sx": sx}
+        attrs = dict(
+            plugin="manual",
+            screen_sample_distance=screen_sample_distance,
+            screen_scale=screen_scale,
+            screen_center_sx_px=screen_center_sx_px,
+            screen_center_sy_px=screen_center_sy_px,
+            beam_energy=beam_energy,
+            alpha=alpha,
+            beta=beta,
+            file_name=path.name,
+        )
 
-    coords: dict[str, NDArray[np.floating]] = {
-        "sy": sy_coords,
-        "sx": sx_coords,
-    }
-    dims = ["sy", "sx"]
-
-    attrs: dict[str, float | str] = {
-        "plugin": "manual",
-        "screen_sample_distance": screen_sample_distance,
-        "screen_scale": screen_scale,
-        "screen_center_sx_px": screen_center_sx_px,
-        "screen_center_sy_px": screen_center_sy_px,
-        "beam_energy": beam_energy,
-        "alpha": alpha,
-        "beta": beta,
-    }
-
-    return xr.DataArray(
-        data=image_np,
-        coords=coords,
-        dims=dims,
-        attrs=attrs,
-    )
+        return xr.DataArray(image_np, coords=coords, dims=["sy", "sx"], attrs=attrs)

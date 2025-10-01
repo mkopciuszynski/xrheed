@@ -4,12 +4,12 @@ Data Loading
 Using Plugins
 -------------
 
-xRHEED uses a plugin system to load RHEED images and provide geometry information for each experiment.
+xRHEED uses a flexible plugin system to load RHEED images and provide geometry information for each experiment.
 
 A plugin should:
 
-- **Load a particular data format** (e.g., ``.raw``, ``.png``, ``.bmp``).  
-- **Include RHEED geometry** by defining an ``ATTRS`` dictionary with keys such as:
+- **Load a specific data format** (e.g., ``.raw``, ``.png``, ``.bmp``).  
+- **Provide RHEED geometry** by defining an ``ATTRS`` dictionary with keys such as:
 
   - ``plugin``: Name of the plugin.  
   - ``screen_sample_distance``: Distance from sample to screen (in mm).  
@@ -23,7 +23,7 @@ A plugin should:
 
 - **Return an ``xarray.DataArray``** with:
   - ``sx`` (horizontal) and ``sy`` (vertical) coordinates, both in millimeters.  
-  - Coordinates sorted so that the image is oriented with the shadow edge at the top (i.e., the image is "facing down").  
+  - Coordinates sorted so the image is oriented with the shadow edge at the top (i.e., the image is "facing down").  
   - The ``sy`` values covering the image should be negative at the top of the image.
 
 Example plugin attributes:
@@ -41,14 +41,15 @@ Example plugin attributes:
         "beta": 2.0,   # default incident angle
     }
 
-
+.. note::
+     There is a helper function `dataarray_from_image()` that might be used to create DataArray from a numpy image, using ATTRS scaling and centers. Plugins may use or override this.
 
 Manual
 ------
 
-While writing and using a dedicated plugin is the recommended approach, it is also possible to load RHEED images manually (BMP, PNG, TIFF, or other formats) using the ``load_data_manual()`` function.
+While writing and using a dedicated plugin is the recommended approach, you can also load RHEED images manually (BMP, PNG, TIFF, or other formats) using the same ``load_data()`` function, but without providing `plugin`.
 
-In this mode, the user must provide the essential calibration parameters directly:
+In this mode, you must provide the essential calibration parameters directly as keyword arguments:
 
 - ``screen_sample_distance``: Distance from sample to screen [mm].  
 - ``screen_scale``: Pixel-to-mm scaling factor.
@@ -63,7 +64,7 @@ Example usage:
 
     import xrheed
 
-    rheed_image = xrheed.load_data_manual(
+    rheed_image = xrheed.load_data(
         "example.bmp",
         screen_sample_distance=309.2,
         screen_scale=9.04,

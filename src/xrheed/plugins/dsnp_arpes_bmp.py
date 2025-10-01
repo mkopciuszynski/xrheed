@@ -1,24 +1,20 @@
-import logging
 from pathlib import Path
-from typing import ClassVar
 
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from PIL import Image
 
-from xrheed.plugins import LoadRheedBase, rheed_plugin
-
-logger = logging.getLogger(__name__)
+from . import LoadRheedBase, register_plugin
 
 
-@rheed_plugin("dsnp_arpes_bmp")
-class LoadPlugin(LoadRheedBase):
+@register_plugin("dsnp_arpes_bmp")
+class DsnpArpesBmpPlugin(LoadRheedBase):
     """Plugin to load UMCS DSNP ARPES BMP RHEED images."""
 
-    TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".bmp"}
+    TOLERATED_EXTENSIONS = {".bmp"}
 
-    ATTRS: ClassVar[dict[str, float | str]] = {
+    ATTRS = {
         "plugin": "UMCS DSNP ARPES bmp",
         "screen_sample_distance": 309.2,  # mm
         "screen_scale": 9.04,  # pixels per mm
@@ -29,55 +25,11 @@ class LoadPlugin(LoadRheedBase):
         "beta": 2.0,  # incident angle
     }
 
-    def load_single_image(
-        self,
-        file_path: Path | str,
-        plugin_name: str = "",
-        **kwargs,
-    ) -> xr.DataArray:
-        file_path = Path(file_path)
-
-        if not self.is_file_accepted(file_path):
-            raise ValueError(f"File not accepted: {file_path}")
-
-        px_to_mm = float(self.ATTRS["screen_scale"])
-
-        # Load BMP image using Pillow
+    def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
+        # Load BMP image using Pillow and convert to numpy array
         image = Image.open(file_path).convert("L")  # Convert to grayscale
         image_np: NDArray[np.uint8] = np.array(image)
 
-        height: int
-        width: int
-        height, width = image_np.shape
+        da = self.dataarray_from_image(image_np)
 
-        # Generate coordinates
-        sx_coords: NDArray[np.float64] = np.arange(width, dtype=np.float64)
-        sy_coords: NDArray[np.float64] = np.arange(height, dtype=np.float64)
-
-        # Shift coordinates to center
-        sx_coords -= float(self.ATTRS["screen_center_sx_px"])
-        sy_coords = float(self.ATTRS["screen_center_sy_px"]) - sy_coords
-        # Convert from pixels to mm
-        sx_coords /= px_to_mm
-        sy_coords /= px_to_mm
-
-        # Flip vertically to match new y coordinates
-        sy_coords = np.flip(sy_coords)
-        image_np = np.flipud(image_np)
-
-        coords: dict[str, NDArray[np.floating]] = {
-            "sy": sy_coords,
-            "sx": sx_coords,
-        }
-        dims = ["sy", "sx"]
-
-        attrs = self.ATTRS.copy()
-
-        logger.info(f"Loaded BMP image {file_path} with shape {image_np.shape}")
-
-        return xr.DataArray(
-            data=image_np,
-            coords=coords,
-            dims=dims,
-            attrs=attrs,
-        )
+        return self.add_file_metadata(da, file_path)

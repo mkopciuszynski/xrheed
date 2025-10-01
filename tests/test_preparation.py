@@ -5,14 +5,15 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-from xrheed.loaders import load_data
-from xrheed.preparation.alignment import find_horizontal_center, find_vertical_center
+import xrheed
+from xrheed.preparation.alignment import (find_horizontal_center,
+                                          find_vertical_center)
 
 
 class TestDataLoading(unittest.TestCase):
     def setUp(self):
         test_data_path = Path(__file__).parent / "data" / "Si_111_7x7_112_phi_00.raw"
-        self.rheed_image = load_data(test_data_path, plugin="dsnp_arpes_raw")
+        self.rheed_image = xrheed.load_data(test_data_path, plugin="dsnp_arpes_raw")
 
     def test_set_center(self):
         center_x = -0.5
