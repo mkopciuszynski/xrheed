@@ -9,6 +9,7 @@ from typing import Any, Dict, Set, Type, Optional
 
 import numpy as np
 import xarray as xr
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,8 @@ class LoadRheedBase(abc.ABC):
         """Attach common metadata (file name, creation time) to attrs."""
         da.attrs["file_name"] = file_path.name
         try:
-            da.attrs["file_ctime"] = Path(file_path).stat().st_birthtime
+            ctime = Path(file_path).stat().st_birthtime
+            da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(ctime).strftime("%Y-%m-%d, %H:%M:%S")
         except Exception:
             pass
         return da
