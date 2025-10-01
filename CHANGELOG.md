@@ -1,5 +1,15 @@
 # Changelog
 
+<a name="2.0.0"></a>
+## [2.0.0] – 2025-xx-xx
+
+- Organize and simplify the data loading logic
+- Breaking change: remove: `load_data_manual()`, now only load_data() is available 
+and works as manual when no plugin is provided
+- Add file name and file creation time to loaded image in attrs
+- Update the documentation
+
+
 <a name="1.3.4"></a>
 ## [1.3.4] – 2025-09-30
 
