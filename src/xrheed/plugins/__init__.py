@@ -45,7 +45,9 @@ class LoadRheedBase(abc.ABC):
         """Attach common metadata (file name, creation time) to attrs."""
         da.attrs["file_name"] = file_path.name
         try:
-            ctime = Path(file_path).stat().st_birthtime
+            stat = Path(file_path).stat()
+            # Use st_birthtime if available, otherwise fallback to st_ctime
+            ctime = getattr(stat, "st_birthtime", stat.st_ctime)
             da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(ctime).strftime(
                 "%Y-%m-%d, %H:%M:%S"
             )
