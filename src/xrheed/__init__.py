@@ -7,13 +7,13 @@ import logging
 import pkgutil
 from importlib.metadata import PackageNotFoundError, version
 
-# Import xarray accessors
-from . import xarray_accessors  # noqa: F401
-from .loaders import load_data, load_data_manual
+# Expose top-level API
+from . import xarray_accessors  # noqa: F401 (registers accessors)
+from .loaders import load_data
 
-__all__ = ["load_data", "load_data_manual", "__version__"]
+__all__ = ["load_data", "__version__"]
 
-# Package version
+# Package version (from setuptools_scm if installed, otherwise fallback)
 try:
     __version__ = version("xrheed")
 except PackageNotFoundError:
@@ -21,27 +21,9 @@ except PackageNotFoundError:
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.info(f"xrheed {__version__} initialized successfully. Accessors registered.")
 
-
-# Check if running inside a Jupyter notebook
-def _in_jupyter():
-    try:
-        from IPython import get_ipython
-
-        shell = get_ipython()
-        return shell is not None and shell.__class__.__name__ == "ZMQInteractiveShell"
-    except Exception:
-        return False
-
-
-# Show a welcome message in Jupyter
-if _in_jupyter():
-    print(f"\n🎉 xrheed v{__version__} loaded!")
-
-
-# Plugin discovery
-def discover_plugins():
+# Auto-discover plugins
+def _discover_plugins():
     try:
         import xrheed.plugins
 
@@ -51,6 +33,16 @@ def discover_plugins():
     except Exception as e:
         logger.warning(f"Plugin discovery failed: {e}")
 
+_discover_plugins()
 
-# Run plugin discovery after all imports
-discover_plugins()
+# Optional: friendly message in notebooks
+def _in_jupyter() -> bool:
+    try:
+        from IPython import get_ipython
+        shell = get_ipython()
+        return shell is not None and shell.__class__.__name__ == "ZMQInteractiveShell"
+    except Exception:
+        return False
+
+if _in_jupyter():
+    print(f"\n🎉 xrheed v{__version__} loaded!")
