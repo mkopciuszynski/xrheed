@@ -46,8 +46,7 @@ class LoadRheedBase(abc.ABC):
         da.attrs["file_name"] = file_path.name
         try:
             stat = Path(file_path).stat()
-            # Use st_birthtime if available, otherwise fallback to st_ctime
-            ctime = getattr(stat, "st_birthtime", stat.st_ctime)
+            ctime = stat.st_mtime  # Use modification time
             da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(ctime).strftime(
                 "%Y-%m-%d, %H:%M:%S"
             )
