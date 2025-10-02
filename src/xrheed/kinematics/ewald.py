@@ -13,6 +13,7 @@ from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .cache_utils import smart_cache
 from .lattice import Lattice, rotation_matrix
+from ..constants import K_INV_ANGSTROM
 
 
 class Ewald:
@@ -89,7 +90,7 @@ class Ewald:
         self.fine_scalling: float = 1.0
 
         # Ewald sphere radius
-        self.ewald_radius: float = np.sqrt(self.beam_energy) * 0.5123
+        self.ewald_radius: float = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
 
         self._ewald_roi: float = self.ewald_radius * (
             self.screen_roi_width / self.screen_sample_distance
