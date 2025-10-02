@@ -14,8 +14,7 @@ from numpy.typing import NDArray
 from PIL import Image
 
 from .plugins import PLUGINS
-
-CANONICAL_STACK_DIMS = {"alpha", "beta", "coverage", "time", "temperature"}
+from .constants import CANONICAL_STACK_DIMS
 
 __all__ = ["load_data"]
 
@@ -34,7 +33,7 @@ def load_data(
     alpha: float = 0.0,
     beta: float = 2.0,
     stack_dim: Optional[str] = None,
-    stack_coords: Optional[Sequence[float]] = None,
+    stack_coords: Optional[Union[Sequence[float], NDArray]] = None,
     **kwargs,
 ) -> xr.DataArray:
     """
