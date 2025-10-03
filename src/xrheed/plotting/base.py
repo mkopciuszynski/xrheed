@@ -50,10 +50,15 @@ def plot_image(
         kwargs.setdefault("vmin", vmin)
         kwargs.setdefault("vmax", vmax)
 
+    if "cmap" not in kwargs:
+        kwargs.setdefault("cmap", "gray")
+    if "add_colorbar" not in kwargs:
+        kwargs.setdefault("add_colorbar", False)
+
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 4))
 
-    rheed_image.plot(ax=ax, cmap="gray", **kwargs)
+    rheed_image.plot(ax=ax, **kwargs)
 
     if show_center_lines:
         ax.axhline(y=0.0, linewidth=1.0, linestyle="--")
