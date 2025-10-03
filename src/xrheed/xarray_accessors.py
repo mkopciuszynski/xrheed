@@ -173,20 +173,103 @@ class RHEEDAccessor:
             raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D array, got {da.ndim}D")
         da.data = rotated
 
-    def apply_image_center(
-        self, center_x: float = 0.0, center_y: float = 0.0, auto_center: bool = False
+
+    def set_center_manual(
+        self,
+        center_x: Union[float, list[float], np.ndarray] = 0.0,
+        center_y: Union[float, list[float], np.ndarray] = 0.0,
+        method: Literal['linear', 'nearest', 'cubic'] = 'linear'
     ) -> None:
+        """
+        Manually shift the image center for a single image or a stack.
+
+        Parameters
+        ----------
+        center_x : float or sequence
+            Horizontal shift(s). If scalar, applied to all frames. 
+            If array-like, must match stack length.
+        center_y : float or sequence
+            Vertical shift(s). Same logic as center_x.
+        method : str, optional
+            Interpolation method for per-frame shifts (default = "linear").
+        """
         da: xr.DataArray = self._obj
-        if da.ndim == STACK_NDIMS:
-            sample = da[0]
+
+        if da.ndim == IMAGE_NDIMS:
+            self._obj = da.assign_coords(
+                sx=da.sx - center_x,
+                sy=da.sy - center_y
+            )
+            return
+
+        elif da.ndim == STACK_NDIMS:
+            stack_dim = da.dims[0]
+            n_frames = da.sizes[stack_dim]
+
+            cx = np.atleast_1d(center_x)
+            cy = np.atleast_1d(center_y)
+
+            if cx.size == 1 and cy.size == 1:
+                self._obj = da.assign_coords(
+                    sx=da.sx - float(cx),
+                    sy=da.sy - float(cy)
+                )
+                return
+
+            # Broadcast scalars to full-length vectors
+            if cx.size == 1:
+                cx = np.full(n_frames, cx.item())
+            if cy.size == 1:
+                cy = np.full(n_frames, cy.item())
+
+            if len(cx) != n_frames or len(cy) != n_frames:
+                raise ValueError(
+                    f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
+                )
+
+            # Normalize shifts relative to first frame
+            cx0, cy0 = cx[0], cy[0]
+            cx = cx - cx0
+            cy = cy - cy0
+
+            da = da.assign_coords(
+                sx=da.sx - cx0,
+                sy=da.sy - cy0
+            )
+
+            shifted_slices = []
+            for i in range(n_frames):
+                new_coords = {
+                    "sx": da.sx - cx[i],
+                    "sy": da.sy - cy[i]
+                }
+                shifted = da.isel({stack_dim: i}).interp(new_coords, method=method, kwargs={"fill_value": 0})
+                shifted_slices.append(shifted)
+
+            self._obj = xr.concat(shifted_slices, dim=stack_dim)
+
         else:
-            sample = da
-        if auto_center:
-            center_x = find_horizontal_center(sample)
-            center_y = find_vertical_center(sample)
-        da["sx"] = da.sx - center_x
-        da["sy"] = da.sy - center_y
-        logger.info("The image was shifted to a new center.")
+            raise ValueError(f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}")
+
+
+
+    def set_center_auto(self) -> None:
+        """
+        Automatically determine and apply the image center using
+        `find_horizontal_center` and `find_vertical_center`.
+        Uses the first frame if data is a stack.
+        """
+        da = self._obj
+        
+        # Use the first frame if data is a stack.
+        image = da[0] if da.ndim == STACK_NDIMS else da
+        
+        center_x = find_horizontal_center(image)
+        center_y = find_vertical_center(image)
+
+        self.set_center_manual(center_x, center_y)
+        logger.info("Applied automatic centering.")
+
 
     def get_profile(
         self,
@@ -245,11 +328,14 @@ class RHEEDAccessor:
         stack_index: int = 0,
         **kwargs,
     ) -> Axes:
+        
         da: xr.DataArray = self._obj
+
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
             raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
+        
         return plot_image(
             rheed_image=da,
             ax=ax,
