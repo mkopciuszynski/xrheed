@@ -287,7 +287,7 @@ class RHEEDAccessor:
         stack_index: int = 0,
         reduce_over: Literal["sy", "sx", "both"] = "sy",
         method: Literal["mean", "sum"] = "mean",
-        plot_origin: bool = False,
+        show_origin: bool = False,
     ) -> xr.DataArray:
         da: xr.DataArray = self._obj
         if da.ndim == STACK_NDIMS:
@@ -322,7 +322,7 @@ class RHEEDAccessor:
             }
         )
 
-        if plot_origin:
+        if show_origin:
             fig, ax = plt.subplots()
             self.plot_image(ax=ax, stack_index=stack_index)
             rect = Rectangle(
