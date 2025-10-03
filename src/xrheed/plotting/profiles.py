@@ -51,7 +51,7 @@ def plot_profile(
         profile.values = normalized.values
         profile.attrs = rheed_profile.attrs.copy()
 
-    if transform_to_k:
+    if transform_to_k and "sx" in profile.coords:
         k_e: float = profile.ri.ewald_sphere_radius
         screen_sample_distance: float = profile.ri.screen_sample_distance
 
@@ -72,7 +72,14 @@ def plot_profile(
 
     else:
         profile.plot(ax=ax, **kwargs)
-        ax.set_xlabel("$S_x$ (mm)")
+        if "sx" in profile.coords:
+            ax.set_xlabel("$S_x$ (mm)")
+        elif "sy" in profile.coords:
+            ax.set_xlabel("$S_y$ (mm)")
+        else:
+            # Use the first dimension name as a fallback
+            dim_name = profile.dims[0] if profile.dims else ""
+            ax.set_xlabel(str(dim_name))
 
     if normalize:
         ax.set_ylabel("Normalized Intensity")
