@@ -20,7 +20,7 @@ Below is a minimal example to demonstrate the workflow with **xRHEED**.
        center=(0, -5), 
        width=40, 
        height=4, 
-       plot_origin=True
+       show_origin=True
    )
 
 
@@ -35,12 +35,8 @@ Example:
 
 .. code-block:: python
 
-   fig, ax = plt.subplots()
-   ax.plot(profile.coords["x"], profile.values)
-   ax.set_xlabel("Reciprocal coordinate (1/Å)")
-   ax.set_ylabel("Intensity")
+   profile.rp.plot_profile(transform_to_k=True, normalize=True)
    plt.show()
-
 
 Next Steps
 ----------
