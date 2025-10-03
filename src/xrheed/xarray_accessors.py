@@ -373,11 +373,15 @@ class RHEEDProfileAccessor:
         center = da.attrs.get("profile_center", "N/A")
         width = da.attrs.get("profile_width", "N/A")
         height = da.attrs.get("profile_height", "N/A")
+        reduce_over = da.attrs.get("reduce_over", "N/A")
+        reduce_method = da.attrs.get("reduce_method", "N/A")
         return (
             f"<RHEEDProfileAccessor\n"
             f"  Center: sx, sy [mm]: {center} \n"
             f"  Width: {width} mm\n"
             f"  Height: {height} mm\n"
+            f"  Reduce over: {reduce_over}\n"
+            f"  Reduce method: {reduce_method}\n"
         )
 
     def convert_to_k(self) -> xr.DataArray:
