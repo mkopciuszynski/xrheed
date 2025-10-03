@@ -49,7 +49,9 @@ class RHEEDAccessor:
         da: xr.DataArray = self._obj
         value = da.attrs.get(attr_name, default)
         if value is None:
-            raise AttributeError(f"Attribute '{attr_name}' not found and no default provided.")
+            raise AttributeError(
+                f"Attribute '{attr_name}' not found and no default provided."
+            )
         try:
             return float(value)
         except (TypeError, ValueError):
@@ -57,7 +59,9 @@ class RHEEDAccessor:
 
     def _set_attr(self, attr_name: str, value: float) -> None:
         if not isinstance(value, (int, float)):
-            raise ValueError(f"Attribute '{attr_name}' must be numeric, got {type(value).__name__}.")
+            raise ValueError(
+                f"Attribute '{attr_name}' must be numeric, got {type(value).__name__}."
+            )
         self._obj.attrs[attr_name] = float(value)
 
     def __repr__(self) -> str:
@@ -119,6 +123,10 @@ class RHEEDAccessor:
         old_px_to_mm = self._get_attr("screen_scale", 1.0)
         self._set_attr("screen_scale", px_to_mm)
 
+        missing = IMAGE_DIMS - da.coords.keys()
+        if missing:
+            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")         
+
         da["sx"] = da.sx * old_px_to_mm / px_to_mm
         da["sy"] = da.sy * old_px_to_mm / px_to_mm
 
@@ -165,20 +173,23 @@ class RHEEDAccessor:
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
             rotated = np.stack(
-                [ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
-                 for i in range(da.sizes[stack_dim])],
+                [
+                    ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
+                    for i in range(da.sizes[stack_dim])
+                ],
                 axis=0,
             )
         else:
-            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D array, got {da.ndim}D")
+            raise ValueError(
+                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D array, got {da.ndim}D"
+            )
         da.data = rotated
-
 
     def set_center_manual(
         self,
         center_x: Union[float, list[float], np.ndarray] = 0.0,
         center_y: Union[float, list[float], np.ndarray] = 0.0,
-        method: Literal['linear', 'nearest', 'cubic'] = 'linear'
+        method: Literal["linear", "nearest", "cubic"] = "linear",
     ) -> None:
         """
         Manually shift the image center for a single image or a stack.
@@ -186,7 +197,7 @@ class RHEEDAccessor:
         Parameters
         ----------
         center_x : float or sequence
-            Horizontal shift(s). If scalar, applied to all frames. 
+            Horizontal shift(s). If scalar, applied to all frames.
             If array-like, must match stack length.
         center_y : float or sequence
             Vertical shift(s). Same logic as center_x.
@@ -195,12 +206,13 @@ class RHEEDAccessor:
         """
         da: xr.DataArray = self._obj
 
+        missing = IMAGE_DIMS - da.coords.keys()
+        if missing:
+            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")            
+
         if da.ndim == IMAGE_NDIMS:
-            self._obj = da.assign_coords(
-                sx=da.sx - center_x,
-                sy=da.sy - center_y
-            )
-            return
+            da['sx'] = da.sx - center_x
+            da['sy'] = da.sy - center_y
 
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
@@ -210,48 +222,45 @@ class RHEEDAccessor:
             cy = np.atleast_1d(center_y)
 
             if cx.size == 1 and cy.size == 1:
-                self._obj = da.assign_coords(
-                    sx=da.sx - float(cx),
-                    sy=da.sy - float(cy)
-                )
-                return
+                self._obj = da.assign_coords(sx=da.sx - float(cx), sy=da.sy - float(cy))
+                da['sx'] = da.sx - float(cx)
+                da['sy'] = da.sy - float(cy)
 
-            # Broadcast scalars to full-length vectors
-            if cx.size == 1:
-                cx = np.full(n_frames, cx.item())
-            if cy.size == 1:
-                cy = np.full(n_frames, cy.item())
 
-            if len(cx) != n_frames or len(cy) != n_frames:
-                raise ValueError(
-                    f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
-                )
+            else:
+                # Broadcast scalars to full-length vectors
+                if cx.size == 1:
+                    cx = np.full(n_frames, cx.item())
+                if cy.size == 1:
+                    cy = np.full(n_frames, cy.item())
 
-            # Normalize shifts relative to first frame
-            cx0, cy0 = cx[0], cy[0]
-            cx = cx - cx0
-            cy = cy - cy0
+                if len(cx) != n_frames or len(cy) != n_frames:
+                    raise ValueError(
+                        f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
+                    )
 
-            da = da.assign_coords(
-                sx=da.sx - cx0,
-                sy=da.sy - cy0
-            )
+                # Normalize shifts relative to first frame
+                cx0, cy0 = cx[0], cy[0]
+                cx = cx - cx0
+                cy = cy - cy0
 
-            shifted_slices = []
-            for i in range(n_frames):
-                new_coords = {
-                    "sx": da.sx - cx[i],
-                    "sy": da.sy - cy[i]
-                }
-                shifted = da.isel({stack_dim: i}).interp(new_coords, method=method, kwargs={"fill_value": 0})
-                shifted_slices.append(shifted)
+                da['sx'] = da.sx - float(cx0)
+                da['sy'] = da.sy - float(cy0)
 
-            self._obj = xr.concat(shifted_slices, dim=stack_dim)
+                shifted_slices = []
+                for i in range(n_frames):
+                    new_coords = {"sx": da.sx - cx[i], "sy": da.sy - cy[i]}
+                    shifted = da.isel({stack_dim: i}).interp(
+                        new_coords, method=method, kwargs={"fill_value": 0}
+                    )
+                    shifted_slices.append(shifted)
+
+                self._obj = xr.concat(shifted_slices, dim=stack_dim)
 
         else:
-            raise ValueError(f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}")
-
-
+            raise ValueError(
+                f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
+            )
 
     def set_center_auto(self) -> None:
         """
@@ -260,16 +269,15 @@ class RHEEDAccessor:
         Uses the first frame if data is a stack.
         """
         da = self._obj
-        
+
         # Use the first frame if data is a stack.
         image = da[0] if da.ndim == STACK_NDIMS else da
-        
+
         center_x = find_horizontal_center(image)
         center_y = find_vertical_center(image)
 
         self.set_center_manual(center_x, center_y)
         logger.info("Applied automatic centering.")
-
 
     def get_profile(
         self,
@@ -285,7 +293,9 @@ class RHEEDAccessor:
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
-            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
+            raise ValueError(
+                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
+            )
 
         cropped = da.sel(
             sx=slice(center[0] - width / 2, center[0] + width / 2),
@@ -303,8 +313,13 @@ class RHEEDAccessor:
 
         profile.attrs = da.attrs.copy()
         profile.attrs.update(
-            {"profile_center": center, "profile_width": width,
-             "profile_height": height, "reduce_over": reduce_over, "reduce_method": method}
+            {
+                "profile_center": center,
+                "profile_width": width,
+                "profile_height": height,
+                "reduce_over": reduce_over,
+                "reduce_method": method,
+            }
         )
 
         if plot_origin:
@@ -312,8 +327,11 @@ class RHEEDAccessor:
             self.plot_image(ax=ax, stack_index=stack_index)
             rect = Rectangle(
                 (center[0] - width / 2, center[1] - height / 2),
-                width, height,
-                linewidth=1, edgecolor="red", facecolor="none"
+                width,
+                height,
+                linewidth=1,
+                edgecolor="red",
+                facecolor="none",
             )
             ax.add_patch(rect)
 
@@ -328,14 +346,16 @@ class RHEEDAccessor:
         stack_index: int = 0,
         **kwargs,
     ) -> Axes:
-        
+
         da: xr.DataArray = self._obj
 
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
-            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
-        
+            raise ValueError(
+                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
+            )
+
         return plot_image(
             rheed_image=da,
             ax=ax,
@@ -370,7 +390,11 @@ class RHEEDProfileAccessor:
         k_e: float = da.ri.ewald_sphere_radius
         screen_sample_distance: float = da.ri.screen_sample_distance
         sx: NDArray = da.coords["sx"].values
-        ky = convert_sx_to_ky(sx, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance)
+        ky = convert_sx_to_ky(
+            sx,
+            ewald_sphere_radius=k_e,
+            screen_sample_distance_mm=screen_sample_distance,
+        )
         return da.assign_coords(sx=ky).rename({"sx": "ky"})
 
     def plot_profile(
