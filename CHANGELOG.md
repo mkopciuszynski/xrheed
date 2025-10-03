@@ -8,6 +8,11 @@
 and works as manual when no plugin is provided
 - Add file name and file creation time to loaded image in attrs
 - Update the documentation
+- Refractor ri accessors to work on both 2d images and 3d stacks
+- Breaking change: split the funciton `apply_image_center` into two separate: `set_center_manual`, `set_center_auto`
+- New example images for 3d stacking notebook
+- Update profile plotting and representation to work for sx, sy or other reducing (also for 3d stacks)
+
 
 
 <a name="1.3.4"></a>
