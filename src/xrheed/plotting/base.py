@@ -39,15 +39,21 @@ def plot_image(
         The axes with the plotted image.
     """
 
-    if auto_levels > 0.0:
-        vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
-        kwargs["vmin"] = vmin
-        kwargs["vmax"] = vmax
+    # Handle auto_levels unless user overrides vmin/vmax
+    if "vmin" not in kwargs or "vmax" not in kwargs:
+        if auto_levels > 0.0:
+            vmin, vmax = _set_auto_levels(rheed_image, auto_levels)
+        else:
+            vmin = rheed_image.min().item()
+            vmax = rheed_image.max().item()
+
+        kwargs.setdefault("vmin", vmin)
+        kwargs.setdefault("vmax", vmax)
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 4))
 
-    rheed_image.plot(ax=ax, add_colorbar=False, cmap="gray", **kwargs)
+    rheed_image.plot(ax=ax, cmap="gray", **kwargs)
 
     if show_center_lines:
         ax.axhline(y=0.0, linewidth=1.0, linestyle="--")
