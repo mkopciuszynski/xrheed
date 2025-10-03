@@ -288,19 +288,16 @@ class RHEEDAccessor:
         reduce_over: Literal["sy", "sx", "both"] = "sy",
         method: Literal["mean", "sum"] = "mean",
         show_origin: bool = False,
+        **kwargs,
     ) -> xr.DataArray:
+        
         da: xr.DataArray = self._obj
-        if da.ndim == STACK_NDIMS:
-            da = da.isel({da.dims[0]: stack_index})
-        elif da.ndim != IMAGE_NDIMS:
-            raise ValueError(
-                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
-            )
 
         cropped = da.sel(
             sx=slice(center[0] - width / 2, center[0] + width / 2),
             sy=slice(center[1] - height / 2, center[1] + height / 2),
         )
+
         reduce_func = cropped.mean if method == "mean" else cropped.sum
         if reduce_over == "sy":
             profile = reduce_func(dim="sy")
@@ -324,7 +321,7 @@ class RHEEDAccessor:
 
         if show_origin:
             fig, ax = plt.subplots()
-            self.plot_image(ax=ax, stack_index=stack_index)
+            self.plot_image(ax=ax, stack_index=stack_index, **kwargs)
             rect = Rectangle(
                 (center[0] - width / 2, center[1] - height / 2),
                 width,
