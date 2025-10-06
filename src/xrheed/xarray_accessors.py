@@ -99,7 +99,7 @@ class RHEEDAccessor:
     def screen_scale(self, px_to_mm: float) -> None:
         """
         Set the screen scale (px/mm) and update coordinate scaling accordingly.
-        
+
         Parameters
         ----------
         px_to_mm : float
@@ -138,7 +138,9 @@ class RHEEDAccessor:
     @property
     def screen_roi_height(self) -> float:
         """Height of the region of interest (ROI) on the screen in mm."""
-        return float(self._obj.attrs.get("screen_roi_height", DEFAULT_SCREEN_ROI_HEIGHT))
+        return float(
+            self._obj.attrs.get("screen_roi_height", DEFAULT_SCREEN_ROI_HEIGHT)
+        )
 
     @screen_roi_height.setter
     def screen_roi_height(self, value: float) -> None:
@@ -201,12 +203,16 @@ class RHEEDAccessor:
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
             da.data = np.stack(
-                [ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
-                 for i in range(da.sizes[stack_dim])],
+                [
+                    ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
+                    for i in range(da.sizes[stack_dim])
+                ],
                 axis=0,
             )
         else:
-            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
+            raise ValueError(
+                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
+            )
 
     def set_center_manual(
         self,
@@ -235,6 +241,7 @@ class RHEEDAccessor:
         if da.ndim == IMAGE_NDIMS:
             da["sx"] = da.sx - center_x
             da["sy"] = da.sy - center_y
+
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
             n_frames = da.sizes[stack_dim]
@@ -244,9 +251,8 @@ class RHEEDAccessor:
 
             if cx.size == 1 and cy.size == 1:
                 self._obj = da.assign_coords(sx=da.sx - float(cx), sy=da.sy - float(cy))
-                da['sx'] = da.sx - float(cx)
-                da['sy'] = da.sy - float(cy)
-
+                da["sx"] = da.sx - float(cx)
+                da["sy"] = da.sy - float(cy)
 
             else:
                 # Broadcast scalars to full-length vectors
@@ -262,24 +268,24 @@ class RHEEDAccessor:
 
                 # Normalize shifts relative to first frame
                 cx0, cy0 = cx[0], cy[0]
-                cx = cx - cx0
-                cy = cy - cy0
+                da["sx"] = da.sx - cx0
+                da["sy"] = da.sy - cy0
 
-                da['sx'] = da.sx - float(cx0)
-                da['sy'] = da.sy - float(cy0)
-
-                shifted_slices = []
+                # In-place modification of the underlying numpy array for all frames
                 for i in range(n_frames):
+                    if i == 0:
+                        continue  # first frame already shifted
                     new_coords = {"sx": da.sx - cx[i], "sy": da.sy - cy[i]}
-                    shifted = da.isel({stack_dim: i}).interp(
-                        new_coords, method=method, kwargs={"fill_value": 0}
+                    da.data[i] = (
+                        da.isel({stack_dim: i})
+                        .interp(new_coords, method=method, kwargs={"fill_value": 0})
+                        .data
                     )
-                    shifted_slices.append(shifted)
-
-                self._obj = xr.concat(shifted_slices, dim=stack_dim)
 
         else:
-            raise ValueError(f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}")
+            raise ValueError(
+                f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
+            )
 
     def set_center_auto(self) -> None:
         """
@@ -348,13 +354,15 @@ class RHEEDAccessor:
             raise ValueError("reduce_over must be 'sy', 'sx', or 'both'")
 
         profile.attrs = da.attrs.copy()
-        profile.attrs.update({
-            "profile_center": center,
-            "profile_width": width,
-            "profile_height": height,
-            "reduce_over": reduce_over,
-            "reduce_method": method,
-        })
+        profile.attrs.update(
+            {
+                "profile_center": center,
+                "profile_width": width,
+                "profile_height": height,
+                "reduce_over": reduce_over,
+                "reduce_method": method,
+            }
+        )
 
         if show_origin:
             fig, ax = plt.subplots()
@@ -405,7 +413,9 @@ class RHEEDAccessor:
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
-            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
+            raise ValueError(
+                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
+            )
 
         return plot_image(
             rheed_image=da,
@@ -455,7 +465,11 @@ class RHEEDProfileAccessor:
         k_e = da.ri.ewald_sphere_radius
         screen_sample_distance = da.ri.screen_sample_distance
         sx = da.coords["sx"].values
-        ky = convert_sx_to_ky(sx, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance)
+        ky = convert_sx_to_ky(
+            sx,
+            ewald_sphere_radius=k_e,
+            screen_sample_distance_mm=screen_sample_distance,
+        )
         return da.assign_coords(sx=ky).rename({"sx": "ky"})
 
     def plot_profile(
