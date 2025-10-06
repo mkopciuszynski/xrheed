@@ -249,38 +249,35 @@ class RHEEDAccessor:
             cx = np.atleast_1d(center_x)
             cy = np.atleast_1d(center_y)
 
-            if cx.size == 1 and cy.size == 1:
-                self._obj = da.assign_coords(sx=da.sx - float(cx), sy=da.sy - float(cy))
-                da["sx"] = da.sx - float(cx)
-                da["sy"] = da.sy - float(cy)
+            # Broadcast scalars
+            if cx.size == 1:
+                cx = np.full(n_frames, cx.item())
+            if cy.size == 1:
+                cy = np.full(n_frames, cy.item())
 
-            else:
-                # Broadcast scalars to full-length vectors
-                if cx.size == 1:
-                    cx = np.full(n_frames, cx.item())
-                if cy.size == 1:
-                    cy = np.full(n_frames, cy.item())
+            if len(cx) != n_frames or len(cy) != n_frames:
+                raise ValueError(
+                    f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
+                )
 
-                if len(cx) != n_frames or len(cy) != n_frames:
-                    raise ValueError(
-                        f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
-                    )
+            # Normalize shifts relative to first frame
+            cx0, cy0 = cx[0], cy[0]
+            da["sx"] = da.sx - cx0
+            da["sy"] = da.sy - cy0
 
-                # Normalize shifts relative to first frame
-                cx0, cy0 = cx[0], cy[0]
-                da["sx"] = da.sx - cx0
-                da["sy"] = da.sy - cy0
+            cx -= cx0
+            cy -= cy0
 
-                # In-place modification of the underlying numpy array for all frames
-                for i in range(n_frames):
-                    if i == 0:
-                        continue  # first frame already shifted
-                    new_coords = {"sx": da.sx - cx[i], "sy": da.sy - cy[i]}
-                    da.data[i] = (
-                        da.isel({stack_dim: i})
-                        .interp(new_coords, method=method, kwargs={"fill_value": 0})
-                        .data
-                    )
+            # In-place modification of the underlying numpy array for all frames
+            for i in range(n_frames):
+                if i == 0:
+                    continue  # first frame already shifted
+                new_coords = {"sx": da.sx - cx[i], "sy": da.sy - cy[i]}
+                da.data[i] = (
+                    da.isel({stack_dim: i})
+                    .interp(new_coords, method=method, kwargs={"fill_value": 0})
+                    .data
+                )
 
         else:
             raise ValueError(
