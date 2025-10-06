@@ -24,6 +24,7 @@ class TestEwald(unittest.TestCase):
         ewald = Ewald(self.lattice, image=None)
         self.assertFalse(ewald._image_data_available)
         self.assertIsInstance(ewald.beam_energy, float)
+        self.assertAlmostEqual(ewald.beam_energy, 18_600.0)
 
     def test_init_with_image(self):
         ewald = Ewald(self.lattice, image=self.rheed_image)
