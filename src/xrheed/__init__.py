@@ -7,32 +7,43 @@ import logging
 import pkgutil
 from importlib.metadata import PackageNotFoundError, version
 
+
 # Expose top-level API
 from . import xarray_accessors  # noqa: F401 (registers accessors)
 from .loaders import load_data
 
 __all__ = ["load_data", "__version__"]
 
+# Configure logging
+logger = logging.getLogger("xrheed")
+
 # Package version (from setuptools_scm if installed, otherwise fallback)
 try:
     __version__ = version("xrheed")
+    logger.info(f"xrheed version detected: {__version__}")
 except PackageNotFoundError:
     __version__ = "0.0.0"
-
-# Configure logging
-logger = logging.getLogger(__name__)
+    logger.warning("xrheed version could not be determined; using fallback 0.0.0.")
 
 
 # Auto-discover plugins
 def _discover_plugins():
+    logger.info("Starting plugin discovery for xrheed...")
     try:
         import xrheed.plugins
 
+        found = False
         for _, module_name, is_pkg in pkgutil.iter_modules(xrheed.plugins.__path__):
             if not is_pkg:
                 importlib.import_module(f"xrheed.plugins.{module_name}")
+                logger.info(f"Loaded plugin module: xrheed.plugins.{module_name}")
+                found = True
+        if not found:
+            logger.warning("No plugin modules found in xrheed.plugins.")
+        else:
+            logger.info("Plugin discovery completed successfully.")
     except Exception as e:
-        logger.warning(f"Plugin discovery failed: {e}")
+        logger.error(f"Plugin discovery failed: {e}")
 
 
 _discover_plugins()
@@ -41,7 +52,7 @@ _discover_plugins()
 # Optional: friendly message in notebooks
 def _in_jupyter() -> bool:
     try:
-        from IPython import get_ipython
+        from IPython.core.getipython import get_ipython
 
         shell = get_ipython()
         return shell is not None and shell.__class__.__name__ == "ZMQInteractiveShell"
