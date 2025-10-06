@@ -1,5 +1,5 @@
 """
-This module defines xarray accessors for RHEED (Reflection High-Energy Electron Diffraction) data.
+Xarray accessors for RHEED (Reflection High-Energy Electron Diffraction) data.
 
 Accessors
 ---------
@@ -41,149 +41,172 @@ logger = logging.getLogger(__name__)
 
 @xr.register_dataarray_accessor("ri")
 class RHEEDAccessor:
+    """
+    Xarray accessor for RHEED images.
+
+    Provides convenient access to RHEED-specific metadata, image manipulation,
+    centering, rotation, and profile extraction methods.
+    """
+
     def __init__(self, xarray_obj: xr.DataArray) -> None:
-        self._obj: xr.DataArray = xarray_obj
-        self._center: Optional[Tuple[float, float]] = None
-
-    def _get_attr(self, attr_name: str, default: Optional[float] = None) -> float:
-        da: xr.DataArray = self._obj
-        value = da.attrs.get(attr_name, default)
-        if value is None:
-            raise AttributeError(
-                f"Attribute '{attr_name}' not found and no default provided."
-            )
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            raise ValueError(f"Attribute '{attr_name}' must be numeric, got {value!r}.")
-
-    def _set_attr(self, attr_name: str, value: float) -> None:
-        if not isinstance(value, (int, float)):
-            raise ValueError(
-                f"Attribute '{attr_name}' must be numeric, got {type(value).__name__}."
-            )
-        self._obj.attrs[attr_name] = float(value)
-
-    def __repr__(self) -> str:
-        da: xr.DataArray = self._obj
-        screen_scale = self._get_attr("screen_scale", None)
-        beam_energy = self._get_attr("beam_energy", None)
-        screen_sample_distance = self._get_attr("screen_sample_distance", None)
-        beta = self._get_attr("beta", DEFAULT_BETA)
-        alpha = self._get_attr("alpha", DEFAULT_ALPHA)
-        file_name = da.attrs.get("file_name", "N/A")
-        file_ctime = da.attrs.get("file_ctime", "N/A")
-
-        return (
-            f"<RHEEDAccessor>\n"
-            f"  File name: {file_name}\n"
-            f"  File creation time: {file_ctime}\n"
-            f"  Image shape: {da.shape}\n"
-            f"  Screen scale: {screen_scale} px/mm\n"
-            f"  Screen sample distance: {screen_sample_distance} mm\n"
-            f"  Beta (incident) angle: {beta:.2f} deg\n"
-            f"  Alpha (azimuthal) angle: {alpha:.2f} deg\n"
-            f"  Beam Energy: {beam_energy} eV\n"
-        )
+        self._obj = xarray_obj
 
     # ---- Properties ----
     @property
     def screen_sample_distance(self) -> float:
-        return self._get_attr("screen_sample_distance", 1.0)
+        """Distance between sample and screen in mm. Default: 1.0 mm."""
+        da = self._obj
+        return float(da.attrs.get("screen_sample_distance", 1.0))
 
     @property
     def beta(self) -> float:
-        return self._get_attr("beta", DEFAULT_BETA)
+        """Incident angle (beta) in degrees. Default: DEFAULT_BETA."""
+        da = self._obj
+        return float(da.attrs.get("beta", DEFAULT_BETA))
 
     @beta.setter
     def beta(self, value: float) -> None:
-        self._set_attr("beta", float(value))
+        """Set the incident angle (beta) in degrees."""
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"beta must be numeric, got {value!r}")
+        self._obj.attrs["beta"] = float(value)
 
     @property
     def alpha(self) -> Union[float, NDArray]:
-        da: xr.DataArray = self._obj
+        """
+        Azimuthal angle (alpha) in degrees.
+        If present as a coordinate, returns the coordinate values; otherwise returns an attribute.
+        """
+        da = self._obj
         if "alpha" in da.coords:
             return da.coords["alpha"].values
-        return self._get_attr("alpha", DEFAULT_ALPHA)
+        return float(da.attrs.get("alpha", DEFAULT_ALPHA))
 
     @alpha.setter
     def alpha(self, value: float) -> None:
-        self._set_attr("alpha", float(value))
+        """Set the azimuthal angle (alpha) in degrees."""
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"alpha must be numeric, got {value!r}")
+        self._obj.attrs["alpha"] = float(value)
 
     @property
     def screen_scale(self) -> float:
-        return self._get_attr("screen_scale", 1.0)
+        """Screen scale in px/mm. Default: 1.0."""
+        da = self._obj
+        return float(da.attrs.get("screen_scale", 1.0))
 
     @screen_scale.setter
     def screen_scale(self, px_to_mm: float) -> None:
-        da: xr.DataArray = self._obj
+        """
+        Set the screen scale (px/mm) and update coordinate scaling accordingly.
+        
+        Parameters
+        ----------
+        px_to_mm : float
+            New scale in pixels per millimeter. Must be positive.
+        """
         if px_to_mm <= 0:
             raise ValueError("screen_scale must be positive.")
 
-        old_px_to_mm = self._get_attr("screen_scale", 1.0)
-        self._set_attr("screen_scale", px_to_mm)
+        da = self._obj
+        old_px_to_mm = self.screen_scale
+        da.attrs["screen_scale"] = float(px_to_mm)
 
         missing = IMAGE_DIMS - da.coords.keys()
         if missing:
-            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")         
+            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")
 
         da["sx"] = da.sx * old_px_to_mm / px_to_mm
         da["sy"] = da.sy * old_px_to_mm / px_to_mm
 
     @property
     def screen_width(self) -> Optional[float]:
-        return self._get_attr("screen_width", None)
+        """Screen width in mm, if set."""
+        val = self._obj.attrs.get("screen_width")
+        return float(val) if val is not None else None
 
     @property
     def screen_roi_width(self) -> float:
-        return self._get_attr("screen_roi_width", DEFAULT_SCREEN_ROI_WIDTH)
+        """Width of the region of interest (ROI) on the screen in mm."""
+        return float(self._obj.attrs.get("screen_roi_width", DEFAULT_SCREEN_ROI_WIDTH))
 
     @screen_roi_width.setter
     def screen_roi_width(self, value: float) -> None:
-        self._set_attr("screen_roi_width", value)
+        """Set the screen ROI width in mm."""
+        self._obj.attrs["screen_roi_width"] = float(value)
 
     @property
     def screen_roi_height(self) -> float:
-        return self._get_attr("screen_roi_height", DEFAULT_SCREEN_ROI_HEIGHT)
+        """Height of the region of interest (ROI) on the screen in mm."""
+        return float(self._obj.attrs.get("screen_roi_height", DEFAULT_SCREEN_ROI_HEIGHT))
 
     @screen_roi_height.setter
     def screen_roi_height(self, value: float) -> None:
-        self._set_attr("screen_roi_height", value)
+        """Set the screen ROI height in mm."""
+        self._obj.attrs["screen_roi_height"] = float(value)
 
     @property
     def beam_energy(self) -> Optional[float]:
-        return self._get_attr("beam_energy", None)
+        """Beam energy in eV, if set."""
+        val = self._obj.attrs.get("beam_energy")
+        return float(val) if val is not None else None
 
     @beam_energy.setter
     def beam_energy(self, value: float) -> None:
-        self._set_attr("beam_energy", value)
+        """Set the beam energy in eV."""
+        self._obj.attrs["beam_energy"] = float(value)
 
     @property
     def ewald_sphere_radius(self) -> float:
+        """
+        Compute the Ewald sphere radius in reciprocal space (k-space).
+
+        Returns
+        -------
+        float
+            Ewald sphere radius in 1/Å.
+        """
         beam_energy = self.beam_energy
         if beam_energy is None:
             raise ValueError("Beam energy is not set.")
         return np.sqrt(beam_energy) * K_INV_ANGSTROM
 
     # ---- Methods ----
+    def __repr__(self) -> str:
+        da = self._obj
+        return (
+            f"<RHEEDAccessor>\n"
+            f"  File name: {da.attrs.get('file_name', 'N/A')}\n"
+            f"  File creation time: {da.attrs.get('file_ctime', 'N/A')}\n"
+            f"  Image shape: {da.shape}\n"
+            f"  Screen scale: {self.screen_scale} px/mm\n"
+            f"  Screen sample distance: {self.screen_sample_distance} mm\n"
+            f"  Beta (incident) angle: {self.beta:.2f} deg\n"
+            f"  Alpha (azimuthal) angle: {self.alpha:.2f} deg\n"
+            f"  Beam Energy: {self.beam_energy} eV\n"
+        )
+
     def rotate(self, angle: float) -> None:
-        da: xr.DataArray = self._obj
+        """
+        Rotate the image or stack of images by a specified angle.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in degrees. Positive values rotate counterclockwise.
+        """
+        da = self._obj
         if da.ndim == IMAGE_NDIMS:
-            rotated = ndimage.rotate(da.data, angle, reshape=False)
+            da.data = ndimage.rotate(da.data, angle, reshape=False)
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
-            rotated = np.stack(
-                [
-                    ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
-                    for i in range(da.sizes[stack_dim])
-                ],
+            da.data = np.stack(
+                [ndimage.rotate(da.isel({stack_dim: i}).data, angle, reshape=False)
+                 for i in range(da.sizes[stack_dim])],
                 axis=0,
             )
         else:
-            raise ValueError(
-                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D array, got {da.ndim}D"
-            )
-        da.data = rotated
+            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
 
     def set_center_manual(
         self,
@@ -197,23 +220,21 @@ class RHEEDAccessor:
         Parameters
         ----------
         center_x : float or sequence
-            Horizontal shift(s). If scalar, applied to all frames.
-            If array-like, must match stack length.
+            Horizontal shift(s). Scalar applied to all frames; array-like must match stack length.
         center_y : float or sequence
             Vertical shift(s). Same logic as center_x.
-        method : str, optional
-            Interpolation method for per-frame shifts (default = "linear").
+        method : {'linear', 'nearest', 'cubic'}, optional
+            Interpolation method for per-frame shifts (default='linear').
         """
-        da: xr.DataArray = self._obj
+        da = self._obj
 
         missing = IMAGE_DIMS - da.coords.keys()
         if missing:
-            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")            
+            raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")
 
         if da.ndim == IMAGE_NDIMS:
-            da['sx'] = da.sx - center_x
-            da['sy'] = da.sy - center_y
-
+            da["sx"] = da.sx - center_x
+            da["sy"] = da.sy - center_y
         elif da.ndim == STACK_NDIMS:
             stack_dim = da.dims[0]
             n_frames = da.sizes[stack_dim]
@@ -258,24 +279,19 @@ class RHEEDAccessor:
                 self._obj = xr.concat(shifted_slices, dim=stack_dim)
 
         else:
-            raise ValueError(
-                f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
-            )
+            raise ValueError(f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}")
 
     def set_center_auto(self) -> None:
         """
         Automatically determine and apply the image center using
         `find_horizontal_center` and `find_vertical_center`.
-        Uses the first frame if data is a stack.
+
+        Uses the first frame if the data is a stack.
         """
         da = self._obj
-
-        # Use the first frame if data is a stack.
         image = da[0] if da.ndim == STACK_NDIMS else da
-
         center_x = find_horizontal_center(image)
         center_y = find_vertical_center(image)
-
         self.set_center_manual(center_x, center_y)
         logger.info("Applied automatic centering.")
 
@@ -290,15 +306,38 @@ class RHEEDAccessor:
         show_origin: bool = False,
         **kwargs,
     ) -> xr.DataArray:
-        
-        da: xr.DataArray = self._obj
+        """
+        Extract an intensity profile from the RHEED image or stack.
 
+        Parameters
+        ----------
+        center : tuple[float, float]
+            Center coordinates (sx, sy) in mm.
+        width : float
+            Width of the profile window in mm.
+        height : float
+            Height of the profile window in mm.
+        stack_index : int
+            Frame index for stacks (default=0).
+        reduce_over : {'sy', 'sx', 'both'}
+            Dimension(s) over which to reduce intensity (default='sy').
+        method : {'mean', 'sum'}
+            Reduction method (default='mean').
+        show_origin : bool
+            If True, display a rectangle showing the profile window.
+
+        Returns
+        -------
+        xr.DataArray
+            Profile data with metadata preserved.
+        """
+        da = self._obj
         cropped = da.sel(
             sx=slice(center[0] - width / 2, center[0] + width / 2),
             sy=slice(center[1] - height / 2, center[1] + height / 2),
         )
-
         reduce_func = cropped.mean if method == "mean" else cropped.sum
+
         if reduce_over == "sy":
             profile = reduce_func(dim="sy")
         elif reduce_over == "sx":
@@ -309,15 +348,13 @@ class RHEEDAccessor:
             raise ValueError("reduce_over must be 'sy', 'sx', or 'both'")
 
         profile.attrs = da.attrs.copy()
-        profile.attrs.update(
-            {
-                "profile_center": center,
-                "profile_width": width,
-                "profile_height": height,
-                "reduce_over": reduce_over,
-                "reduce_method": method,
-            }
-        )
+        profile.attrs.update({
+            "profile_center": center,
+            "profile_width": width,
+            "profile_height": height,
+            "reduce_over": reduce_over,
+            "reduce_method": method,
+        })
 
         if show_origin:
             fig, ax = plt.subplots()
@@ -343,15 +380,32 @@ class RHEEDAccessor:
         stack_index: int = 0,
         **kwargs,
     ) -> Axes:
+        """
+        Plot a RHEED image or stack frame.
 
-        da: xr.DataArray = self._obj
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            Axes to plot on. If None, a new figure is created.
+        auto_levels : float
+            Automatic contrast adjustment level (default=0.0).
+        show_center_lines : bool
+            If True, show horizontal and vertical center lines.
+        show_specular_spot : bool
+            If True, highlight the specular spot.
+        stack_index : int
+            Frame index for stacks (default=0).
 
+        Returns
+        -------
+        matplotlib.axes.Axes
+            The axes containing the plot.
+        """
+        da = self._obj
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
-            raise ValueError(
-                f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
-            )
+            raise ValueError(f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D")
 
         return plot_image(
             rheed_image=da,
@@ -365,37 +419,43 @@ class RHEEDAccessor:
 
 @xr.register_dataarray_accessor("rp")
 class RHEEDProfileAccessor:
+    """
+    Xarray accessor for RHEED intensity profiles.
+
+    Provides profile plotting and conversion to reciprocal space.
+    """
+
     def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
 
     def __repr__(self):
-        da: xr.DataArray = self._obj
-        center = da.attrs.get("profile_center", "N/A")
-        width = da.attrs.get("profile_width", "N/A")
-        height = da.attrs.get("profile_height", "N/A")
-        reduce_over = da.attrs.get("reduce_over", "N/A")
-        reduce_method = da.attrs.get("reduce_method", "N/A")
+        da = self._obj
         return (
-            f"<RHEEDProfileAccessor\n"
-            f"  Center: sx, sy [mm]: {center} \n"
-            f"  Width: {width} mm\n"
-            f"  Height: {height} mm\n"
-            f"  Reduce over: {reduce_over}\n"
-            f"  Reduce method: {reduce_method}\n"
+            f"<RHEEDProfileAccessor>\n"
+            f"  Center: sx, sy [mm]: {da.attrs.get('profile_center', 'N/A')} \n"
+            f"  Width: {da.attrs.get('profile_width', 'N/A')} mm\n"
+            f"  Height: {da.attrs.get('profile_height', 'N/A')} mm\n"
+            f"  Reduce over: {da.attrs.get('reduce_over', 'N/A')}\n"
+            f"  Reduce method: {da.attrs.get('reduce_method', 'N/A')}\n"
         )
 
     def convert_to_k(self) -> xr.DataArray:
-        da: xr.DataArray = self._obj
+        """
+        Convert profile coordinates from screen units (sx) to reciprocal space (ky).
+
+        Returns
+        -------
+        xr.DataArray
+            Profile with 'sx' replaced by 'ky'.
+        """
+        da = self._obj
         if "sx" not in da.coords:
             raise ValueError("The profile must have 'sx' coordinate to convert to ky.")
-        k_e: float = da.ri.ewald_sphere_radius
-        screen_sample_distance: float = da.ri.screen_sample_distance
-        sx: NDArray = da.coords["sx"].values
-        ky = convert_sx_to_ky(
-            sx,
-            ewald_sphere_radius=k_e,
-            screen_sample_distance_mm=screen_sample_distance,
-        )
+
+        k_e = da.ri.ewald_sphere_radius
+        screen_sample_distance = da.ri.screen_sample_distance
+        sx = da.coords["sx"].values
+        ky = convert_sx_to_ky(sx, ewald_sphere_radius=k_e, screen_sample_distance_mm=screen_sample_distance)
         return da.assign_coords(sx=ky).rename({"sx": "ky"})
 
     def plot_profile(
@@ -405,7 +465,24 @@ class RHEEDProfileAccessor:
         normalize: bool = True,
         **kwargs,
     ) -> Axes:
-        da: xr.DataArray = self._obj.copy()
+        """
+        Plot a RHEED intensity profile.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            Axes to plot on. If None, a new figure is created.
+        transform_to_k : bool
+            If True, convert sx to ky using the Ewald sphere.
+        normalize : bool
+            If True, normalize intensity to [0, 1].
+
+        Returns
+        -------
+        matplotlib.axes.Axes
+            The axes containing the plot.
+        """
+        da = self._obj.copy()
         return plot_profile(
             rheed_profile=da,
             ax=ax,
