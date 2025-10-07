@@ -11,7 +11,7 @@ These accessors extend xarray's `DataArray` objects with domain-specific methods
 """
 
 import logging
-from typing import Optional, Tuple, Union, Literal
+from typing import Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,16 +21,9 @@ from matplotlib.patches import Rectangle
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .constants import (
-    DEFAULT_ALPHA,
-    DEFAULT_BETA,
-    DEFAULT_SCREEN_ROI_HEIGHT,
-    DEFAULT_SCREEN_ROI_WIDTH,
-    K_INV_ANGSTROM,
-    IMAGE_DIMS,
-    IMAGE_NDIMS,
-    STACK_NDIMS,
-)
+from .constants import (DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_SCREEN_ROI_HEIGHT,
+                        DEFAULT_SCREEN_ROI_WIDTH, IMAGE_DIMS, IMAGE_NDIMS,
+                        K_INV_ANGSTROM, STACK_NDIMS)
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile

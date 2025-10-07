@@ -13,8 +13,8 @@ import xarray as xr
 from numpy.typing import NDArray
 from PIL import Image
 
-from .plugins import PLUGINS
 from .constants import CANONICAL_STACK_DIMS
+from .plugins import PLUGINS
 
 __all__ = ["load_data"]
 
@@ -128,10 +128,10 @@ def load_data(
         h, w = image_np.shape
 
         if screen_center_sx_px is None:
-            logger.warning(f"screen_center_sx_px not provided, using image midpoint.")
+            logger.warning("screen_center_sx_px not provided, using image midpoint.")
             screen_center_sx_px = w // 2
         if screen_center_sy_px is None:
-            logger.warning(f"screen_center_sy_px not provided, using image midpoint.")
+            logger.warning("screen_center_sy_px not provided, using image midpoint.")
             screen_center_sy_px = h // 2
 
         logger.info(f"Calculating physical coordinates for image of shape ({h}, {w}).")

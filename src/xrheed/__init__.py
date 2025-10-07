@@ -7,7 +7,6 @@ import logging
 import pkgutil
 from importlib.metadata import PackageNotFoundError, version
 
-
 # Expose top-level API
 from . import xarray_accessors  # noqa: F401 (registers accessors)
 from .loaders import load_data

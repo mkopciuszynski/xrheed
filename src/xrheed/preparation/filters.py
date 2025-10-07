@@ -5,6 +5,7 @@ from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 
+
 def gaussian_filter_profile(
     profile: xr.DataArray,
     sigma: float = 1.0,
@@ -115,16 +116,20 @@ def high_pass_filter(
         )
 
     # Set attributes for high-pass filtering
-    filtered.attrs.update({
-        "hp_filter": True,
-        "hp_threshold": threshold,
-        "hp_sigma": sigma,
-    })
+    filtered.attrs.update(
+        {
+            "hp_filter": True,
+            "hp_threshold": threshold,
+            "hp_sigma": sigma,
+        }
+    )
 
     return filtered
 
 
-def _apply_hp_filter(image_values: NDArray, threshold: float, sigma_px: float) -> NDArray:
+def _apply_hp_filter(
+    image_values: NDArray, threshold: float, sigma_px: float
+) -> NDArray:
     """
     Helper function to apply high-pass filter to a single 2D image array.
 

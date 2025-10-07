@@ -1,12 +1,10 @@
 import numpy as np
 import xarray as xr
-from typing import Union
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .base import convert_gx_gy_to_sx_sy
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
-
+from .base import convert_gx_gy_to_sx_sy
 
 
 def transform_image_to_kxky(
@@ -85,8 +83,6 @@ def transform_image_to_kxky(
     raise ValueError(
         f"Unsupported ndim={rheed_data.ndim}, expected {IMAGE_NDIMS} (image) or {STACK_NDIMS} (stack)"
     )
-
-    
 
 
 def _rotate_trans_image(

@@ -9,11 +9,11 @@ from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 from tqdm.notebook import tqdm
 
+from ..constants import IMAGE_NDIMS, K_INV_ANGSTROM, STACK_NDIMS
 from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .cache_utils import smart_cache
 from .lattice import Lattice, rotation_matrix
-from ..constants import K_INV_ANGSTROM, IMAGE_NDIMS, STACK_NDIMS
 
 
 class Ewald:
@@ -391,7 +391,6 @@ class Ewald:
             kwargs["cmap"] = "gray"
 
         if show_image:
-
             ax.imshow(
                 mask * image.data,
                 origin="lower",

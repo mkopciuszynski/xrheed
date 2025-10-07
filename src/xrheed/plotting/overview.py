@@ -1,10 +1,12 @@
+from typing import Sequence, Union
+
 import matplotlib.pyplot as plt
 import xarray as xr
 from matplotlib.figure import Figure
-from typing import Sequence, Union
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import plot_image
+
 
 def plot_images(
     rheed_data: Union[xr.DataArray, Sequence[xr.DataArray]],
@@ -52,7 +54,9 @@ def plot_images(
         if not rheed_data:
             raise ValueError("Empty list of images provided.")
         if not all(isinstance(img, xr.DataArray) for img in rheed_data):
-            raise TypeError(f"All images in the list must be {IMAGE_NDIMS}D DataArrays.")
+            raise TypeError(
+                f"All images in the list must be {IMAGE_NDIMS}D DataArrays."
+            )
         if len(rheed_data) < 2:
             raise ValueError("At least two images are required to plot a grid layout.")
         images = rheed_data
@@ -78,8 +82,10 @@ def plot_images(
     nrows = (n_images + ncols - 1) // ncols
 
     first_image = images[0]
-    fig_ratio: float = first_image.ri.screen_roi_width * 2.0 / first_image.ri.screen_roi_height
-    fig_h : float = fig_w / fig_ratio * 1.2
+    fig_ratio: float = (
+        first_image.ri.screen_roi_width * 2.0 / first_image.ri.screen_roi_height
+    )
+    fig_h: float = fig_w / fig_ratio * 1.2
 
     fig, axes = plt.subplots(
         nrows=nrows,
