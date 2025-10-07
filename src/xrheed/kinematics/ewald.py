@@ -1,6 +1,6 @@
 import copy
 from logging import warning
-from typing import Optional
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,111 +13,99 @@ from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .cache_utils import smart_cache
 from .lattice import Lattice, rotation_matrix
-from ..constants import K_INV_ANGSTROM
+from ..constants import K_INV_ANGSTROM, IMAGE_NDIMS, STACK_NDIMS
 
 
 class Ewald:
     """
     Class for calculating and analyzing the Ewald sphere construction in RHEED.
 
-    This class provides functionality for generating reciprocal lattice spots,
-    simulating their appearance on a RHEED screen, and matching them with
-    experimental data.
+    Supports single images or image stacks (additional first dimension). Provides
+    functionality for generating reciprocal lattice spots, simulating their appearance
+    on a RHEED screen, and matching them with experimental data.
     """
 
     # Class constants
-    SPOT_WIDTH_MM: float = 1.5  #: Default spot width in mm
-    SPOT_HEIGHT_MM: float = 5.0  #: Default spot height in mm
+    SPOT_WIDTH_MM: float = 1.5
+    SPOT_HEIGHT_MM: float = 5.0
 
-    def __init__(self, lattice: Lattice, image: Optional[xr.DataArray] = None) -> None:
+    def __init__(
+        self,
+        lattice: Lattice,
+        image: Optional[xr.DataArray] = None,
+        stack_index: int = 0,
+    ) -> None:
         """
-        Initialize an Ewald object for RHEED spot calculation.
+        Initialize an Ewald object for RHEED spot calculations.
 
         Parameters
         ----------
         lattice : Lattice
             Lattice object representing the crystal structure.
         image : Optional[xr.DataArray], optional
-            RHEED image data. If None, default values are used.
+            RHEED image data. Can be a single image or a stack of images. If None,
+            default values are used.
+        stack_index : int, optional
+            Index of the image to use from a stack (default is 0).
         """
-
-        self.image: xr.DataArray
-        self.beam_energy: float
-        self.screen_sample_distance: float
-        self.screen_scale: float
-        self.screen_roi_width: float
-        self.screen_roi_height: float
-        self._beta: float
-        self._alpha: float
-        self._image_data_available: bool
+        self._image_stack: Optional[xr.DataArray] = None
+        self._stack_index: int = stack_index
 
         if image is None:
-            warning("RHEED image is not provided, default values are loaded.")
-            self.beam_energy = 18.6 * 1000
-            self.screen_sample_distance = 309.2
-            self.screen_scale = 9.5
-            self.screen_roi_width = 60
-            self.screen_roi_height = 80
-
-            self._image_data_available = False
-            self._beta = 1.0
-            self._alpha = 0.0
+            warning("RHEED image not provided, default parameters are loaded.")
+            self.image: Optional[xr.DataArray] = None
+            self.beam_energy: float = 18_600.0
+            self.screen_sample_distance: float = 309.2
+            self.screen_scale: float = 9.5
+            self.screen_roi_width: float = 60
+            self.screen_roi_height: float = 80
+            self._beta: Union[float, NDArray[np.float32]] = 1.0
+            self._alpha: Union[float, NDArray[np.float32]] = 0.0
+            self._image_data_available: bool = False
         else:
-            self.image = image.copy()
-            self.beam_energy = image.ri.beam_energy
-            self.screen_sample_distance = image.ri.screen_sample_distance
-            self.screen_scale = image.ri.screen_scale
-            self.screen_roi_width = image.ri.screen_roi_width
-            self.screen_roi_height = image.ri.screen_roi_height
+            if image.ndim == IMAGE_NDIMS:
+                self.image = image.copy()
+            elif image.ndim == STACK_NDIMS:
+                self._image_stack = image.copy()
+                self.image = self._image_stack[stack_index]
+
+            self.beam_energy = float(image.ri.beam_energy)
+            self.screen_sample_distance = float(image.ri.screen_sample_distance)
+            self.screen_scale = float(image.ri.screen_scale)
+            self.screen_roi_width = float(image.ri.screen_roi_width)
+            self.screen_roi_height = float(image.ri.screen_roi_height)
 
             self._beta = image.ri.beta
             self._alpha = image.ri.alpha
             self._image_data_available = True
 
         self._lattice_scale: float = 1.0
-
-        # If set to true, the decorated functions will first try to load cached data
         self.use_cache: bool = True
-
-        # Default Spot size in px used in matching calculations
         self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
         self._spot_h_px: int = int(self.SPOT_HEIGHT_MM * self.screen_scale)
-
-        self.spot_structure = self._generate_spot_structure()
+        self.spot_structure: NDArray[np.bool_] = self._generate_spot_structure()
 
         self.shift_x: float = 0.0
         self.shift_y: float = 0.0
-        self.fine_scalling: float = 1.0
+        self.fine_scaling: float = 1.0
 
-        # Ewald sphere radius
         self.ewald_radius: float = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
-
         self._ewald_roi: float = self.ewald_radius * (
             self.screen_roi_width / self.screen_sample_distance
         )
-        # Lattice and its inverse
+
         self._lattice: Lattice = copy.deepcopy(lattice)
         self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
         self.label: Optional[str] = lattice.label
 
-        # Mirror symmetry
         self.mirror: bool = False
-
         self.ew_sx: NDArray[np.float32]
         self.ew_sy: NDArray[np.float32]
 
         self.calculate_ewald()
 
     def __repr__(self) -> str:
-        """
-        Return a formatted string representation of the Ewald object.
-
-        Returns
-        -------
-        str
-            Summary of the Ewald parameters and lattice vectors.
-        """
-        details = (
+        return (
             f"Ewald Class Object: {self.label}\n"
             f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
             f"  Alpha (rotation angle) : {self.alpha:.2f}°\n"
@@ -130,7 +118,6 @@ class Ewald:
             f"  Reciprocal Vector b1   : [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/Å\n"
             f"  Reciprocal Vector b2   : [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/Å\n"
         )
-        return details
 
     def __copy__(self) -> "Ewald":
         """
@@ -143,19 +130,31 @@ class Ewald:
         """
 
         new_ewald = Ewald(self._lattice, self.image)
-
         new_ewald.alpha = self.alpha
         new_ewald.beta = self.beta
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
         new_ewald._spot_w_px = self._spot_w_px
         new_ewald._spot_h_px = self._spot_h_px
-
         return new_ewald
 
     @property
+    def stack_index(self) -> int:
+        """int: Index of the current image in a stack."""
+        return self._stack_index
+
+    @stack_index.setter
+    def stack_index(self, value: int):
+        if self._image_stack is None:
+            raise ValueError("Stack index can only be set for 3D image stacks.")
+        if not (value < self._image_stack.shape[0]):
+            raise ValueError("Stack index out of bounds.")
+        self._stack_index = value
+        self.image = self._image_stack[self._stack_index]
+        self.calculate_ewald()
+
+    @property
     def lattice_scale(self) -> float:
-        """float: Scaling factor applied to the lattice vectors."""
         return self._lattice_scale
 
     @lattice_scale.setter
@@ -165,21 +164,27 @@ class Ewald:
 
     @property
     def alpha(self) -> float:
-        """float: Incident beam angle (degrees)."""
+        if isinstance(self._alpha, np.ndarray):
+            return self._alpha[self._stack_index]
         return self._alpha
 
     @alpha.setter
     def alpha(self, value: float):
+        if isinstance(self._alpha, np.ndarray):
+            raise ValueError("Cannot set alpha individually for stack images.")
         self._alpha = value
         self.calculate_ewald()
 
     @property
     def beta(self) -> float:
-        """float: Region of interest radius on the Ewald sphere."""
+        if isinstance(self._beta, np.ndarray):
+            return self._beta[self._stack_index]
         return self._beta
 
     @beta.setter
     def beta(self, value: float):
+        if isinstance(self._beta, np.ndarray):
+            raise ValueError("Cannot set beta individually for stack images.")
         self._beta = value
         self.calculate_ewald()
 
@@ -220,8 +225,8 @@ class Ewald:
         """
 
         ewald_radius: float = self.ewald_radius
-        alpha: float = self._alpha
-        beta: float = self._beta
+        alpha: float = self.alpha
+        beta: float = self.beta
         screen_sample_distance: float = self.screen_sample_distance
 
         inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
@@ -294,6 +299,9 @@ class Ewald:
             fig, ax = plt.subplots()
 
         if show_image:
+            if self.image is None:
+                raise ValueError("There was no RHEED image attached.")
+
             imshow_keys = {"cmap", "vmin", "vmax"}
             plot_image_kwargs = {
                 k: kwargs.pop(k) for k in list(kwargs.keys()) if k in imshow_keys
@@ -328,42 +336,13 @@ class Ewald:
         if "marker" not in kwargs:
             kwargs["marker"] = "|"
 
-        fine_scaling: float = self.fine_scalling
+        fine_scaling: float = self.fine_scaling
 
         ax.scatter(
             (self.ew_sx + self.shift_x) * fine_scaling,
             (self.ew_sy + self.shift_y) * fine_scaling,
             **kwargs,
         )
-
-        return ax
-
-    def plot_spots(self, ax=None, show_image: bool = False, **kwargs):
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        mask = self._generate_mask()
-        image = self.image
-
-        if "cmap" not in kwargs:
-            kwargs["cmap"] = "gray"
-
-        if show_image:
-            ax.imshow(
-                mask * image.data,
-                origin="lower",
-                extent=(image.sx.min(), image.sx.max(), image.sy.min(), image.sy.max()),
-                aspect="equal",
-                **kwargs,
-            )
-        else:
-            ax.imshow(
-                mask,
-                origin="lower",
-                extent=(image.sx.min(), image.sx.max(), image.sy.min(), image.sy.max()),
-                aspect="equal",
-                cmap="gray",
-            )
 
         return ax
 
@@ -382,7 +361,7 @@ class Ewald:
             Match coefficient.
         """
 
-        assert self._image_data_available, "Image data is not available"
+        assert self.image is not None
 
         image = self.image.data
 
@@ -606,6 +585,9 @@ class Ewald:
             Boolean mask of the same shape as the RHEED image.
         """
         image = self.image
+
+        assert image is not None
+
         screen_scale = self.screen_scale
         screen_roi_width = self.screen_roi_width
         screen_roi_height = self.screen_roi_height
