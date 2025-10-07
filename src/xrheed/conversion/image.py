@@ -34,7 +34,7 @@ def transform_image_to_kxky(
 
     # --- Physical and geometric parameters ---
     screen_sample_distance = rheed_data.ri.screen_sample_distance
-    ewald_radius = rheed_data.ri.ewald_sphere_radius
+    ewald_radius = rheed_data.ri.ewald_radius
     beta = rheed_data.ri.beta
     alpha = rheed_data.ri.alpha
 

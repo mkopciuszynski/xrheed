@@ -159,7 +159,7 @@ class RHEEDAccessor:
         self._obj.attrs["beam_energy"] = float(value)
 
     @property
-    def ewald_sphere_radius(self) -> float:
+    def ewald_radius(self) -> float:
         """
         Compute the Ewald sphere radius in reciprocal space (k-space).
 
@@ -459,12 +459,12 @@ class RHEEDProfileAccessor:
         if "sx" not in da.coords:
             raise ValueError("The profile must have 'sx' coordinate to convert to ky.")
 
-        k_e = da.ri.ewald_sphere_radius
+        k_e = da.ri.ewald_radius
         screen_sample_distance = da.ri.screen_sample_distance
         sx = da.coords["sx"].values
         ky = convert_sx_to_ky(
             sx,
-            ewald_sphere_radius=k_e,
+            ewald_radius=k_e,
             screen_sample_distance_mm=screen_sample_distance,
         )
         return da.assign_coords(sx=ky).rename({"sx": "ky"})

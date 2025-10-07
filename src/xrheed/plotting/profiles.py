@@ -52,14 +52,14 @@ def plot_profile(
         profile.attrs = rheed_profile.attrs.copy()
 
     if transform_to_k and "sx" in profile.coords:
-        k_e: float = profile.ri.ewald_sphere_radius
+        k_e: float = profile.ri.ewald_radius
         screen_sample_distance: float = profile.ri.screen_sample_distance
 
         sx: NDArray = profile.coords["sx"].values
 
         kx = convert_sx_to_ky(
             sx,
-            ewald_sphere_radius=k_e,
+            ewald_radius=k_e,
             screen_sample_distance_mm=screen_sample_distance,
         )
 
