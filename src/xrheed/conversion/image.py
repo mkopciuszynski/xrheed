@@ -1,13 +1,15 @@
 import numpy as np
 import xarray as xr
+from typing import Union
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
 from .base import convert_gx_gy_to_sx_sy
+from ..constants import IMAGE_NDIMS, STACK_NDIMS
 
 
 def transform_image_to_kxky(
-    rheed_image: xr.DataArray,
+    rheed_data: xr.DataArray,
     rotate: bool = False,
     point_symmetry: bool = False,
 ) -> xr.DataArray:
@@ -28,11 +30,10 @@ def transform_image_to_kxky(
     """
 
     # prepare the data for calculations
-    screen_sample_distance: float = rheed_image.ri.screen_sample_distance
-    beta: float = rheed_image.ri.beta
-    alpha: float = rheed_image.ri.alpha
+    screen_sample_distance: float = rheed_data.ri.screen_sample_distance
+    ewald_radius: float = rheed_data.ri.ewald_sphere_radius
 
-    ewald_radius: float = np.sqrt(rheed_image.ri.beam_energy) * 0.5123
+    beta: float = rheed_data.ri.beta
 
     # new coordinates for transformation
     # TODO add the parameter that allows to set kx, ky
@@ -64,19 +65,49 @@ def transform_image_to_kxky(
         sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky}
     )
 
-    trans_image: xr.DataArray = rheed_image.interp(sx=sx, sy=sy, method="linear")
+    if rheed_data.ndim == IMAGE_NDIMS:
 
-    if rotate:
-        trans_image_rotated = _rotate_trans_image(trans_image, alpha)
-        trans_image = trans_image_rotated
+        alpha: float = rheed_data.ri.alpha
+        
+        transformed: xr.DataArray = rheed_data.interp(sx=sx, sy=sy, method="linear")
 
-    if point_symmetry:
-        trans_image_rotated = _rotate_trans_image(trans_image, 180)
-        trans_image = xr.where(np.isnan(trans_image), trans_image_rotated, trans_image)
+        if rotate:
+            trans_image_rotated = _rotate_trans_image(transformed, alpha)
+            transformed = trans_image_rotated
 
-    trans_image.attrs = rheed_image.attrs
+        if point_symmetry:
+            trans_image_rotated = _rotate_trans_image(transformed, 180)
+            transformed = xr.where(np.isnan(transformed), trans_image_rotated, transformed)
+        
+        transformed.attrs = rheed_data.attrs
+        return transformed
 
-    return trans_image
+    if rheed_data.ndim == STACK_NDIMS and "alpha" in rheed_data.coords:
+
+        transformed_slices = []
+        alpha: NDArray= rheed_data.ri.alpha
+        
+
+        for i in range(rheed_data.sizes["alpha"]):
+            image = rheed_data.isel(alpha=i)
+            transformed = image.interp(sx=sx, sy=sy, method="linear")
+
+            transformed = _rotate_trans_image(transformed, float(alpha[i]))
+            if point_symmetry:
+                rotated_180 = _rotate_trans_image(transformed, 180)
+                transformed = xr.where(np.isnan(transformed), rotated_180, transformed)
+
+            transformed_slices.append(transformed)
+
+        transformed_stack = xr.concat(transformed_slices, dim="alpha")
+        transformed_stack = transformed_stack.assign_coords(alpha=rheed_data.alpha)
+
+        transformed_stack.attrs = rheed_data.attrs
+        return transformed_stack
+
+    
+
+    return transformed
 
 
 def _rotate_trans_image(
