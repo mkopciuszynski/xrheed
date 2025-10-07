@@ -22,10 +22,10 @@ class TestRHEEDAccessors(unittest.TestCase):
 
     def test_set_center_manual(self):
         da_copy = self.da.copy()
-        
+
         original_sx = da_copy.sx.values.copy()
         original_sy = da_copy.sy.values.copy()
-        
+
         da_copy.ri.set_center_manual(center_x=5.0, center_y=3.0)
 
         self.assertTrue(np.allclose(da_copy.sx.values, original_sx - 5.0))
