@@ -3,6 +3,7 @@ import xarray as xr
 from numpy.typing import NDArray
 from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
+from ..constants import IMAGE_NDIMS, STACK_NDIMS
 
 def gaussian_filter_profile(
     profile: xr.DataArray,
@@ -54,61 +55,83 @@ def gaussian_filter_profile(
 
 
 def high_pass_filter(
-    rheed_image: xr.DataArray, threshold: float = 0.1, sigma: float = 1.0
+    rheed_data: xr.DataArray,
+    threshold: float = 0.1,
+    sigma: float = 1.0,
 ) -> xr.DataArray:
     """
-    Apply a high-pass filter to a RHEED image using Gaussian filtering.
+    Apply a high-pass filter to a RHEED image or stack using Gaussian filtering.
 
     Parameters
     ----------
-    rheed_image : xr.DataArray
-        RHEED image data to be filtered.
+    rheed_data : xr.DataArray
+        RHEED image (2D) or image stack (3D) to be filtered.
+        The stack must have the first dimension as the stacking dimension.
     threshold : float, optional
         Threshold for the high-pass filter (default is 0.1).
-        This value scales the blurred image before subtraction,
-        effectively controlling the strength of the filter.
-        A higher value will result in a stronger high-pass effect.
+        Scales the blurred image before subtraction.
     sigma : float, optional
-        Standard deviation for the Gaussian kernel, in the same units as the image coordinate
-        (default is 1.0).
+        Standard deviation for the Gaussian kernel in screen units (default is 1.0).
 
     Returns
     -------
     xr.DataArray
-        The high-pass filtered RHEED image as a new DataArray.
+        High-pass filtered RHEED image or stack.
     """
+
     # Validate input
-    assert isinstance(
-        rheed_image, xr.DataArray
-    ), "rheed_image must be an xarray.DataArray"
-    assert rheed_image.ndim == 2, "rheed_image must have two dimensions"
-    assert (
-        "screen_scale" in rheed_image.attrs
-    ), "rheed_image must have 'screen_scale' attribute"
+    if not isinstance(rheed_data, xr.DataArray):
+        raise TypeError("rheed_data must be an xarray.DataArray")
+    if "screen_scale" not in rheed_data.attrs:
+        raise ValueError("rheed_data must have 'screen_scale' attribute")
 
-    # Create a copy of the input image to avoid modifying the original
-    high_pass_image: xr.DataArray = rheed_image.copy()
+    sigma_px: float = sigma * rheed_data.ri.screen_scale
 
-    sigma_px: float = sigma * rheed_image.ri.screen_scale
+    # --- Handle single image ---
+    if rheed_data.ndim == IMAGE_NDIMS:
+        filtered_values = _apply_hp_filter(rheed_data.values, threshold, sigma_px)
+        filtered = rheed_data.copy()
+        filtered.values = filtered_values
 
-    rheed_image_values: NDArray = rheed_image.values
+    # --- Handle stack ---
+    elif rheed_data.ndim == STACK_NDIMS:
+        stack_dim = rheed_data.dims[0]
+        filtered_slices = []
 
-    # Apply Gaussian filter to the image
-    blurred_image_values: NDArray = gaussian_filter(rheed_image_values, sigma=sigma_px)
+        for i in range(rheed_data.sizes[stack_dim]):
+            slice_values = rheed_data.isel({stack_dim: i}).values
+            filtered_slice = _apply_hp_filter(slice_values, threshold, sigma_px)
+            da_slice = rheed_data.isel({stack_dim: i}).copy()
+            da_slice.values = filtered_slice
+            filtered_slices.append(da_slice)
 
-    high_pass_image_values: NDArray = (
-        rheed_image_values - threshold * blurred_image_values
-    )
-    high_pass_image_values -= high_pass_image_values.min()
+        filtered = xr.concat(filtered_slices, dim=stack_dim)
+        filtered = filtered.assign_coords({stack_dim: rheed_data[stack_dim]})
 
-    # Clip to valid uint8 range and cast
-    high_pass_image_values = np.clip(high_pass_image_values, 0, 255).astype(np.uint8)
+    else:
+        raise ValueError(
+            f"rheed_data must be {IMAGE_NDIMS}D or {STACK_NDIMS}D (stack), "
+            f"got {rheed_data.ndim}D"
+        )
 
-    high_pass_image.values = high_pass_image_values
+    # Set attributes for high-pass filtering
+    filtered.attrs.update({
+        "hp_filter": True,
+        "hp_threshold": threshold,
+        "hp_sigma": sigma,
+    })
 
-    # Set attributes for the high-pass filtered image
-    high_pass_image.attrs["hp_filter"] = True
-    high_pass_image.attrs["hp_threshold"] = threshold
-    high_pass_image.attrs["hp_sigma"] = sigma
+    return filtered
 
-    return high_pass_image
+
+def _apply_hp_filter(image_values: NDArray, threshold: float, sigma_px: float) -> NDArray:
+    """
+    Helper function to apply high-pass filter to a single 2D image array.
+
+    Returns clipped uint8 array.
+    """
+    blurred = gaussian_filter(image_values, sigma=sigma_px)
+    hp_image = image_values - threshold * blurred
+    hp_image -= hp_image.min()
+    hp_image = np.clip(hp_image, 0, 255).astype(np.uint8)
+    return hp_image
