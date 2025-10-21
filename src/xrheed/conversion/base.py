@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 
 def convert_sx_to_ky(
     x_coords_mm: NDArray,
-    ewald_sphere_radius: float,
+    ewald_radius: float,
     screen_sample_distance_mm: float,
 ) -> NDArray:
     """Convert sx coordinates from mm to ky [1/Å] using the Ewald sphere radius and screen-sample distance.
@@ -14,7 +14,7 @@ def convert_sx_to_ky(
     ----------
     x_coords_mm : NDArray
         Array of x coordinates in millimeters (mm).
-    ewald_sphere_radius : float
+    ewald_radius : float
         Radius of the Ewald sphere in reciprocal space (1/Å).
     screen_sample_distance_mm : float
         Distance from the sample to the screen in millimeters (mm).
@@ -25,7 +25,7 @@ def convert_sx_to_ky(
         Converted x coordinates in ky [1/Å].
     """
 
-    kx: NDArray = (x_coords_mm / screen_sample_distance_mm) * ewald_sphere_radius
+    kx: NDArray = (x_coords_mm / screen_sample_distance_mm) * ewald_radius
 
     return kx
 

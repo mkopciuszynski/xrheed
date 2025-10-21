@@ -17,13 +17,14 @@ class TestEwald(unittest.TestCase):
         # Prepare test image
         test_data_path = Path(__file__).parent / "data" / "Si_111_7x7_112_phi_00.raw"
         self.rheed_image = xrheed.load_data(test_data_path, plugin="dsnp_arpes_raw")
-        self.rheed_image.ri.apply_image_center(auto_center=True)
+        self.rheed_image.ri.set_center_auto()
         self.rheed_image.ri.beta = 2.8
 
     def test_init_without_image(self):
         ewald = Ewald(self.lattice, image=None)
         self.assertFalse(ewald._image_data_available)
         self.assertIsInstance(ewald.beam_energy, float)
+        self.assertAlmostEqual(ewald.beam_energy, 18_600.0)
 
     def test_init_with_image(self):
         ewald = Ewald(self.lattice, image=self.rheed_image)

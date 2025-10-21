@@ -81,7 +81,7 @@ plt.show()
 
 # Get intensity profile and plot its origin
 profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
-                                     plot_origin=True)
+                                     show_origin=True)
 ```
 
 ---

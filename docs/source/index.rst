@@ -59,6 +59,7 @@ Contents
    
    notebooks/getting_started
    notebooks/diffraction_profiles
+   notebooks/rheed_3d_stacks
    notebooks/ewald_construction
    notebooks/ewald_kxky_transformation
    notebooks/ewald_kxky_transformation_advanced

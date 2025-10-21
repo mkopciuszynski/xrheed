@@ -3,11 +3,28 @@
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-xx-xx
 
-- Organize and simplify the data loading logic
-- Breaking change: remove: `load_data_manual()`, now only load_data() is available 
-and works as manual when no plugin is provided
-- Add file name and file creation time to loaded image in attrs
-- Update the documentation
+### Added
+- Added `file_name` and `file_creation_time` attributes to loaded images.  
+- Added new example images for the 3D stacking notebook.  
+- Added support for image stacks with `alpha` coordinates in `conversion.image.transform_image_to_kxky`.  
+- Added full support for stack images in `kinematics.Ewald`.  
+- Introduced `enable_logging()` utility for easier logging configuration.  
+
+### Changed
+- Refactored and simplified the data loading logic for maintainability.  
+- Refactored RI accessors to work with both 2D and 3D (stacked) images.  
+- Improved profile plotting and representation to support reduction along `sx`, `sy`, and other dimensions (including 3D stacks).  
+- Updated ARHEED `kx–ky` transformation visuals with new example images.  
+- Updated documentation for advanced `kx–ky` transformations using multiple (stack) images.  
+
+### Removed
+- **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).  
+
+### Renamed
+- **Breaking:** Renamed `ewald_sphere_radius` → `ewald_radius` in RI accessors for naming consistency.  
+
+### Split
+- **Breaking:** Replaced `apply_image_center()` with two clearer functions: `set_center_manual()` and `set_center_auto()`.
 
 
 <a name="1.3.4"></a>

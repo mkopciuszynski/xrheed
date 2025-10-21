@@ -13,9 +13,8 @@ import xarray as xr
 from numpy.typing import NDArray
 from PIL import Image
 
+from .constants import CANONICAL_STACK_DIMS
 from .plugins import PLUGINS
-
-CANONICAL_STACK_DIMS = {"alpha", "beta", "coverage", "time", "temperature"}
 
 __all__ = ["load_data"]
 
@@ -34,7 +33,7 @@ def load_data(
     alpha: float = 0.0,
     beta: float = 2.0,
     stack_dim: Optional[str] = None,
-    stack_coords: Optional[Sequence[float]] = None,
+    stack_coords: Optional[Union[Sequence[float], NDArray]] = None,
     **kwargs,
 ) -> xr.DataArray:
     """
@@ -65,14 +64,14 @@ def load_data(
 
     # --- Multi-file case ---
     if isinstance(path, (list, tuple)):
-        print("This is not fully implemented now!")
-
         if plugin is None:
+            logger.error("Multi-file loading requested but no plugin specified.")
             raise ValueError("Multi-file loading is only supported with plugins.")
         logger.info(f"Loading {len(path)} files with plugin={plugin}")
         arrays = [load_data(p, plugin=plugin, **kwargs) for p in path]
 
         if stack_dim is None:
+            logger.error("No stack_dim provided for multi-file loading.")
             raise ValueError("stack_dim must be provided when loading multiple files.")
 
         if stack_dim not in CANONICAL_STACK_DIMS:
@@ -81,8 +80,12 @@ def load_data(
                 f"Consider using one of {sorted(CANONICAL_STACK_DIMS)} for consistency."
             )
 
+        logger.info(f"Concatenating {len(arrays)} images along dimension '{stack_dim}'")
         da = xr.concat(arrays, dim=stack_dim)
         if stack_coords is not None:
+            logger.info(
+                f"Assigning custom coordinates to stack dimension '{stack_dim}'"
+            )
             da = da.assign_coords({stack_dim: stack_coords})
         return da
 
@@ -91,9 +94,14 @@ def load_data(
     path = Path(path)
 
     if plugin is not None:
+        logger.info(f"Loading file '{path}' using plugin '{plugin}'")
         plugin_cls = PLUGINS[plugin]
         plugin_instance = plugin_cls()
         if not plugin_instance.is_file_accepted(path):
+            logger.error(
+                f"File {path} not accepted by plugin '{plugin}'. "
+                f"Allowed extensions: {plugin_cls.TOLERATED_EXTENSIONS}"
+            )
             raise ValueError(
                 f"File {path} not accepted by plugin '{plugin}'. "
                 f"Allowed extensions: {plugin_cls.TOLERATED_EXTENSIONS}"
@@ -102,25 +110,31 @@ def load_data(
 
     # --- Single-file case - manual mode ---
     else:
-        assert screen_scale is not None, "screen_scale must be provided in manual mode"
-        assert (
-            screen_sample_distance is not None
-        ), "screen_scale must be provided in manual mode"
-        assert beam_energy is not None, "screen_scale must be provided in manual mode"
+        logger.info(f"Loading file '{path}' in manual mode.")
+        if screen_scale is None:
+            logger.error("screen_scale must be provided in manual mode.")
+            raise ValueError("screen_scale must be provided in manual mode.")
+        if screen_sample_distance is None:
+            logger.error("screen_sample_distance must be provided in manual mode.")
+            raise ValueError("screen_sample_distance must be provided in manual mode.")
+        if beam_energy is None:
+            logger.error("beam_energy must be provided in manual mode.")
+            raise ValueError("beam_energy must be provided in manual mode.")
 
-        # Load image (bmp/png/tiff/…)
+        logger.info(f"Opening image file '{path}' as grayscale.")
         image = Image.open(path).convert("L")
         image_np: NDArray[np.uint8] = np.array(image, dtype=np.uint8)
 
-        h: int
-        w: int
         h, w = image_np.shape
 
         if screen_center_sx_px is None:
+            logger.warning("screen_center_sx_px not provided, using image midpoint.")
             screen_center_sx_px = w // 2
         if screen_center_sy_px is None:
+            logger.warning("screen_center_sy_px not provided, using image midpoint.")
             screen_center_sy_px = h // 2
 
+        logger.info(f"Calculating physical coordinates for image of shape ({h}, {w}).")
         sx = (np.arange(w) - screen_center_sx_px) / screen_scale
         sy = (screen_center_sy_px - np.arange(h)) / screen_scale
 
@@ -140,4 +154,7 @@ def load_data(
             file_name=path.name,
         )
 
+        logger.info(
+            f"Returning DataArray for file '{path}' with shape {image_np.shape}."
+        )
         return xr.DataArray(image_np, coords=coords, dims=["sy", "sx"], attrs=attrs)
