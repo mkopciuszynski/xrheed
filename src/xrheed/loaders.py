@@ -67,7 +67,8 @@ def load_data(
         if plugin is None:
             logger.error("Multi-file loading requested but no plugin specified.")
             raise ValueError("Multi-file loading is only supported with plugins.")
-        logger.info(f"Loading {len(path)} files with plugin={plugin}")
+
+        logger.info("Loading %d files with plugin=%s", len(path), plugin)
         arrays = [load_data(p, plugin=plugin, **kwargs) for p in path]
 
         if stack_dim is None:
@@ -76,15 +77,18 @@ def load_data(
 
         if stack_dim not in CANONICAL_STACK_DIMS:
             logger.warning(
-                f"Non-standard stack dimension '{stack_dim}'. "
-                f"Consider using one of {sorted(CANONICAL_STACK_DIMS)} for consistency."
+                "Non-standard stack dimension '%s'. Consider using one of %s for consistency.",
+                stack_dim,
+                sorted(CANONICAL_STACK_DIMS),
             )
 
-        logger.info(f"Concatenating {len(arrays)} images along dimension '{stack_dim}'")
+        logger.info(
+            "Concatenating %d images along dimension '%s'", len(arrays), stack_dim
+        )
         da = xr.concat(arrays, dim=stack_dim)
         if stack_coords is not None:
             logger.info(
-                f"Assigning custom coordinates to stack dimension '{stack_dim}'"
+                "Assigning custom coordinates to stack dimension '%s'", stack_dim
             )
             da = da.assign_coords({stack_dim: stack_coords})
         return da
@@ -94,13 +98,15 @@ def load_data(
     path = Path(path)
 
     if plugin is not None:
-        logger.info(f"Loading file '{path}' using plugin '{plugin}'")
+        logger.info("Loading file '%s' using plugin '%s'", path, plugin)
         plugin_cls = PLUGINS[plugin]
         plugin_instance = plugin_cls()
         if not plugin_instance.is_file_accepted(path):
             logger.error(
-                f"File {path} not accepted by plugin '{plugin}'. "
-                f"Allowed extensions: {plugin_cls.TOLERATED_EXTENSIONS}"
+                "File %s not accepted by plugin '%s'. Allowed extensions: %s",
+                path,
+                plugin,
+                plugin_cls.TOLERATED_EXTENSIONS,
             )
             raise ValueError(
                 f"File {path} not accepted by plugin '{plugin}'. "
@@ -110,7 +116,7 @@ def load_data(
 
     # --- Single-file case - manual mode ---
     else:
-        logger.info(f"Loading file '{path}' in manual mode.")
+        logger.info("Loading file '%s' in manual mode.", path)
         if screen_scale is None:
             logger.error("screen_scale must be provided in manual mode.")
             raise ValueError("screen_scale must be provided in manual mode.")
@@ -121,7 +127,7 @@ def load_data(
             logger.error("beam_energy must be provided in manual mode.")
             raise ValueError("beam_energy must be provided in manual mode.")
 
-        logger.info(f"Opening image file '{path}' as grayscale.")
+        logger.info("Opening image file '%s' as grayscale.", path)
         image = Image.open(path).convert("L")
         image_np: NDArray[np.uint8] = np.array(image, dtype=np.uint8)
 
@@ -134,7 +140,9 @@ def load_data(
             logger.warning("screen_center_sy_px not provided, using image midpoint.")
             screen_center_sy_px = h // 2
 
-        logger.info(f"Calculating physical coordinates for image of shape ({h}, {w}).")
+        logger.info(
+            "Calculating physical coordinates for image of shape (%d, %d).", h, w
+        )
         sx = (np.arange(w) - screen_center_sx_px) / screen_scale
         sy = (screen_center_sy_px - np.arange(h)) / screen_scale
 
@@ -155,6 +163,6 @@ def load_data(
         )
 
         logger.info(
-            f"Returning DataArray for file '{path}' with shape {image_np.shape}."
+            "Returning DataArray for file '%s' with shape %s.", path, image_np.shape
         )
         return xr.DataArray(image_np, coords=coords, dims=["sy", "sx"], attrs=attrs)
