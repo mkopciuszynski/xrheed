@@ -21,9 +21,16 @@ from matplotlib.patches import Rectangle
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .constants import (DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_SCREEN_ROI_HEIGHT,
-                        DEFAULT_SCREEN_ROI_WIDTH, IMAGE_DIMS, IMAGE_NDIMS,
-                        K_INV_ANGSTROM, STACK_NDIMS)
+from .constants import (
+    DEFAULT_ALPHA,
+    DEFAULT_BETA,
+    DEFAULT_SCREEN_ROI_HEIGHT,
+    DEFAULT_SCREEN_ROI_WIDTH,
+    IMAGE_DIMS,
+    IMAGE_NDIMS,
+    K_INV_ANGSTROM,
+    STACK_NDIMS,
+)
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
@@ -43,6 +50,11 @@ class RHEEDAccessor:
 
     def __init__(self, xarray_obj: xr.DataArray) -> None:
         self._obj = xarray_obj
+        logger.debug(
+            "Registered RHEEDAccessor for DataArray with shape %s and coords %s",
+            getattr(xarray_obj, "shape", None),
+            list(xarray_obj.coords.keys()),
+        )
 
     # ---- Properties ----
     @property
@@ -191,6 +203,7 @@ class RHEEDAccessor:
             Rotation angle in degrees. Positive values rotate counterclockwise.
         """
         da = self._obj
+        logger.debug("rotate called: angle=%s, ndim=%s", angle, da.ndim)
         if da.ndim == IMAGE_NDIMS:
             da.data = ndimage.rotate(da.data, angle, reshape=False)
         elif da.ndim == STACK_NDIMS:
@@ -203,9 +216,16 @@ class RHEEDAccessor:
                 axis=0,
             )
         else:
+            logger.error(
+                "rotate: unsupported ndim=%s (expected %s or %s)",
+                da.ndim,
+                IMAGE_NDIMS,
+                STACK_NDIMS,
+            )
             raise ValueError(
                 f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
             )
+        logger.info("Rotation applied: angle=%s degrees", angle)
 
     def set_center_manual(
         self,
@@ -226,6 +246,12 @@ class RHEEDAccessor:
             Interpolation method for per-frame shifts (default='linear').
         """
         da = self._obj
+        logger.debug(
+            "set_center_manual called: center_x=%s, center_y=%s, method=%s",
+            center_x,
+            center_y,
+            method,
+        )
 
         missing = IMAGE_DIMS - da.coords.keys()
         if missing:
@@ -249,6 +275,12 @@ class RHEEDAccessor:
                 cy = np.full(n_frames, cy.item())
 
             if len(cx) != n_frames or len(cy) != n_frames:
+                logger.error(
+                    "Invalid center lengths: expected %s, got %s and %s",
+                    n_frames,
+                    len(cx),
+                    len(cy),
+                )
                 raise ValueError(
                     f"center_x/center_y must be scalar or length={n_frames}, got {len(cx)} and {len(cy)}"
                 )
@@ -271,6 +303,11 @@ class RHEEDAccessor:
                     .interp(new_coords, method=method, kwargs={"fill_value": 0})
                     .data
                 )
+            logger.info(
+                "Manual centering applied to %d frames using method=%s",
+                n_frames,
+                method,
+            )
 
         else:
             raise ValueError(
@@ -289,7 +326,9 @@ class RHEEDAccessor:
         center_x = find_horizontal_center(image)
         center_y = find_vertical_center(image)
         self.set_center_manual(center_x, center_y)
-        logger.info("Applied automatic centering.")
+        logger.info(
+            "Applied automatic centering: center_x=%s, center_y=%s", center_x, center_y
+        )
 
     def get_profile(
         self,
@@ -328,6 +367,16 @@ class RHEEDAccessor:
             Profile data with metadata preserved.
         """
         da = self._obj
+        logger.debug(
+            "get_profile called: center=%s width=%s height=%s stack_index=%s reduce_over=%s method=%s",
+            center,
+            width,
+            height,
+            stack_index,
+            reduce_over,
+            method,
+        )
+
         cropped = da.sel(
             sx=slice(center[0] - width / 2, center[0] + width / 2),
             sy=slice(center[1] - height / 2, center[1] + height / 2),
@@ -366,6 +415,7 @@ class RHEEDAccessor:
                 facecolor="none",
             )
             ax.add_patch(rect)
+            logger.debug("Added origin rectangle to plot at center=%s", center)
 
         return profile
 
@@ -400,9 +450,18 @@ class RHEEDAccessor:
             The axes containing the plot.
         """
         da = self._obj
+        logger.debug(
+            "plot_image called: ndim=%s stack_index=%s auto_levels=%s show_center_lines=%s show_specular_spot=%s",
+            da.ndim,
+            stack_index,
+            auto_levels,
+            show_center_lines,
+            show_specular_spot,
+        )
         if da.ndim == STACK_NDIMS:
             da = da.isel({da.dims[0]: stack_index})
         elif da.ndim != IMAGE_NDIMS:
+            logger.error("plot_image: unsupported ndim=%s", da.ndim)
             raise ValueError(
                 f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
             )
@@ -427,6 +486,10 @@ class RHEEDProfileAccessor:
 
     def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
+        logger.debug(
+            "Registered RHEEDProfileAccessor for DataArray with shape %s",
+            getattr(xarray_obj, "shape", None),
+        )
 
     def __repr__(self):
         da = self._obj
@@ -451,9 +514,13 @@ class RHEEDProfileAccessor:
         da = self._obj
         if "sx" not in da.coords:
             raise ValueError("The profile must have 'sx' coordinate to convert to ky.")
-
         k_e = da.ri.ewald_radius
         screen_sample_distance = da.ri.screen_sample_distance
+        logger.debug(
+            "convert_to_k: converting sx->ky with ewald_radius=%s, screen_sample_distance=%s",
+            k_e,
+            screen_sample_distance,
+        )
         sx = da.coords["sx"].values
         ky = convert_sx_to_ky(
             sx,
