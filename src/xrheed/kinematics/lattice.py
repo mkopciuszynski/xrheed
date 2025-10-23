@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from numpy.typing import NDArray
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 Vector = NDArray[np.float32]
 
@@ -66,6 +70,14 @@ class Lattice:
         )
         self.reciprocal_lattice: NDArray[np.float32] = Lattice.generate_lattice(
             self.b1, self.b2
+        )
+        logger.debug(
+            "Lattice initialized: label=%s a1=%s a2=%s b1=%s b2=%s",
+            self.label,
+            self.a1.tolist(),
+            self.a2.tolist(),
+            self.b1.tolist(),
+            self.b2.tolist(),
         )
 
     def __copy__(self) -> Lattice:
@@ -218,6 +230,7 @@ class Lattice:
         Args:
             alpha (float): Rotation angle in degrees.
         """
+        logger.info("Rotating Lattice by %.4f degrees: label=%s", alpha, self.label)
         self.a1 = np.dot(rotation_matrix(alpha), self.a1)
         self.a2 = np.dot(rotation_matrix(alpha), self.a2)
 
@@ -233,6 +246,9 @@ class Lattice:
         Args:
             lattice_scale (float): Scaling factor for the lattice vectors.
         """
+        logger.info(
+            "Scaling Lattice by factor %.4f: label=%s", lattice_scale, self.label
+        )
         self.a1 = self.a1 * lattice_scale
         self.a2 = self.a2 * lattice_scale
         self.b1 = self.b1 / lattice_scale

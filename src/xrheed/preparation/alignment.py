@@ -2,8 +2,12 @@ import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
+import logging
 
 from xrheed.preparation.filters import gaussian_filter_profile
+
+
+logger = logging.getLogger(__name__)
 
 
 def find_horizontal_center(image: xr.DataArray) -> float:
@@ -25,8 +29,20 @@ def find_horizontal_center(image: xr.DataArray) -> float:
     profile_smoothed: xr.DataArray = gaussian_filter_profile(profile, sigma=1.0)
     max_pos: float = profile_smoothed.sx.values[np.argmax(profile_smoothed.values)]
 
-    # TODO improve this adding additional horizontal_center search
+    logger.debug(
+        "find_horizontal_center: image_shape=%s nx=%s -> max_pos=%.6f",
+        getattr(image, "shape", None),
+        profile_smoothed.sizes.get(profile_smoothed.dims[0], None),
+        max_pos,
+    )
 
+    logger.info(
+        "Horizontal center estimated at %.4f",
+        max_pos,
+    )
+
+
+    # TODO improve this adding additional horizontal_center search
     return max_pos
 
 
@@ -76,6 +92,18 @@ def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) ->
     result = sigmoid_model.fit(sy, params=params, x=sx)
     sigmoid_center: float = result.params["x0"].value
     sigmoid_k: float = result.params["k"].value
+
+    logger.debug(
+        "find_vertical_center: fitted x0=%.6f k=%.6f max_idx=%d",
+        sigmoid_center,
+        sigmoid_k,
+        max_idx,
+    )
+
+    logger.info(
+        "Vertical center estimated at %.4f",
+        sigmoid_center - sigmoid_k * 3.0,
+    )
 
     return sigmoid_center - sigmoid_k * 3.0
 
@@ -130,11 +158,18 @@ def find_incident_angle(
     # Convert to degrees
     beta_deg: float = np.degrees(beta_rad)
 
-    print(f"Transmission spot at: {x_trans:.2f}")
-    print(f"Mirror spot at: {x_mirr:.2f}")
-    print(f"Spot distance: {spot_distance:.2f}")
-    print(f"Shadow edge: {shadow_edge:.2f}")
-    print(f"Polar angle: {beta_deg:.2f}")
+    logger.debug(
+        "find_incident_angle: screen_sample_distance=%s x_range=%s y_range=%s",
+        screen_sample_distance,
+        x_range,
+        y_range,
+    )
+
+    logger.info("Transmission spot at: %.2f", x_trans)
+    logger.info("Mirror spot at: %.2f", x_mirr)
+    logger.info("Spot distance: %.2f", spot_distance)
+    logger.info("Shadow edge: %.2f", shadow_edge)
+    logger.info("Polar angle (deg): %.2f", beta_deg)
 
     return beta_deg
 

@@ -225,7 +225,7 @@ class RHEEDAccessor:
             raise ValueError(
                 f"Expected {IMAGE_NDIMS}D or {STACK_NDIMS}D, got {da.ndim}D"
             )
-        logger.info("Rotation applied: angle=%s degrees", angle)
+        logger.info("Rotation applied: angle=%.4f degrees", float(angle))
 
     def set_center_manual(
         self,
@@ -246,10 +246,18 @@ class RHEEDAccessor:
             Interpolation method for per-frame shifts (default='linear').
         """
         da = self._obj
+        def _first_float(val):
+            if isinstance(val, float):
+                return val
+            elif isinstance(val, (list, np.ndarray)):
+                return float(val[0])
+            else:
+                return float(val)
+
         logger.debug(
-            "set_center_manual called: center_x=%s, center_y=%s, method=%s",
-            center_x,
-            center_y,
+            "set_center_manual called: center_x=%.4f, center_y=%.4f, method=%s",
+            _first_float(center_x),
+            _first_float(center_y),
             method,
         )
 
@@ -304,9 +312,11 @@ class RHEEDAccessor:
                     .data
                 )
             logger.info(
-                "Manual centering applied to %d frames using method=%s",
+                "Manual centering applied to %d frames using method=%s; center_x=%.4f, center_y=%.4f",
                 n_frames,
                 method,
+                float(cx0),
+                float(cy0),
             )
 
         else:
@@ -327,7 +337,7 @@ class RHEEDAccessor:
         center_y = find_vertical_center(image)
         self.set_center_manual(center_x, center_y)
         logger.info(
-            "Applied automatic centering: center_x=%s, center_y=%s", center_x, center_y
+            "Applied automatic centering: center_x=%.4f, center_y=%.4f", float(center_x), float(center_y)
         )
 
     def get_profile(

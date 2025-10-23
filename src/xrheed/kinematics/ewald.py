@@ -1,8 +1,9 @@
 import copy
-from logging import warning
+import logging
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
@@ -14,6 +15,9 @@ from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .cache_utils import smart_cache
 from .lattice import Lattice, rotation_matrix
+
+
+logger = logging.getLogger(__name__)
 
 
 class Ewald:
@@ -52,7 +56,7 @@ class Ewald:
         self._stack_index: int = stack_index
 
         if image is None:
-            warning("RHEED image not provided, default parameters are loaded.")
+            logger.warning("RHEED image not provided, default parameters are loaded.")
             self.image: Optional[xr.DataArray] = None
             self.beam_energy: float = 18_600.0
             self.screen_sample_distance: float = 309.2
@@ -103,6 +107,13 @@ class Ewald:
         self.ew_sy: NDArray[np.float32]
 
         self.calculate_ewald()
+        logger.info(
+            "Initialized Ewald: label=%s image_provided=%s beam_energy=%.1f screen_scale=%.2f",
+            self.label,
+            self._image_data_available,
+            self.beam_energy,
+            self.screen_scale,
+        )
 
     def __repr__(self) -> str:
         return (
@@ -261,22 +272,28 @@ class Ewald:
 
         self.ew_sx = sx
         self.ew_sy = sy
+        logger.debug(
+            "calculate_ewald: generated %d spots (mirror=%s) ewald_roi=%.3f",
+            sx.size,
+            self.mirror,
+            getattr(self, "_ewald_roi", float("nan")),
+        )
 
     def plot(
         self,
-        ax: Optional[plt.Axes] = None,
+        ax: Optional[Axes] = None,
         show_image: bool = True,
         show_roi: bool = False,
         auto_levels: float = 0.0,
         show_center_lines: bool = False,
         **kwargs,
-    ) -> plt.Axes:
+    ) -> Axes:
         """
         Plot the calculated spot positions and optionally the RHEED image.
 
         Parameters
         ----------
-        ax : Optional[plt.Axes], optional
+        ax : Optional[Axes], optional
             Matplotlib axes to plot on. If None, a new figure is created.
         show_image : bool, optional
             If True, plot the RHEED image (default: True).
@@ -291,12 +308,18 @@ class Ewald:
 
         Returns
         -------
-        plt.Axes
+        matplotlib.axes.Axes
             The axes with the plotted data.
         """
 
         if ax is None:
             fig, ax = plt.subplots()
+        logger.debug(
+            "plot: show_image=%s show_roi=%s show_center_lines=%s",
+            show_image,
+            show_roi,
+            show_center_lines,
+        )
 
         if show_image:
             if self.image is None:
@@ -343,6 +366,7 @@ class Ewald:
             (self.ew_sy + self.shift_y) * fine_scaling,
             **kwargs,
         )
+        logger.info("Plotted %d ewald spots on axes.", getattr(self.ew_sx, "size", 0))
 
         return ax
 
@@ -398,6 +422,12 @@ class Ewald:
                 aspect="equal",
                 **kwargs,
             )
+            logger.debug(
+                "plot_spots: show_image=%s mask_shape=%s",
+                show_image,
+                getattr(mask, "shape", None),
+            )
+            logger.info("Displayed spot mask on axes.")
         else:
             ax.imshow(
                 mask,

@@ -2,6 +2,10 @@ from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def convert_sx_to_ky(
@@ -26,6 +30,12 @@ def convert_sx_to_ky(
     """
 
     kx: NDArray = (x_coords_mm / screen_sample_distance_mm) * ewald_radius
+    logger.debug(
+        "convert_sx_to_ky: x_coords_mm.shape=%s ewald_radius=%s screen_sample_distance_mm=%s",
+        getattr(x_coords_mm, "shape", None),
+        ewald_radius,
+        screen_sample_distance_mm,
+    )
 
     return kx
 
@@ -86,6 +96,16 @@ def convert_gx_gy_to_sx_sy(
     # calculate the shift between the center of Ewald sphere and the center of reciprocal lattice
     delta_x: np.float32 = np.float32(k0 * np.cos(np.deg2rad(beta)))
 
+    logger.info(
+        "convert_gx_gy_to_sx_sy: gx.shape=%s gy.shape=%s ewald_radius=%s beta=%s screen_sample_distance=%s remove_outside=%s",
+        getattr(gx, "shape", None),
+        getattr(gy, "shape", None),
+        ewald_radius,
+        beta,
+        screen_sample_distance,
+        remove_outside,
+    )
+
     # shift the center of reciprocal lattice
     kx: NDArray[np.float32] = gx + delta_x
     ky: NDArray[np.float32] = gy
@@ -116,5 +136,6 @@ def convert_gx_gy_to_sx_sy(
     # calculate the spot positions
     sx: NDArray[np.float32] = rho * np.cos(phi)
     sy: NDArray[np.float32] = -rho * np.sin(phi)
+    logger.debug("convert_gx_gy_to_sx_sy: result shapes sx=%s sy=%s", getattr(sx, "shape", None), getattr(sy, "shape", None))
 
     return sx, sy

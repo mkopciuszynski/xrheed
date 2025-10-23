@@ -37,7 +37,7 @@ def _discover_plugins():
         for _, module_name, is_pkg in pkgutil.iter_modules(xrheed.plugins.__path__):
             if not is_pkg:
                 importlib.import_module(f"xrheed.plugins.{module_name}")
-                logger.info("Loaded plugin module: xrheed.plugins.%s", module_name)
+                logger.debug("Loaded plugin module: xrheed.plugins.%s", module_name)
                 found = True
         if not found:
             logger.warning("No plugin modules found in xrheed.plugins.")
