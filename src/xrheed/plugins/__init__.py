@@ -4,14 +4,11 @@ Plugin system for RHEED data loading.
 
 import abc
 import datetime
-import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type
 
 import numpy as np
 import xarray as xr
-
-logger = logging.getLogger(__name__)
 
 PLUGINS: Dict[str, Type["LoadRheedBase"]] = {}
 
@@ -21,7 +18,6 @@ def register_plugin(name: str):
 
     def decorator(cls):
         PLUGINS[name] = cls
-        logger.info(f"Registered RHEED plugin: {name}")
         return cls
 
     return decorator

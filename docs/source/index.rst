@@ -51,6 +51,7 @@ Contents
    geometry
    kinematic
    loaders
+   logging
 
 .. _example-notebooks:
 .. toctree::

@@ -2,9 +2,13 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
+import logging
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import convert_gx_gy_to_sx_sy
+
+
+logger = logging.getLogger(__name__)
 
 
 def transform_image_to_kxky(
@@ -36,10 +40,19 @@ def transform_image_to_kxky(
     beta = rheed_data.ri.beta
     alpha = rheed_data.ri.alpha
 
+    logger.info(
+        "transform_image_to_kxky: rheed_data.ndim=%s rotate=%s point_symmetry=%s",
+        rheed_data.ndim,
+        rotate,
+        point_symmetry,
+    )
+
     # --- Target coordinate grid ---
     kx: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
     ky: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
     gx, gy = np.meshgrid(kx, ky, indexing="ij")
+
+    logger.debug("transform_image_to_kxky: grid shapes kx=%s ky=%s gx=%s gy=%s", kx.shape, ky.shape, gx.shape, gy.shape)
 
     sx_to_kx, sy_to_ky = convert_gx_gy_to_sx_sy(
         gx,
@@ -52,6 +65,8 @@ def transform_image_to_kxky(
 
     sx = xr.DataArray(sx_to_kx, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
     sy = xr.DataArray(sy_to_ky, dims=["kx", "ky"], coords={"kx": kx, "ky": ky})
+
+    logger.debug("transform_image_to_kxky: converted sx/sy shapes %s %s", sx.shape, sy.shape)
 
     # --- Helper to process a single image ---
     def _transform_single_image(image: xr.DataArray, angle: float) -> xr.DataArray:
@@ -67,10 +82,12 @@ def transform_image_to_kxky(
 
     # --- Handle single image ---
     if rheed_data.ndim == IMAGE_NDIMS:
+        logger.info("transform_image_to_kxky: processing single image case with alpha=%.3f", float(alpha))
         return _transform_single_image(rheed_data, float(alpha))
 
     # --- Handle stack with alpha coordinate ---
     if rheed_data.ndim == STACK_NDIMS and "alpha" in rheed_data.coords:
+        logger.info("transform_image_to_kxky: processing stack with alpha coordinate, size=%d", rheed_data.sizes["alpha"])
         transformed_slices = [
             _transform_single_image(rheed_data.isel(alpha=i), float(alpha[i]))
             for i in range(rheed_data.sizes["alpha"])
@@ -108,6 +125,8 @@ def _rotate_trans_image(
     if trans_image.ndim != 2:
         raise ValueError("rotate_xarray expects a 2D DataArray")
 
+    logger.info("_rotate_trans_image: angle=%.3f mode=%s input_shape=%s", angle, mode, trans_image.shape)
+
     # Assert that coordinates exist
     if "kx" not in trans_image.coords or "ky" not in trans_image.coords:
         raise ValueError("rotate_xarray requires coordinates 'kx' and 'ky'")
@@ -140,5 +159,7 @@ def _rotate_trans_image(
         attrs=trans_image.attrs,
         name=trans_image.name,
     )
+
+    logger.debug("_rotate_trans_image: rotated shape=%s", rotated.shape)
 
     return rotated.where(rotated_mask)
