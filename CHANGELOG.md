@@ -16,6 +16,8 @@
 - Improved profile plotting and representation to support reduction along `sx`, `sy`, and other dimensions (including 3D stacks).  
 - Updated ARHEED `kx–ky` transformation visuals with new example images.  
 - Updated documentation for advanced `kx–ky` transformations using multiple (stack) images.  
+ - Standardized logging across core modules (module-level loggers, lazy-style messages) to improve diagnostics.
+ - Added documentation on logging usage and configuration (`docs/source/logging.rst`).
 
 ### Removed
 - **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).  
