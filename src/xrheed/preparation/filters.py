@@ -28,7 +28,7 @@ def gaussian_filter_profile(
     xr.DataArray
         The filtered profile as a new DataArray.
     """
-    logger.debug("gaussian_filter_profile called: name=%s sigma=%s", profile.name, sigma)
+    logger.debug("gaussian_filter_profile called: sigma=%s", sigma)
     assert isinstance(profile, xr.DataArray), "profile must be an xarray.DataArray"
     assert profile.ndim == 1, "profile must have only one dimension"
 
@@ -55,7 +55,6 @@ def gaussian_filter_profile(
         attrs=profile.attrs,
         name=profile.name,
     )
-    logger.debug("gaussian_filter_profile: finished filtering profile=%s", profile.name)
     return filtered_profile
 
 
