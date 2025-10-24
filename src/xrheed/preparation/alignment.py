@@ -2,6 +2,7 @@ import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
+from lmfit.models import LorentzianModel, LinearModel
 import logging
 
 from xrheed.preparation.filters import gaussian_filter_profile
@@ -40,7 +41,6 @@ def find_horizontal_center(image: xr.DataArray) -> float:
         "Horizontal center estimated at %.4f",
         max_pos,
     )
-
 
     # TODO improve this adding additional horizontal_center search
     return max_pos
@@ -228,3 +228,78 @@ def _linear_plus_sigmoid(
         Model values.
     """
     return a * x + b + L / (1 + np.exp(-k * (x - x0)))
+
+
+def _spot_sigma_from_profile(
+    profile: xr.DataArray, start_window: int = 5, max_window: int = 50
+) -> float:
+    """
+    Helper: Fit a Lorentzian + linear background around the strongest peak
+    in a 1D diffraction profile. Start with a small window and
+    iteratively expand until the fit stabilizes.
+
+    Parameters
+    ----------
+    profile : xr.DataArray
+        1D profile with coordinate 'sx' (mm).
+    start_window : int
+        Initial half-width of the fitting window (points).
+        Also used as the step size for expansion.
+    max_window : int
+        Maximum half-width to try.
+
+    Returns
+    -------
+    sigma_mm : float
+        Lorentzian sigma (HWHM) in mm.
+    """
+    x = profile["sx"].values
+    y = profile.values.astype(float)
+    n = len(y)
+
+    i_max = int(np.argmax(y))
+
+    best_sigma = None
+    prev_sigma = None
+
+    for half in range(start_window, max_window + 1, start_window):
+        left = max(0, i_max - half)
+        right = min(n, i_max + half)
+        xw = x[left:right]
+        yw = y[left:right]
+
+        if len(xw) < 5:
+            continue
+
+        # Model: Lorentzian + linear background
+        lmod = LorentzianModel(prefix="l_")
+        bmod = LinearModel(prefix="b_")
+        model = lmod + bmod
+
+        params = model.make_params()
+        params["l_center"].set(value=x[i_max], min=xw.min(), max=xw.max())
+        params["l_sigma"].set(value=(xw[-1] - xw[0]) / 20, min=np.diff(xw).mean())
+        params["l_amplitude"].set(
+            value=(yw.max() - yw.min()) * (xw[-1] - xw[0]) / 10, min=0
+        )
+        params["b_slope"].set(value=0)
+        params["b_intercept"].set(value=yw.min())
+
+        try:
+            result = model.fit(yw, params, x=xw)
+            sigma = float(result.params["l_sigma"].value)
+        except Exception:
+            continue
+
+        # Check stability: if sigma stops changing much, accept it
+        if prev_sigma is not None and abs(sigma - prev_sigma) < 0.05 * sigma:
+            best_sigma = sigma
+            break
+
+        prev_sigma = sigma
+        best_sigma = sigma
+
+    if best_sigma is None:
+        raise RuntimeError("No stable fit found")
+
+    return best_sigma
