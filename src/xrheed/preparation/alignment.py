@@ -10,6 +10,9 @@ from scipy.signal import find_peaks
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
+import matplotlib.pyplot as plt
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -184,15 +187,18 @@ def find_vertical_center(
 
         # Fit sigmoid
         sigmoid_model = lf.Model(_linear_plus_sigmoid)
-        params = sigmoid_model.make_params(a=0.0, b=0.0, L=1.0,
-                                           k=0.1, x0=float(sy_coords.mean()))
+        params = sigmoid_model.make_params(
+            a=0.0, b=0.0, L=1.0, k=0.1, x0=float(sy_coords.mean())
+        )
         try:
             result = sigmoid_model.fit(vals, params=params, x=sy_coords)
             x0 = result.params["x0"].value
             k = result.params["k"].value
             center = x0 - k
             centers.append(center)
-            logger.debug("Stripe %d: fitted x0=%.4f k=%.4f → center=%.4f", i, x0, k, center)
+            logger.debug(
+                "Stripe %d: fitted x0=%.4f k=%.4f → center=%.4f", i, x0, k, center
+            )
         except Exception as e:
             logger.debug("Stripe %d: fit failed (%s)", i, str(e))
             continue
@@ -201,75 +207,112 @@ def find_vertical_center(
         raise RuntimeError("No valid vertical centers found in any stripe.")
 
     center_final = float(np.median(centers))
-    logger.info("Vertical center estimated at %.4f (from %d stripes)", center_final, len(centers))
+    logger.info(
+        "Vertical center estimated at %.4f (from %d stripes)",
+        center_final,
+        len(centers),
+    )
     return center_final
-
-
-
 def find_incident_angle(
     image: xr.DataArray,
-    x_range: tuple[float, float] = (-3, 3),
     y_range: tuple[float, float] = (-30, 30),
-) -> float:
+    prominence: float = 0.1,
+    return_shadow_edge: bool = False,
+) -> float | tuple[float, float | None]:
     """
-    Find incident angle in degrees
-    using the position of transmission and mirror spots.
+    Find incident angle in degrees using reflection/transmission spots near sx=0.
 
-    Parameters:
-    -----------
-    image : xarray.DataArray
+    Parameters
+    ----------
+    image : xr.DataArray
         RHEED image with 'sx' and 'sy' coordinates.
-    x_range : tuple(float, float)
-        The range of x to select from the image.
-    y_range : tuple(float, float)
-        The range of y to select from the image.
+    y_range : tuple(float, float), optional
+        Range of sy to select for the vertical profile (default -30..30).
+    prominence : float, optional
+        Minimum prominence for peak detection.
+    return_shadow_edge : bool, optional
+        If True, return a tuple (beta_deg, shadow_edge).
+        If False (default), return only beta_deg.
 
-    Returns:
-    --------
+    Returns
+    -------
     beta_deg : float
-        Angle beta in degrees.
+        Incident angle in degrees.
+    shadow_edge : float | None, optional
+        Position of the shadow edge (None if transmission spot not found).
     """
+    if "sx" not in image.coords or "sy" not in image.coords:
+        raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
     screen_sample_distance: float = image.ri.screen_sample_distance
 
-    # Sum along y (or x) to get a 1D profile.
-    # Here summing over 'y' to get vertical profile along x.
+    # --- determine sx range dynamically from reflection profile ---
+    profile_for_sigma = image.sel(sy=slice(-20, 0)).sum(dim="sy")
+    sigma = _spot_sigma_from_profile(profile_for_sigma) * 0.5
+    x_range = (-sigma, sigma)
+
+    # --- vertical profile near sx=0 ---
     vertical_profile: xr.DataArray = image.sel(
         sx=slice(*x_range), sy=slice(*y_range)
     ).sum("sx")
 
-    # Transmission spot: y > 0
-    trans_part: xr.DataArray = vertical_profile.sel(sy=slice(0, 30))
-    x_trans: NDArray = trans_part.sy[np.argmax(trans_part.values)].item()
+    sigma = _spot_sigma_from_profile(vertical_profile) * 0.5
+    vertical_profile = gaussian_filter_profile(vertical_profile, sigma=sigma)
 
-    # Mirror spot: y < 0
-    mirr_part: xr.DataArray = vertical_profile.sel(sy=slice(-30, 0))
-    x_mirr: NDArray = mirr_part.sy[np.argmax(mirr_part.values)].item()
+    sy_coords = vertical_profile.sy.values
+    vals = vertical_profile.values.astype(float)
 
-    # Calculate distance and shadow edge
-    spot_distance: float = float(x_trans - x_mirr)
-    shadow_edge: float = float(0.5 * (x_trans + x_mirr))
+    if np.ptp(vals) == 0:
+        raise RuntimeError("Flat profile: cannot detect spots")
 
-    # Calculate beta in radians
-    beta_rad: float = np.arctan(0.5 * spot_distance / screen_sample_distance)
+    # normalize
+    vals -= vals.min()
+    vals /= vals.max()
 
-    # Convert to degrees
-    beta_deg: float = np.degrees(beta_rad)
+    # --- find peaks ---
+    peaks, _ = find_peaks(vals, prominence=prominence)
+    if peaks.size == 0:
+        raise RuntimeError("No peaks detected in vertical profile")
 
-    logger.debug(
-        "find_incident_angle: screen_sample_distance=%s x_range=%s y_range=%s",
-        screen_sample_distance,
-        x_range,
-        y_range,
-    )
+    sy_peaks = sy_coords[peaks]
+    vals_peaks = vals[peaks]
 
-    logger.info("Transmission spot at: %.2f", x_trans)
-    logger.info("Mirror spot at: %.2f", x_mirr)
-    logger.info("Spot distance: %.2f", spot_distance)
-    logger.info("Shadow edge: %.2f", shadow_edge)
-    logger.info("Polar angle (deg): %.2f", beta_deg)
+    refl_candidates = sy_peaks[sy_peaks < 0]
+    trans_candidates = sy_peaks[sy_peaks > 0]
 
-    return beta_deg
+    if refl_candidates.size == 0:
+        raise RuntimeError("No reflection spot detected")
+
+    sy_mirr = float(refl_candidates[np.argmax(vals_peaks[sy_peaks < 0])])
+    logger.info("Mirror spot at: %.2f", sy_mirr)
+
+    if trans_candidates.size > 0:
+        sy_trans = float(trans_candidates[np.argmax(vals_peaks[sy_peaks > 0])])
+        logger.info("Transmission spot at: %.2f", sy_trans)
+
+        spot_distance = sy_trans - sy_mirr
+        shadow_edge = 0.5 * (sy_trans + sy_mirr)
+
+        beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
+        beta_deg = np.degrees(beta_rad)
+
+        logger.info("Spot distance: %.2f", spot_distance)
+        logger.info("Shadow edge: %.2f", shadow_edge)
+        logger.info("Incident angle (deg): %.2f", beta_deg)
+
+        return (beta_deg, shadow_edge) if return_shadow_edge else beta_deg
+    else:
+        # fallback: only reflection spot visible
+        beta_rad = np.arctan(sy_mirr / screen_sample_distance)
+        beta_deg = np.degrees(beta_rad)
+
+        logger.warning(
+            "Transmission spot not detected; using reflection spot only. "
+            "Incident angle (deg): %.2f", beta_deg
+        )
+
+        return (beta_deg, None) if return_shadow_edge else beta_deg
+
 
 
 # Define sigmoid function for fitting
@@ -351,9 +394,19 @@ def _spot_sigma_from_profile(
     sigma_mm : float
         Lorentzian sigma (HWHM) in mm.
     """
-    x = profile["sx"].values
+    # choose coordinate name: prefer 'sx', fall back to 'sy'
+    if "sx" in profile.coords:
+        x = profile["sx"].values.astype(float)
+    elif "sy" in profile.coords:
+        x = profile["sy"].values.astype(float)
+    else:
+        raise AssertionError("Profile must have 'sx' or 'sy' coordinate")
+
     y = profile.values.astype(float)
     n = len(y)
+
+    if x.shape[0] != n:
+        raise RuntimeError("Coordinate length does not match profile length")
 
     i_max = int(np.argmax(y))
 
