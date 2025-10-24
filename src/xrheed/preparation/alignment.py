@@ -1,49 +1,122 @@
+import logging
+from typing import Optional
+
 import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
+from lmfit.models import LinearModel, LorentzianModel
 from numpy.typing import NDArray
-from lmfit.models import LorentzianModel, LinearModel
-import logging
+from scipy.signal import find_peaks
 
 from xrheed.preparation.filters import gaussian_filter_profile
-
 
 logger = logging.getLogger(__name__)
 
 
-def find_horizontal_center(image: xr.DataArray) -> float:
+def find_horizontal_center(
+    image: xr.DataArray,
+    n_stripes: int = 20,
+    smooth_sigma: Optional[float] = None,
+    min_prominence: float = 0.1,
+) -> float:
     """
-    Find the horizontal center of a RHEED image by summing along the y-axis and finding the maximum position.
+    Estimate horizontal (sx) symmetry center of a diffraction image.
 
     Parameters
     ----------
     image : xr.DataArray
-        RHEED image with 'sx' and 'sy' coordinates.
+        2D image with 'sx' and 'sy' coords.
+    n_stripes : int, optional
+        Number of horizontal stripes along 'sy' to analyze (default 20).
+    smooth_sigma : float, optional
+        Smoothing sigma in sx units. If None, estimated automatically
+        from the global profile using _spot_sigma_from_profile, then scaled 2.0.
+    min_prominence : float, optional
+        Minimum prominence for peak detection (relative to normalized profile).
 
     Returns
     -------
     float
-        The sx-coordinate of the horizontal center.
+        Estimated sx coordinate of symmetry center.
     """
+    if "sx" not in image.coords or "sy" not in image.coords:
+        raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
-    profile: xr.DataArray = image.sum("sy")
-    profile_smoothed: xr.DataArray = gaussian_filter_profile(profile, sigma=1.0)
-    max_pos: float = profile_smoothed.sx.values[np.argmax(profile_smoothed.values)]
+    # --- Estimate smoothing sigma if not provided ---
+    if smooth_sigma is None:
+        global_profile = image.sum(dim="sy")
+        smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
+        logger.debug("Auto smooth_sigma estimated: %.4f", smooth_sigma)
 
-    logger.debug(
-        "find_horizontal_center: image_shape=%s nx=%s -> max_pos=%.6f",
-        getattr(image, "shape", None),
-        profile_smoothed.sizes.get(profile_smoothed.dims[0], None),
-        max_pos,
-    )
+    ny = int(image.sizes["sy"])
+    stripe_height = max(1, ny // int(n_stripes))
+    sx_coords = np.asarray(image.sx.values)
 
+    # --- First pass: collect maxima from all stripes ---
+    stripe_profiles = []
+    stripe_maxima = []
+    for i in range(n_stripes):
+        start = i * stripe_height
+        end = ny if i == n_stripes - 1 else (i + 1) * stripe_height
+        stripe = image.isel(sy=slice(start, end))
+        profile = stripe.sum(dim="sy")
+        if profile.size == 0:
+            continue
+        profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
+        stripe_profiles.append((profile_smooth, sx_coords))
+        stripe_maxima.append(profile_smooth.values.max())
+
+    if not stripe_profiles:
+        raise RuntimeError("No valid stripes found.")
+
+    avg_max = np.mean(stripe_maxima)
+    logger.debug("Average stripe max: %.4f", avg_max)
+
+    centers = []
+    for idx, ((profile_smooth, sx_coords), max_val) in enumerate(
+        zip(stripe_profiles, stripe_maxima)
+    ):
+        logger.debug("Stripe %d: max=%.4f", idx, max_val)
+
+        # Skip weak stripes (< 50% of average max)
+        if max_val < avg_max * 0.5:
+            logger.debug("Stripe %d skipped (too weak)", idx)
+            continue
+
+        y = profile_smooth.values.astype(float)
+
+        y_norm = (y - y.min()) / np.ptp(y)
+        peaks, _ = find_peaks(y_norm, prominence=min_prominence)
+
+        if peaks.size == 1:
+            center = float(sx_coords[peaks[0]])
+            centers.append(center)
+            logger.debug("Stripe %d: single peak at %.4f", idx, center)
+        elif peaks.size == 2:
+            x1, x2 = sx_coords[peaks[0]], sx_coords[peaks[1]]
+            center = float(0.5 * (x1 + x2))
+            centers.append(center)
+            logger.debug(
+                "Stripe %d: two peaks at %.4f, %.4f → midpoint %.4f",
+                idx,
+                x1,
+                x2,
+                center,
+            )
+        else:
+            logger.debug("Stripe %d skipped (found %d peaks)", idx, peaks.size)
+            continue
+
+    if not centers:
+        raise RuntimeError("No valid peaks found in any stripe.")
+
+    center_final = float(np.median(centers))
     logger.info(
-        "Horizontal center estimated at %.4f",
-        max_pos,
+        "Estimated horizontal center: %.4f, using %d selected profile",
+        center_final,
+        len(centers),
     )
-
-    # TODO improve this adding additional horizontal_center search
-    return max_pos
+    return center_final
 
 
 def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) -> float:
