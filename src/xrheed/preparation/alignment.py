@@ -119,66 +119,91 @@ def find_horizontal_center(
     return center_final
 
 
-def find_vertical_center(image: xr.DataArray, shadow_edge_width: float = 5.0) -> float:
+def find_vertical_center(
+    image: xr.DataArray,
+    shadow_edge_width: float = 5.0,
+    n_stripes: int = 20,
+) -> float:
     """
-    Find the vertical center of a RHEED image using the shadow edge and a linear+sigmoid fit.
+    Estimate the vertical (sy) center of a RHEED image using the shadow edge.
+    The image is divided into vertical stripes along 'sx'; for each stripe,
+    a profile along 'sy' is extracted and a linear+sigmoid model is fitted
+    to locate the shadow edge. The final center is the median of valid fits.
 
     Parameters
     ----------
     image : xr.DataArray
-        RHEED image with 'sx' and 'sy' coordinates.
+        2D RHEED image with 'sx' and 'sy' coordinates.
     shadow_edge_width : float, optional
-        Estimated width of the shadow edge (default is 5.0).
+        Estimated width of the shadow edge (default 5.0).
+    n_stripes : int, optional
+        Number of vertical stripes along 'sx' to analyze (default 20).
 
     Returns
     -------
     float
-        The y-coordinate of the vertical center.
+        Estimated sy coordinate of the vertical center.
     """
+    if "sx" not in image.coords or "sy" not in image.coords:
+        raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
-    x_range: float = 20.0
-    x_mirror_spot_size: float = 3.0
+    nx = int(image.sizes["sx"])
+    stripe_width = max(1, nx // n_stripes)
 
-    profile: xr.DataArray = image.where(
-        ((image.sx >= -x_range) & (image.sx <= -x_mirror_spot_size))
-        | ((image.sx >= x_mirror_spot_size) & (image.sx <= x_range)),
-        drop=True,
-    ).sum(dim="sx")
+    centers = []
+    for i in range(n_stripes):
+        start = i * stripe_width
+        end = nx if i == n_stripes - 1 else (i + 1) * stripe_width
+        stripe = image.isel(sx=slice(start, end))
 
-    sigma: float = shadow_edge_width * 0.1
-    profile_smoothed: xr.DataArray = gaussian_filter_profile(profile, sigma=sigma)
-    max_idx: int = int(np.argmax(profile_smoothed.values))
+        if stripe.size == 0:
+            continue
 
-    subprofile: xr.DataArray = profile_smoothed.isel(sy=slice(max_idx, None))
+        # Collapse stripe into a vertical profile
+        profile = stripe.sum(dim="sx")
 
-    # Prepare data for fitting
-    sx: NDArray = subprofile["sy"].values
-    sy: NDArray = subprofile.values
+        # Smooth profile
+        sigma = shadow_edge_width * 0.1
+        profile_smoothed = gaussian_filter_profile(profile, sigma=sigma)
 
-    sy -= sy.min()
-    sy /= sy.max()
+        # Take only the falling edge after the maximum
+        max_idx = int(np.argmax(profile_smoothed.values))
+        subprofile = profile_smoothed.isel(sy=slice(max_idx, None))
+        if subprofile.size == 0:
+            continue
 
-    sigmoid_model: lf.Model = lf.Model(_linear_plus_sigmoid)
+        sy_coords = subprofile["sy"].values
+        vals = subprofile.values.astype(float)
 
-    params = sigmoid_model.make_params(a=0.0, b=0.0, L=1.0, k=0.1, x0=0.0)
+        if np.ptp(vals) == 0:
+            continue
 
-    result = sigmoid_model.fit(sy, params=params, x=sx)
-    sigmoid_center: float = result.params["x0"].value
-    sigmoid_k: float = result.params["k"].value
+        # Normalize
+        vals -= vals.min()
+        vals /= vals.max()
 
-    logger.debug(
-        "find_vertical_center: fitted x0=%.6f k=%.6f max_idx=%d",
-        sigmoid_center,
-        sigmoid_k,
-        max_idx,
-    )
+        # Fit sigmoid
+        sigmoid_model = lf.Model(_linear_plus_sigmoid)
+        params = sigmoid_model.make_params(a=0.0, b=0.0, L=1.0,
+                                           k=0.1, x0=float(sy_coords.mean()))
+        try:
+            result = sigmoid_model.fit(vals, params=params, x=sy_coords)
+            x0 = result.params["x0"].value
+            k = result.params["k"].value
+            center = x0 - k
+            centers.append(center)
+            logger.debug("Stripe %d: fitted x0=%.4f k=%.4f → center=%.4f", i, x0, k, center)
+        except Exception as e:
+            logger.debug("Stripe %d: fit failed (%s)", i, str(e))
+            continue
 
-    logger.info(
-        "Vertical center estimated at %.4f",
-        sigmoid_center - sigmoid_k * 3.0,
-    )
+    if not centers:
+        raise RuntimeError("No valid vertical centers found in any stripe.")
 
-    return sigmoid_center - sigmoid_k * 3.0
+    center_final = float(np.median(centers))
+    logger.info("Vertical center estimated at %.4f (from %d stripes)", center_final, len(centers))
+    return center_final
+
 
 
 def find_incident_angle(
