@@ -1,16 +1,12 @@
 import logging
-from typing import Optional, Tuple
-
 import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
+from typing import Optional, Tuple
 from lmfit.models import LinearModel, LorentzianModel
 from numpy.typing import NDArray
 from scipy.signal import find_peaks
-
 from xrheed.preparation.filters import gaussian_filter_profile
-
-import matplotlib.pyplot as plt
 
 
 logger = logging.getLogger(__name__)
@@ -213,19 +209,22 @@ def find_vertical_center(
         len(centers),
     )
 
-
     # --- refinement: adjust with shadow edge if available ---
     try:
         sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image)
         if sy_trans is not None:
             shadow_edge = 0.5 * (sy_trans + sy_mirr)
             center_final += shadow_edge
-            logger.info("Adjusted vertical center with shadow edge %.4f → %.4f",
-                        shadow_edge, center_final)
+            logger.info(
+                "Adjusted vertical center with shadow edge %.4f → %.4f",
+                shadow_edge,
+                center_final,
+            )
     except Exception as e:
         logger.debug("Incident angle refinement skipped (%s)", str(e))
 
     return center_final
+
 
 def find_incident_angle(
     image: xr.DataArray,
@@ -250,25 +249,19 @@ def find_incident_angle(
     logger.info("Mirror spot detected at sy=%.4f", sy_mirr)
     if sy_trans is not None:
         logger.info("Transmission spot detected at sy=%.4f", sy_trans)
+    beta_deg = _calculate_incident_angle(sy_mirr, sy_trans, screen_sample_distance)
+    if sy_trans is not None:
         spot_distance = sy_trans - sy_mirr
         shadow_edge = 0.5 * (sy_trans + sy_mirr)
-        beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
-        beta_deg = np.degrees(beta_rad)
-
         logger.info("Spot distance=%.4f, Shadow edge=%.4f", spot_distance, shadow_edge)
         logger.info("Incident angle (deg) from reflection+transmission: %.4f", beta_deg)
     else:
-        # fallback: reflection only
-        beta_rad = np.arctan(sy_mirr / screen_sample_distance)
-        beta_deg = np.degrees(beta_rad)
-
         logger.warning(
             "Transmission spot not detected; using reflection-only estimate. "
-            "Incident angle (deg)=%.4f", beta_deg
+            "Incident angle (deg)=%.4f",
+            beta_deg,
         )
-
     return beta_deg
-
 
 
 # Define sigmoid function for fitting
@@ -412,8 +405,6 @@ def _spot_sigma_from_profile(
     return best_sigma
 
 
-
-
 def _find_reflection_and_transmission_spots(
     image: xr.DataArray,
     y_range: tuple[float, float] = (-30, 30),
@@ -479,3 +470,20 @@ def _find_reflection_and_transmission_spots(
         sy_trans = float(trans_candidates[np.argmax(vals_peaks[sy_peaks > 0])])
 
     return sy_mirr, sy_trans
+
+
+def _calculate_incident_angle(
+    sy_mirr: float, sy_trans: Optional[float], screen_sample_distance: float
+) -> float:
+    """
+    Calculate incident angle beta (deg) from mirror and transmission spot positions.
+    If sy_trans is None, use reflection-only estimate.
+    """
+    if sy_trans is not None:
+        spot_distance = sy_trans - sy_mirr
+        beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
+        beta_deg = np.degrees(beta_rad)
+    else:
+        beta_rad = np.arctan(sy_mirr / screen_sample_distance)
+        beta_deg = np.degrees(beta_rad)
+    return beta_deg
