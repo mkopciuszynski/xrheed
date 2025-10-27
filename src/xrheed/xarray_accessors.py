@@ -34,7 +34,11 @@ from .constants import (
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
-from .preparation.alignment import find_horizontal_center, find_vertical_center
+from .preparation.alignment import (
+    find_horizontal_center,
+    find_vertical_center,
+    find_incident_angle,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +250,7 @@ class RHEEDAccessor:
             Interpolation method for per-frame shifts (default='linear').
         """
         da = self._obj
+
         def _first_float(val):
             if isinstance(val, float):
                 return val
@@ -324,21 +329,35 @@ class RHEEDAccessor:
                 f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
             )
 
-    def set_center_auto(self) -> None:
+    def set_center_auto(self, update_incident_angle: bool = False) -> None:
         """
         Automatically determine and apply the image center using
         `find_horizontal_center` and `find_vertical_center`.
 
         Uses the first frame if the data is a stack.
+        If update_incident_angle is True, updates the incident angle based on the new center.
         """
         da = self._obj
         image = da[0] if da.ndim == STACK_NDIMS else da
+
         center_x = find_horizontal_center(image)
         center_y = find_vertical_center(image, center_x=center_x)
+
         self.set_center_manual(center_x, center_y)
+
         logger.info(
-            "Applied automatic centering: center_x=%.4f, center_y=%.4f", float(center_x), float(center_y)
+            "Applied automatic centering: center_x=%.4f, center_y=%.4f",
+            float(center_x),
+            float(center_y),
         )
+
+        if update_incident_angle:
+            beta = find_incident_angle(da)
+            da.ri.beta = beta
+            logger.info(
+                "Updated incident angle: %.4f",
+                float(beta),
+            )
 
     def get_profile(
         self,
