@@ -209,19 +209,18 @@ def find_vertical_center(
         len(centers),
     )
 
-    # --- refinement: adjust with shadow edge if available ---
-    try:
-        sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image)
-        if sy_trans is not None:
-            shadow_edge = 0.5 * (sy_trans + sy_mirr)
-            center_final += shadow_edge
-            logger.info(
-                "Adjusted vertical center with shadow edge %.4f → %.4f",
-                shadow_edge,
-                center_final,
-            )
-    except Exception as e:
-        logger.debug("Incident angle refinement skipped (%s)", str(e))
+    # --- refinement: adjust using reflected and trismission spots if available ---
+    
+    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image)
+    if sy_trans is not None:
+        shadow_edge = 0.5 * (sy_trans + sy_mirr)
+        center_final += shadow_edge
+        logger.info(
+            "Adjust using reflected and trismission spots: %.4f",
+            shadow_edge
+        )
+    else :
+        logger.debug("Incident angle refinement skipped (%s)")
 
     return center_final
 
