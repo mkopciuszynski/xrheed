@@ -334,7 +334,7 @@ class RHEEDAccessor:
         da = self._obj
         image = da[0] if da.ndim == STACK_NDIMS else da
         center_x = find_horizontal_center(image)
-        center_y = find_vertical_center(image)
+        center_y = find_vertical_center(image, center_x=center_x)
         self.set_center_manual(center_x, center_y)
         logger.info(
             "Applied automatic centering: center_x=%.4f, center_y=%.4f", float(center_x), float(center_y)

@@ -9,6 +9,9 @@ from scipy.signal import find_peaks
 from xrheed.preparation.filters import gaussian_filter_profile
 
 
+import matplotlib.pyplot as plt
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -122,6 +125,7 @@ def find_vertical_center(
     image: xr.DataArray,
     shadow_edge_width: float = 5.0,
     n_stripes: int = 20,
+    center_x: float = 0.0
 ) -> float:
     """
     Estimate the vertical (sy) center of a RHEED image using the shadow edge.
@@ -137,6 +141,10 @@ def find_vertical_center(
         Estimated width of the shadow edge (default 5.0).
     n_stripes : int, optional
         Number of vertical stripes along 'sx' to analyze (default 20).
+    center_x : float, optional
+        Horizontal center (sx) to subtract from coordinates before analysis
+        (default 0.0). Useful to align profiles to a previously estimated
+        horizontal center.
 
     Returns
     -------
@@ -202,19 +210,24 @@ def find_vertical_center(
     if not centers:
         raise RuntimeError("No valid vertical centers found in any stripe.")
 
-    center_final = float(np.median(centers))
+    center_y = float(np.median(centers))
     logger.info(
         "Vertical center estimated at %.4f (from %d stripes)",
-        center_final,
+        center_y,
         len(centers),
     )
 
     # --- refinement: adjust using reflected and trismission spots if available ---
     
-    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image)
+    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image,
+                                                                center_x=center_x,
+                                                                center_y=center_y)
+    print(sy_mirr)
+    print(sy_trans)
+    
     if sy_trans is not None:
         shadow_edge = 0.5 * (sy_trans + sy_mirr)
-        center_final += shadow_edge
+        center_y += shadow_edge
         logger.info(
             "Adjust using reflected and trismission spots: %.4f",
             shadow_edge
@@ -222,7 +235,7 @@ def find_vertical_center(
     else :
         logger.debug("Incident angle refinement skipped (%s)")
 
-    return center_final
+    return center_y
 
 
 def find_incident_angle(
@@ -403,14 +416,16 @@ def _spot_sigma_from_profile(
 
     return best_sigma
 
-
 def _find_reflection_and_transmission_spots(
     image: xr.DataArray,
     y_range: tuple[float, float] = (-30, 30),
     prominence: float = 0.1,
+    center_x: float = 0.0,
+    center_y: float = 0.0,
 ) -> Tuple[float, Optional[float]]:
     """
     Detect reflection (sy<0) and transmission (sy>0) spots near sx=0.
+    Optionally shift coordinates by center_x and center_y.
 
     Parameters
     ----------
@@ -420,6 +435,10 @@ def _find_reflection_and_transmission_spots(
         Range of sy to select for the vertical profile (default -30..30).
     prominence : float, optional
         Minimum prominence for peak detection.
+    center_x : float, optional
+        Horizontal center to subtract from sx (default 0.0).
+    center_y : float, optional
+        Vertical center to subtract from sy (default 0.0).
 
     Returns
     -------
@@ -431,8 +450,8 @@ def _find_reflection_and_transmission_spots(
     # --- determine sx range dynamically from reflection profile ---
     profile_for_sigma = image.sel(sy=slice(-20, 0)).sum(dim="sy")
     sigma = _spot_sigma_from_profile(profile_for_sigma) * 0.5
-    x_range = (-sigma, sigma)
-
+    x_range = (center_x - sigma, center_x + sigma)
+    
     # --- vertical profile near sx=0 ---
     vertical_profile: xr.DataArray = image.sel(
         sx=slice(*x_range), sy=slice(*y_range)
@@ -441,7 +460,7 @@ def _find_reflection_and_transmission_spots(
     sigma = _spot_sigma_from_profile(vertical_profile) * 0.5
     vertical_profile = gaussian_filter_profile(vertical_profile, sigma=sigma)
 
-    sy_coords = vertical_profile.sy.values
+    sy_coords = vertical_profile.sy.values - center_y
     vals = vertical_profile.values.astype(float)
 
     if np.ptp(vals) == 0:
