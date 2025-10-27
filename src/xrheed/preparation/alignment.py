@@ -125,7 +125,7 @@ def find_vertical_center(
     image: xr.DataArray,
     shadow_edge_width: float = 5.0,
     n_stripes: int = 20,
-    center_x: float = 0.0
+    center_x: float = 0.0,
 ) -> float:
     """
     Estimate the vertical (sy) center of a RHEED image using the shadow edge.
@@ -212,27 +212,21 @@ def find_vertical_center(
 
     center_y = float(np.median(centers))
     logger.info(
-        "Vertical center estimated at %.4f (from %d stripes)",
+        "Vertical center estimated at %.4f, using %d edge profiles",
         center_y,
         len(centers),
     )
 
     # --- refinement: adjust using reflected and trismission spots if available ---
-    
-    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(image,
-                                                                center_x=center_x,
-                                                                center_y=center_y)
-    print(sy_mirr)
-    print(sy_trans)
-    
+    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(
+        image, center_x=center_x, center_y=center_y
+    )
+
     if sy_trans is not None:
         shadow_edge = 0.5 * (sy_trans + sy_mirr)
         center_y += shadow_edge
-        logger.info(
-            "Adjust using reflected and trismission spots: %.4f",
-            shadow_edge
-        )
-    else :
+        logger.info("Adjust using reflected and trismission spots: %.4f", shadow_edge)
+    else:
         logger.debug("Incident angle refinement skipped (%s)")
 
     return center_y
@@ -416,6 +410,7 @@ def _spot_sigma_from_profile(
 
     return best_sigma
 
+
 def _find_reflection_and_transmission_spots(
     image: xr.DataArray,
     y_range: tuple[float, float] = (-30, 30),
@@ -451,7 +446,7 @@ def _find_reflection_and_transmission_spots(
     profile_for_sigma = image.sel(sy=slice(-20, 0)).sum(dim="sy")
     sigma = _spot_sigma_from_profile(profile_for_sigma) * 0.5
     x_range = (center_x - sigma, center_x + sigma)
-    
+
     # --- vertical profile near sx=0 ---
     vertical_profile: xr.DataArray = image.sel(
         sx=slice(*x_range), sy=slice(*y_range)
