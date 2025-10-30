@@ -8,9 +8,6 @@ from lmfit.models import LinearModel, LorentzianModel  # type: ignore
 from numpy.typing import NDArray
 from scipy.signal import find_peaks  # type: ignore
 
-import matplotlib.pyplot as plt
-
-
 from xrheed.preparation.filters import gaussian_filter_profile
 
 logger = logging.getLogger(__name__)
@@ -165,7 +162,6 @@ def find_vertical_center(
 
     centers = []
     for i in range(n_stripes):
-
         start = i * stripe_width
         end = nx if i == n_stripes - 1 else (i + 1) * stripe_width
         stripe = image.isel(sx=slice(start, end))

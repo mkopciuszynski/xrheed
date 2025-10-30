@@ -360,7 +360,7 @@ class RHEEDAccessor:
                 "Updated incident angle: %.4f",
                 float(beta),
             )
-        
+
     def get_roi_image(self) -> xr.DataArray:
         """
         Return a copy of the image restricted to the screen ROI.
@@ -378,7 +378,6 @@ class RHEEDAccessor:
             sy=slice(-roi_height, None),
         ).copy()
         return da_roi
-
 
     def get_profile(
         self,

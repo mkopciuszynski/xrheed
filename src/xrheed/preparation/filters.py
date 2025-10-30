@@ -151,7 +151,12 @@ def _apply_hp_filter(
 
     Returns clipped uint8 array.
     """
-    logger.debug("_apply_hp_filter: sigma_px=%s threshold=%s image_shape=%s", sigma_px, threshold, getattr(image_values, 'shape', None))
+    logger.debug(
+        "_apply_hp_filter: sigma_px=%s threshold=%s image_shape=%s",
+        sigma_px,
+        threshold,
+        getattr(image_values, "shape", None),
+    )
     blurred = gaussian_filter(image_values, sigma=sigma_px)
     hp_image = image_values - threshold * blurred
     hp_image -= hp_image.min()

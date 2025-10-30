@@ -136,6 +136,10 @@ def convert_gx_gy_to_sx_sy(
     # calculate the spot positions
     sx: NDArray[np.float32] = rho * np.cos(phi)
     sy: NDArray[np.float32] = -rho * np.sin(phi)
-    logger.debug("convert_gx_gy_to_sx_sy: result shapes sx=%s sy=%s", getattr(sx, "shape", None), getattr(sy, "shape", None))
+    logger.debug(
+        "convert_gx_gy_to_sx_sy: result shapes sx=%s sy=%s",
+        getattr(sx, "shape", None),
+        getattr(sy, "shape", None),
+    )
 
     return sx, sy
