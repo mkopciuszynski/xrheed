@@ -8,13 +8,15 @@ from numpy.typing import NDArray
 from scipy.signal import find_peaks
 from xrheed.preparation.filters import gaussian_filter_profile
 
+import matplotlib.pyplot as plt
+
 
 logger = logging.getLogger(__name__)
 
 
 def find_horizontal_center(
     image: xr.DataArray,
-    n_stripes: int = 16,
+    n_stripes: int = 10,
     smooth_sigma: Optional[float] = None,
     min_prominence: float = 0.2,
     tolerance: float = 0.5,
@@ -27,7 +29,7 @@ def find_horizontal_center(
     image : xr.DataArray
         2D image with 'sx' and 'sy' coords.
     n_stripes : int, optional
-        Number of horizontal stripes along 'sy' to analyze (default 16).
+        Number of horizontal stripes along 'sy' to analyze (default 10).
     smooth_sigma : float, optional
         Smoothing sigma in sx units. If None, estimated automatically
         from the global profile using _spot_sigma_from_profile, then scaled 2.0.
@@ -159,7 +161,7 @@ def find_horizontal_center(
 def find_vertical_center(
     image: xr.DataArray,
     shadow_edge_width: float = 5.0,
-    n_stripes: int = 16,
+    n_stripes: int = 10,
     center_x: float = 0.0,
 ) -> float:
     """
@@ -175,7 +177,7 @@ def find_vertical_center(
     shadow_edge_width : float, optional
         Estimated width of the shadow edge (default 5.0).
     n_stripes : int, optional
-        Number of vertical stripes along 'sx' to analyze (default 16).
+        Number of vertical stripes along 'sx' to analyze (default 10).
     center_x : float, optional
         Horizontal center (sx) to subtract from coordinates before analysis
         (default 0.0). Useful to align profiles to a previously estimated
@@ -192,8 +194,11 @@ def find_vertical_center(
     nx = int(image.sizes["sx"])
     stripe_width = max(1, nx // n_stripes)
 
+    shadow_edge_width_px = int(shadow_edge_width * image.ri.screen_scale)
+
     centers = []
     for i in range(n_stripes):
+
         start = i * stripe_width
         end = nx if i == n_stripes - 1 else (i + 1) * stripe_width
         stripe = image.isel(sx=slice(start, end))
@@ -205,12 +210,22 @@ def find_vertical_center(
         profile = stripe.sum(dim="sx")
 
         # Smooth profile
-        sigma = shadow_edge_width * 0.1
+        sigma = shadow_edge_width * 0.2
         profile_smoothed = gaussian_filter_profile(profile, sigma=sigma)
 
-        # Take only the falling edge after the maximum
-        max_idx = int(np.argmax(profile_smoothed.values))
-        subprofile = profile_smoothed.isel(sy=slice(max_idx, None))
+        # Find all local maxima
+        peaks, _ = find_peaks(profile_smoothed.values.astype(float), prominence=0.1)
+        if peaks.size == 0:
+            continue
+
+        # Since low values are always at positive sx (right side),
+        # take the *last* peak index
+        peak_idx = int(peaks[-1])
+
+        # Restrict to the falling edge after that local maximum
+        subprofile = profile_smoothed.isel(
+            sy=slice(peak_idx - shadow_edge_width_px // 2, None)
+        )
         if subprofile.size == 0:
             continue
 
@@ -221,26 +236,36 @@ def find_vertical_center(
             continue
 
         # Normalize
-        vals -= vals.min()
-        vals /= vals.max()
+        vals = (vals - vals.min()) / np.ptp(vals)
 
-        # Fit sigmoid
+        # Fit sigmoid with limited iterations
         sigmoid_model = lf.Model(_linear_plus_sigmoid)
         params = sigmoid_model.make_params(
             a=0.0, b=0.0, L=1.0, k=0.1, x0=float(sy_coords.mean())
         )
-        try:
-            result = sigmoid_model.fit(vals, params=params, x=sy_coords)
+
+        result = sigmoid_model.fit(
+            vals,
+            params=params,
+            x=sy_coords,
+            max_nfev=100,  # limit number of iterations
+        )
+
+        # Accept only if fit converged and quality is reasonable
+        redchi = getattr(result, "redchi", np.inf)
+        if result.success and redchi < 0.01:
             x0 = result.params["x0"].value
             k = result.params["k"].value
-            center = x0 - k
+            # use the edge of the sigmoid about 16%
+            center = x0 - np.log(5) / k
             centers.append(center)
             logger.debug(
-                "Stripe %d: fitted x0=%.4f k=%.4f → center=%.4f", i, x0, k, center
+                "Fit accepted: x0=%.4f, k=%.4f, redchi=%.4g", x0, k, result.redchi
             )
-        except Exception as e:
-            logger.debug("Stripe %d: fit failed (%s)", i, str(e))
-            continue
+        else:
+            logger.debug(
+                "Fit rejected: success=%s, redchi=%.4g", result.success, result.redchi
+            )
 
     if not centers:
         raise RuntimeError("No valid vertical centers found in any stripe.")

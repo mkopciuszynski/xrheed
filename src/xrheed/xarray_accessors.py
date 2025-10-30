@@ -340,8 +340,10 @@ class RHEEDAccessor:
         da = self._obj
         image = da[0] if da.ndim == STACK_NDIMS else da
 
-        center_x = find_horizontal_center(image)
-        center_y = find_vertical_center(image, center_x=center_x)
+        image_roi = image.ri.get_roi_image()
+
+        center_x = find_horizontal_center(image_roi)
+        center_y = find_vertical_center(image_roi, center_x=center_x)
 
         self.set_center_manual(center_x, center_y)
 
@@ -358,6 +360,25 @@ class RHEEDAccessor:
                 "Updated incident angle: %.4f",
                 float(beta),
             )
+        
+    def get_roi_image(self) -> xr.DataArray:
+        """
+        Return a copy of the image restricted to the screen ROI.
+
+        The ROI is defined by the attributes 'screen_roi_width' and
+        'screen_roi_height' (in mm).
+        """
+        da = self._obj
+
+        roi_width: float = self.screen_roi_width
+        roi_height: float = self.screen_roi_height
+
+        da_roi = da.sel(
+            sx=slice(-roi_width, roi_width),
+            sy=slice(-roi_height, None),
+        ).copy()
+        return da_roi
+
 
     def get_profile(
         self,
