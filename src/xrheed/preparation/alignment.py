@@ -20,7 +20,7 @@ def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
     prominence: float = 0.1,
-    tolerance: float = 0.2,  # default in mm
+    tolerance: float = 2.0,  # default in mm
 ) -> float:
     """
     Estimate horizontal (sx) symmetry center of a diffraction image.
@@ -47,12 +47,26 @@ def find_horizontal_center(
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
     smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
-    global_profile_smooth = gaussian_filter_profile(
-        global_profile, sigma=smooth_sigma * 3.0
-    )
+    global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
-    approx_center = global_profile_smooth.idxmax(dim="sx").item()
-    global_max = float(global_profile_smooth.max().values)
+    # Normalize
+    y = global_profile_smooth.values.astype(float)
+    y = (y - y.min()) / np.ptp(y)
+
+    # Detect peaks
+    peaks, _ = find_peaks(y, prominence=prominence)
+    x_coords = global_profile_smooth.sx.values[peaks]
+    heights = y[peaks]
+
+    if x_coords.size == 0:
+        raise RuntimeError("No peaks found in global profile")
+    elif x_coords.size < 3:
+        approx_center = float(global_profile_smooth.idxmax(dim="sx").item())
+    else:
+        approx_center = float(np.average(x_coords, weights=heights))
+    logger.info("Global approx_center: %.4f", approx_center)
+
+    global_max = global_profile_smooth.max()
 
     ny = int(image.sizes["sy"])
     stripe_height = max(1, ny // int(n_stripes))
@@ -106,7 +120,7 @@ def find_horizontal_center(
     logger.info(
         "Estimated horizontal center: %.4f, using %d stripes",
         center_final,
-        n_stripes,
+        len(centers),
     )
     return center_final
 
