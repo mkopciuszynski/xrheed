@@ -8,6 +8,9 @@ from lmfit.models import LinearModel, LorentzianModel  # type: ignore
 from numpy.typing import NDArray
 from scipy.signal import find_peaks  # type: ignore
 
+import matplotlib.pyplot as plt
+
+
 from xrheed.preparation.filters import gaussian_filter_profile
 
 logger = logging.getLogger(__name__)
@@ -43,10 +46,14 @@ def find_horizontal_center(
 
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
-    approx_center = global_profile.idxmax(dim="sx").item()
-    global_max = float(global_profile.max().values)
-
     smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
+    global_profile_smooth = gaussian_filter_profile(
+        global_profile, sigma=smooth_sigma * 3.0
+    )
+
+    approx_center = global_profile_smooth.idxmax(dim="sx").item()
+    global_max = float(global_profile_smooth.max().values)
+
     ny = int(image.sizes["sy"])
     stripe_height = max(1, ny // int(n_stripes))
     sx_coords = np.asarray(image.sx.values)
@@ -61,7 +68,7 @@ def find_horizontal_center(
             continue
 
         profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
-        if profile_smooth.max() < global_max * 0.5:
+        if profile_smooth.max() < global_max * 0.7:
             continue
 
         y = profile_smooth.values.astype(float)
