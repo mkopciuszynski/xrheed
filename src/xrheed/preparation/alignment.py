@@ -1,15 +1,14 @@
 import logging
+from typing import Optional, Tuple
+
 import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
-from typing import Optional, Tuple
-from lmfit.models import LinearModel, LorentzianModel
+from lmfit.models import LinearModel, LorentzianModel  # type: ignore
 from numpy.typing import NDArray
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks  # type: ignore
+
 from xrheed.preparation.filters import gaussian_filter_profile
-
-import matplotlib.pyplot as plt
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +16,8 @@ logger = logging.getLogger(__name__)
 def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
-    smooth_sigma: Optional[float] = None,
-    min_prominence: float = 0.2,
-    tolerance: float = 0.5,
+    prominence: float = 0.1,
+    tolerance: float = 0.2,  # default in mm
 ) -> float:
     """
     Estimate horizontal (sx) symmetry center of a diffraction image.
@@ -27,17 +25,13 @@ def find_horizontal_center(
     Parameters
     ----------
     image : xr.DataArray
-        2D image with 'sx' and 'sy' coords.
+        2D image with 'sx' and 'sy' coordinates.
     n_stripes : int, optional
         Number of horizontal stripes along 'sy' to analyze (default 10).
-    smooth_sigma : float, optional
-        Smoothing sigma in sx units. If None, estimated automatically
-        from the global profile using _spot_sigma_from_profile, then scaled 2.0.
-    min_prominence : float, optional
+    prominence : float, optional
         Minimum prominence for peak detection (relative to normalized profile).
     tolerance : float, optional
-        Allowed deviation (in sx units) when comparing central peak vs midpoint
-        of extremes for odd peak counts (default 0.5).
+        Maximum allowed deviation from global center (in sx units, default 0.2 mm).
 
     Returns
     -------
@@ -47,113 +41,65 @@ def find_horizontal_center(
     if "sx" not in image.coords or "sy" not in image.coords:
         raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
-    # --- Estimate smoothing sigma if not provided ---
-    if smooth_sigma is None:
-        global_profile = image.sum(dim="sy")
-        smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
-        logger.debug("Auto smooth_sigma estimated: %.4f", smooth_sigma)
+    # --- Global profile and approximate center ---
+    global_profile = image.mean(dim="sy")
+    approx_center = global_profile.idxmax(dim="sx").item()
+    global_max = float(global_profile.max().values)
 
+    smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
     ny = int(image.sizes["sy"])
     stripe_height = max(1, ny // int(n_stripes))
     sx_coords = np.asarray(image.sx.values)
 
-    # --- Collect smoothed stripe profiles and maxima ---
-    stripe_profiles = []
-    stripe_maxima = []
+    centers = []
     for i in range(n_stripes):
         start = i * stripe_height
         end = ny if i == n_stripes - 1 else (i + 1) * stripe_height
         stripe = image.isel(sy=slice(start, end))
-        profile = stripe.sum(dim="sy")
+        profile = stripe.mean(dim="sy")
         if profile.size == 0:
             continue
+
         profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
-        stripe_profiles.append((profile_smooth, sx_coords))
-        stripe_maxima.append(profile_smooth.values.max())
-
-    if not stripe_profiles:
-        raise RuntimeError("No valid stripes found.")
-
-    avg_max = np.mean(stripe_maxima)
-    logger.debug("Average stripe max: %.4f", avg_max)
-
-    centers = []
-    # --- Analyze each stripe ---
-    for idx, ((profile_smooth, sx_coords), max_val) in enumerate(
-        zip(stripe_profiles, stripe_maxima)
-    ):
-        logger.debug("Stripe %d: max=%.4f", idx, max_val)
-
-        # Skip weak stripes (< 50% of average max)
-        if max_val < avg_max * 0.5:
-            logger.debug("Stripe %d skipped (too weak)", idx)
+        if profile_smooth.max() < global_max * 0.5:
             continue
 
-        # Normalize profile
         y = profile_smooth.values.astype(float)
-        y_norm = (y - y.min()) / np.ptp(y)
-
-        # Peak detection
-        peaks, _ = find_peaks(y_norm, prominence=min_prominence)
+        y = (y - y.min()) / np.ptp(y)
+        peaks, _ = find_peaks(y, prominence=prominence)
+        if peaks.size == 0:
+            continue
         x_coords = np.sort(sx_coords[peaks])
 
-        if x_coords.size == 0:
-            logger.debug("Stripe %d: no peaks detected", idx)
-            continue
+        # Candidate centers: mean of all + drop-one means
+        candidates = [np.mean(x_coords)]
+        if x_coords.size > 1:
+            for j in range(x_coords.size):
+                candidates.append(np.mean(np.delete(x_coords, j)))
 
-        if x_coords.size % 2 == 0:
-            # Even number of peaks: use all symmetric pairs
-            pair_midpoints = [
-                0.5 * (x_coords[i] + x_coords[-i - 1])
-                for i in range(x_coords.size // 2)
-            ]
-            center = float(np.mean(pair_midpoints))
-            spread = np.ptp(pair_midpoints)
-            logger.debug(
-                "Stripe %d: %d peaks → pair midpoints %s → center %.4f (spread %.4f)",
-                idx,
-                x_coords.size,
-                ", ".join(f"{m:.4f}" for m in pair_midpoints),
-                center,
-                spread,
-            )
+        # Pick candidate closest to global approx_center
+        center = min(candidates, key=lambda c: abs(c - approx_center))
 
+        # Only accept if within fixed tolerance
+        if abs(center - approx_center) <= tolerance:
+            centers.append(center)
         else:
-            # Odd number of peaks: compare central peak vs midpoint of extremes
-            mid_idx = x_coords.size // 2
-            midpoint = 0.5 * (x_coords[0] + x_coords[-1])
-            center_peak = x_coords[mid_idx]
-
-            if abs(center_peak - midpoint) < tolerance:
-                center = float(center_peak)
-                logger.debug(
-                    "Stripe %d: %d peaks → central peak %.4f (≈ midpoint %.4f)",
-                    idx,
-                    x_coords.size,
-                    center,
-                    midpoint,
-                )
-            else:
-                center = float(midpoint)
-                logger.debug(
-                    "Stripe %d: %d peaks → midpoint of extremes %.4f (central %.4f off)",
-                    idx,
-                    x_coords.size,
-                    center,
-                    center_peak,
-                )
-
-        centers.append(center)
+            logger.debug(
+                "Stripe %d rejected: candidate %.3f vs approx_center %.3f (tol %.3f)",
+                i,
+                center,
+                approx_center,
+                tolerance,
+            )
 
     if not centers:
         raise RuntimeError("No valid peaks found in any stripe.")
 
-    # --- Final aggregation ---
     center_final = float(np.median(centers))
     logger.info(
         "Estimated horizontal center: %.4f, using %d stripes",
         center_final,
-        len(centers),
+        n_stripes,
     )
     return center_final
 
