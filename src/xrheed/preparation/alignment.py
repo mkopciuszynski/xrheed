@@ -7,6 +7,7 @@ import xarray as xr
 from lmfit.models import LinearModel, LorentzianModel  # type: ignore
 from numpy.typing import NDArray
 from scipy.signal import find_peaks  # type: ignore
+from scipy.special import expit  # type: ignore
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
@@ -124,7 +125,6 @@ def find_horizontal_center(
 
 def find_vertical_center(
     image: xr.DataArray,
-    shadow_edge_width: float = 5.0,
     n_stripes: int = 10,
     center_x: float = 0.0,
 ) -> float:
@@ -138,8 +138,6 @@ def find_vertical_center(
     ----------
     image : xr.DataArray
         2D RHEED image with 'sx' and 'sy' coordinates.
-    shadow_edge_width : float, optional
-        Estimated width of the shadow edge (default 5.0).
     n_stripes : int, optional
         Number of vertical stripes along 'sx' to analyze (default 10).
     center_x : float, optional
@@ -155,17 +153,17 @@ def find_vertical_center(
     if "sx" not in image.coords or "sy" not in image.coords:
         raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
-    nx = int(image.sizes["sx"])
-    stripe_width = max(1, nx // n_stripes)
+    nx: int = int(image.sizes["sx"])
+    stripe_width: int = max(1, nx // n_stripes)
 
-    shadow_edge_width_px = int(shadow_edge_width * image.ri.screen_scale)
+    global_profile = image.mean(dim="sx")
+    smooth_sigma: float = 1.0 * _spot_sigma_from_profile(global_profile)
 
     centers = []
     for i in range(n_stripes):
         start = i * stripe_width
         end = nx if i == n_stripes - 1 else (i + 1) * stripe_width
         stripe = image.isel(sx=slice(start, end))
-
         if stripe.size == 0:
             continue
 
@@ -173,27 +171,42 @@ def find_vertical_center(
         profile = stripe.sum(dim="sx")
 
         # Smooth profile
-        sigma = shadow_edge_width * 0.2
-        profile_smoothed = gaussian_filter_profile(profile, sigma=sigma)
+        profile_smoothed = gaussian_filter_profile(profile, sigma=smooth_sigma)
+
+        # Extract coordinates and values
+        sy_coords = profile_smoothed["sy"].values
+        vals = profile_smoothed.values.astype(float)
 
         # Find all local maxima
-        peaks, _ = find_peaks(profile_smoothed.values.astype(float), prominence=0.1)
+        peaks, _ = find_peaks(vals, prominence=0.1)
         if peaks.size == 0:
             continue
 
-        # Since low values are always at positive sx (right side),
-        # take the *last* peak index
-        peak_idx = int(peaks[-1])
-
-        # Restrict to the falling edge after that local maximum
-        subprofile = profile_smoothed.isel(
-            sy=slice(peak_idx - shadow_edge_width_px // 2, None)
-        )
-        if subprofile.size == 0:
+        # Filter peaks to only those at negative sy
+        negative_mask = sy_coords[peaks] < 0
+        negative_peaks = peaks[negative_mask]
+        if negative_peaks.size == 0:
             continue
 
+        # Take the *last* peak among negative sy (i.e. closest to zero from the left)
+        peak_idx = int(negative_peaks[-1])
+
+        # Restrict to the falling edge after that local maximum
+        subprofile = profile_smoothed.isel(sy=slice(peak_idx, None))
+        if subprofile.size == 0:
+            continue
         sy_coords = subprofile["sy"].values
         vals = subprofile.values.astype(float)
+
+        # Add synthetic plateau points before the falling edge
+        n_extra = 100
+        sy_step = np.median(np.diff(sy_coords))
+        sy_extra = sy_coords[0] - sy_step * np.arange(n_extra, 0, -1)
+        vals_extra = np.full_like(sy_extra, vals[0])  # flat extension
+
+        # Concatenate synthetic + original data
+        sy_coords = np.concatenate([sy_extra, sy_coords])
+        vals = np.concatenate([vals_extra, vals])
 
         if np.ptp(vals) == 0:
             continue
@@ -203,10 +216,13 @@ def find_vertical_center(
 
         # Fit sigmoid with limited iterations
         sigmoid_model = lf.Model(_linear_plus_sigmoid)
-        params = sigmoid_model.make_params(
-            a=0.0, b=0.0, L=1.0, k=0.1, x0=float(sy_coords.mean())
-        )
+        params = sigmoid_model.make_params(a=0.0, b=0.1, L=1.0, k=-0.5, x0=0.0)
 
+        params["L"].set(min=0.8, max=1.2)
+        params["k"].set(min=-2.0, max=-0.2)
+        params["x0"].set(min=-10.0, max=10.0)
+        params["a"].set(min=-0.2, max=0.2)
+        params["b"].set(min=0.0, max=0.2)
         result = sigmoid_model.fit(
             vals,
             params=params,
@@ -346,7 +362,7 @@ def _linear_plus_sigmoid(
     NDArray
         Model values.
     """
-    return a * x + b + L / (1 + np.exp(-k * (x - x0)))
+    return a * x + b + L * expit(k * (x - x0))
 
 
 def _spot_sigma_from_profile(
