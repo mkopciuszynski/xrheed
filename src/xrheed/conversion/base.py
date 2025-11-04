@@ -1,9 +1,8 @@
+import logging
 from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +135,10 @@ def convert_gx_gy_to_sx_sy(
     # calculate the spot positions
     sx: NDArray[np.float32] = rho * np.cos(phi)
     sy: NDArray[np.float32] = -rho * np.sin(phi)
-    logger.debug("convert_gx_gy_to_sx_sy: result shapes sx=%s sy=%s", getattr(sx, "shape", None), getattr(sy, "shape", None))
+    logger.debug(
+        "convert_gx_gy_to_sx_sy: result shapes sx=%s sy=%s",
+        getattr(sx, "shape", None),
+        getattr(sy, "shape", None),
+    )
 
     return sx, sy

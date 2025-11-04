@@ -1,10 +1,11 @@
+import logging
+
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def gaussian_filter_profile(
     xr.DataArray
         The filtered profile as a new DataArray.
     """
-    logger.debug("gaussian_filter_profile called: name=%s sigma=%s", profile.name, sigma)
+    logger.debug("gaussian_filter_profile called: sigma=%s", sigma)
     assert isinstance(profile, xr.DataArray), "profile must be an xarray.DataArray"
     assert profile.ndim == 1, "profile must have only one dimension"
 
@@ -55,7 +56,6 @@ def gaussian_filter_profile(
         attrs=profile.attrs,
         name=profile.name,
     )
-    logger.debug("gaussian_filter_profile: finished filtering profile=%s", profile.name)
     return filtered_profile
 
 
@@ -152,7 +152,12 @@ def _apply_hp_filter(
 
     Returns clipped uint8 array.
     """
-    logger.debug("_apply_hp_filter: sigma_px=%s threshold=%s image_shape=%s", sigma_px, threshold, getattr(image_values, 'shape', None))
+    logger.debug(
+        "_apply_hp_filter: sigma_px=%s threshold=%s image_shape=%s",
+        sigma_px,
+        threshold,
+        getattr(image_values, "shape", None),
+    )
     blurred = gaussian_filter(image_values, sigma=sigma_px)
     hp_image = image_values - threshold * blurred
     hp_image -= hp_image.min()

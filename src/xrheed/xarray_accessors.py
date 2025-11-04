@@ -21,20 +21,14 @@ from matplotlib.patches import Rectangle
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .constants import (
-    DEFAULT_ALPHA,
-    DEFAULT_BETA,
-    DEFAULT_SCREEN_ROI_HEIGHT,
-    DEFAULT_SCREEN_ROI_WIDTH,
-    IMAGE_DIMS,
-    IMAGE_NDIMS,
-    K_INV_ANGSTROM,
-    STACK_NDIMS,
-)
+from .constants import (DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_SCREEN_ROI_HEIGHT,
+                        DEFAULT_SCREEN_ROI_WIDTH, IMAGE_DIMS, IMAGE_NDIMS,
+                        K_INV_ANGSTROM, STACK_NDIMS)
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
-from .preparation.alignment import find_horizontal_center, find_vertical_center
+from .preparation.alignment import (find_horizontal_center,
+                                    find_incident_angle, find_vertical_center)
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +240,7 @@ class RHEEDAccessor:
             Interpolation method for per-frame shifts (default='linear').
         """
         da = self._obj
+
         def _first_float(val):
             if isinstance(val, float):
                 return val
@@ -324,21 +319,55 @@ class RHEEDAccessor:
                 f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
             )
 
-    def set_center_auto(self) -> None:
+    def set_center_auto(self, update_incident_angle: bool = False) -> None:
         """
         Automatically determine and apply the image center using
         `find_horizontal_center` and `find_vertical_center`.
 
         Uses the first frame if the data is a stack.
+        If update_incident_angle is True, updates the incident angle based on the new center.
         """
         da = self._obj
         image = da[0] if da.ndim == STACK_NDIMS else da
-        center_x = find_horizontal_center(image)
-        center_y = find_vertical_center(image)
+
+        image_roi = image.ri.get_roi_image()
+
+        center_x = find_horizontal_center(image_roi)
+        center_y = find_vertical_center(image_roi, center_x=center_x)
+
         self.set_center_manual(center_x, center_y)
+
         logger.info(
-            "Applied automatic centering: center_x=%.4f, center_y=%.4f", float(center_x), float(center_y)
+            "Applied automatic centering: center_x=%.4f, center_y=%.4f",
+            float(center_x),
+            float(center_y),
         )
+
+        if update_incident_angle:
+            beta = find_incident_angle(da)
+            da.ri.beta = beta
+            logger.info(
+                "Updated incident angle: %.4f",
+                float(beta),
+            )
+
+    def get_roi_image(self) -> xr.DataArray:
+        """
+        Return a copy of the image restricted to the screen ROI.
+
+        The ROI is defined by the attributes 'screen_roi_width' and
+        'screen_roi_height' (in mm).
+        """
+        da = self._obj
+
+        roi_width: float = self.screen_roi_width
+        roi_height: float = self.screen_roi_height
+
+        da_roi = da.sel(
+            sx=slice(-roi_width, roi_width),
+            sy=slice(-roi_height, None),
+        ).copy()
+        return da_roi
 
     def get_profile(
         self,

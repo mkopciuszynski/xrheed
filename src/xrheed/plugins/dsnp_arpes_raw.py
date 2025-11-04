@@ -15,10 +15,10 @@ class DsnpArpesRawPlugin(LoadRheedBase):
     ATTRS = {
         "plugin": "UMCS DSNP ARPES raw",
         "screen_sample_distance": 309.2,  # mm
-        "screen_scale": 9.04,  # pixels per mm
+        "screen_scale": 9.3112,  # pixels per mm
         "screen_center_sx_px": 740,
         "screen_center_sy_px": 155,
-        "beam_energy": 18_600,  # eV
+        "beam_energy": 19_400,  # eV
         "alpha": 0.0,
         "beta": 2.0,
     }
