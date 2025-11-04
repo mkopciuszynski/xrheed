@@ -62,8 +62,8 @@ class Ewald:
             self.screen_scale: float = 9.5
             self.screen_roi_width: float = 60
             self.screen_roi_height: float = 80
-            self._beta: Union[float, NDArray[np.float32]] = 1.0
-            self._alpha: Union[float, NDArray[np.float32]] = 0.0
+            self._incident_angle: Union[float, NDArray[np.float32]] = 1.0
+            self._azimuthal_angle: Union[float, NDArray[np.float32]] = 0.0
             self._image_data_available: bool = False
         else:
             if image.ndim == IMAGE_NDIMS:
@@ -78,8 +78,8 @@ class Ewald:
             self.screen_roi_width = float(image.ri.screen_roi_width)
             self.screen_roi_height = float(image.ri.screen_roi_height)
 
-            self._beta = image.ri.beta
-            self._alpha = image.ri.alpha
+            self._incident_angle = image.ri.incident_angle
+            self._azimuthal_angle = image.ri.azimuthal_angle
             self._image_data_available = True
 
         self._lattice_scale: float = 1.0
@@ -118,8 +118,8 @@ class Ewald:
         return (
             f"Ewald Class Object: {self.label}\n"
             f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
-            f"  Alpha (rotation angle) : {self.alpha:.2f}°\n"
-            f"  Beta (incident angle)  : {self.beta:.2f}°\n"
+            f"  Azimuthal angle (alpha): {self.azimuthal_angle:.2f}°\n"
+            f"  Iincident angle (beta) : {self.incident_angle:.2f}°\n"
             f"  Lattice Scale          : {self.lattice_scale:.2f}\n"
             f"  Screen Scale           : {self.screen_scale:.2f} px/mm\n"
             f"  Sample-Screen Distance : {self.screen_sample_distance:.1f} mm\n"
@@ -140,8 +140,8 @@ class Ewald:
         """
 
         new_ewald = Ewald(self._lattice, self.image)
-        new_ewald.alpha = self.alpha
-        new_ewald.beta = self.beta
+        new_ewald.azimuthal_angle = self.azimuthal_angle
+        new_ewald.incident_angle = self.incident_angle
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
         new_ewald._spot_w_px = self._spot_w_px
@@ -173,29 +173,29 @@ class Ewald:
         self.calculate_ewald()
 
     @property
-    def alpha(self) -> float:
-        if isinstance(self._alpha, np.ndarray):
-            return self._alpha[self._stack_index]
-        return self._alpha
+    def azimuthal_angle(self) -> float:
+        if isinstance(self._azimuthal_angle, np.ndarray):
+            return self._azimuthal_angle[self._stack_index]
+        return self._azimuthal_angle
 
-    @alpha.setter
-    def alpha(self, value: float):
-        if isinstance(self._alpha, np.ndarray):
+    @azimuthal_angle.setter
+    def azimuthal_angle(self, value: float):
+        if isinstance(self._azimuthal_angle, np.ndarray):
             raise ValueError("Cannot set alpha individually for stack images.")
-        self._alpha = value
+        self._azimuthal_angle = value
         self.calculate_ewald()
 
     @property
-    def beta(self) -> float:
-        if isinstance(self._beta, np.ndarray):
-            return self._beta[self._stack_index]
-        return self._beta
+    def incident_angle(self) -> float:
+        if isinstance(self._incident_angle, np.ndarray):
+            return self._incident_angle[self._stack_index]
+        return self._incident_angle
 
-    @beta.setter
-    def beta(self, value: float):
-        if isinstance(self._beta, np.ndarray):
-            raise ValueError("Cannot set beta individually for stack images.")
-        self._beta = value
+    @incident_angle.setter
+    def incident_angle(self, value: float):
+        if isinstance(self._incident_angle, np.ndarray):
+            raise ValueError("Cannot set incident individually for stack images.")
+        self._incident_angle = value
         self.calculate_ewald()
 
     @property
@@ -235,8 +235,8 @@ class Ewald:
         """
 
         ewald_radius: float = self.ewald_radius
-        alpha: float = self.alpha
-        beta: float = self.beta
+        alpha: float = self.azimuthal_angle
+        beta: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
 
         inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
@@ -494,7 +494,7 @@ class Ewald:
         match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
         for i, alpha in enumerate(tqdm(alpha_vector)):
-            self.alpha = alpha
+            self.azimuthal_angle = alpha
             match_vector[i] = self.calculate_match(normalize=normalize)
 
         return xr.DataArray(
@@ -588,7 +588,7 @@ class Ewald:
 
             match_phi = np.zeros_like(alpha_vector)
             for j, alpha in enumerate(alpha_vector):
-                self.alpha = alpha
+                self.azimuthal_angle = alpha
                 match_phi[j] = self.calculate_match(normalize=normalize)
 
             match_matrix[:, i] = match_phi

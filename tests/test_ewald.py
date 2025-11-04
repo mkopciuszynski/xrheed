@@ -44,7 +44,7 @@ class TestEwald(unittest.TestCase):
         ewald.calculate_ewald()
 
         old_sx = ewald.ew_sx.copy()
-        ewald.alpha = ewald.alpha + 5.0
+        ewald.azimuthal_angle = ewald.azimuthal_angle + 5.0
         self.assertFalse(np.array_equal(old_sx, ewald.ew_sx))
 
     def test_inverse_lattice_generation(self):
@@ -66,7 +66,7 @@ class TestEwald(unittest.TestCase):
         ewald.calculate_ewald()
 
         score_A = ewald.calculate_match()
-        ewald.alpha = 10.0
+        ewald.azimuthal_angle = 10.0
         score_B = ewald.calculate_match()
 
         self.assertIsInstance(score_A, (int, np.integer))
