@@ -1,14 +1,14 @@
 import logging
+import warnings
 from typing import Optional, Tuple
 
 import lmfit as lf  # type: ignore
 import numpy as np
 import xarray as xr
-from lmfit.models import LinearModel, LorentzianModel  # type: ignore
+from lmfit.models import LorentzianModel  # type: ignore
 from numpy.typing import NDArray
 from scipy.signal import find_peaks  # type: ignore
 from scipy.special import expit  # type: ignore
-import warnings
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
@@ -379,7 +379,8 @@ logging.getLogger(__name__)
 
 
 def _spot_sigma_from_profile(
-    profile: xr.DataArray, max_sigma: float = 2.0  # in mm
+    profile: xr.DataArray,
+    max_sigma: float = 2.0,  # in mm
 ) -> float:
     """
     Fit a Lorentzian around peaks in a 1D diffraction profile.

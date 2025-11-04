@@ -3,9 +3,9 @@ import logging
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 import numpy as np
 import xarray as xr
+from matplotlib.axes import Axes
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 from tqdm.notebook import tqdm
@@ -15,7 +15,6 @@ from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
 from .cache_utils import smart_cache
 from .lattice import Lattice, rotation_matrix
-
 
 logger = logging.getLogger(__name__)
 

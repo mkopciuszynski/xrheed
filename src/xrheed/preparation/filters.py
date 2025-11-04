@@ -1,10 +1,11 @@
+import logging
+
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
-import logging
 
 logger = logging.getLogger(__name__)
 

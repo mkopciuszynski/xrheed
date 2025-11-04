@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import copy
+import logging
 from typing import List, Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from numpy.typing import NDArray
-import logging
-
 
 logger = logging.getLogger(__name__)
 

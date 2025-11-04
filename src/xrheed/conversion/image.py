@@ -1,12 +1,12 @@
+import logging
+
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
-import logging
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import convert_gx_gy_to_sx_sy
-
 
 logger = logging.getLogger(__name__)
 
