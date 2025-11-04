@@ -8,6 +8,7 @@ from lmfit.models import LinearModel, LorentzianModel  # type: ignore
 from numpy.typing import NDArray
 from scipy.signal import find_peaks  # type: ignore
 from scipy.special import expit  # type: ignore
+import warnings
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
@@ -18,7 +19,7 @@ def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
     prominence: float = 0.1,
-    tolerance: float = 2.0,  # default in mm
+    refinement_tolerance: float = 1.0,  # default in mm
 ) -> float:
     """
     Estimate horizontal (sx) symmetry center of a diffraction image.
@@ -31,7 +32,7 @@ def find_horizontal_center(
         Number of horizontal stripes along 'sy' to analyze (default 10).
     prominence : float, optional
         Minimum prominence for peak detection (relative to normalized profile).
-    tolerance : float, optional
+    refinement_tolerance : float, optional
         Maximum allowed deviation from global center (in sx units, default 0.2 mm).
 
     Returns
@@ -39,22 +40,25 @@ def find_horizontal_center(
     float
         Estimated sx coordinate of symmetry center.
     """
+    logger.debug("find_horizontal_profile called")
+
     if "sx" not in image.coords or "sy" not in image.coords:
         raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
     smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
+
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
     # Normalize
-    y = global_profile_smooth.values.astype(float)
-    y = (y - y.min()) / np.ptp(y)
+    vals = global_profile_smooth.values.astype(float)
+    vals = (vals - vals.min()) / np.ptp(vals)
 
     # Detect peaks
-    peaks, _ = find_peaks(y, prominence=prominence)
+    peaks, _ = find_peaks(vals, prominence=prominence)
     x_coords = global_profile_smooth.sx.values[peaks]
-    heights = y[peaks]
+    heights = vals[peaks]
 
     if x_coords.size == 0:
         raise RuntimeError("No peaks found in global profile")
@@ -83,9 +87,9 @@ def find_horizontal_center(
         if profile_smooth.max() < global_max * 0.7:
             continue
 
-        y = profile_smooth.values.astype(float)
-        y = (y - y.min()) / np.ptp(y)
-        peaks, _ = find_peaks(y, prominence=prominence)
+        vals = profile_smooth.values.astype(float)
+        vals = (vals - vals.min()) / np.ptp(vals)
+        peaks, _ = find_peaks(vals, prominence=prominence)
         if peaks.size == 0:
             continue
         x_coords = np.sort(sx_coords[peaks])
@@ -100,7 +104,7 @@ def find_horizontal_center(
         center = min(candidates, key=lambda c: abs(c - approx_center))
 
         # Only accept if within fixed tolerance
-        if abs(center - approx_center) <= tolerance:
+        if abs(center - approx_center) <= refinement_tolerance:
             centers.append(center)
         else:
             logger.debug(
@@ -108,7 +112,7 @@ def find_horizontal_center(
                 i,
                 center,
                 approx_center,
-                tolerance,
+                refinement_tolerance,
             )
 
     if not centers:
@@ -150,6 +154,7 @@ def find_vertical_center(
     float
         Estimated sy coordinate of the vertical center.
     """
+    logger.debug("find_vertical_profile called center_x=%s", center_x)
     if "sx" not in image.coords or "sy" not in image.coords:
         raise AssertionError("Image must have 'sx' and 'sy' coordinates")
 
@@ -257,16 +262,21 @@ def find_vertical_center(
     )
 
     # --- refinement: adjust using reflected and trismission spots if available ---
-    sy_mirr, sy_trans = _find_reflection_and_transmission_spots(
-        image, center_x=center_x, center_y=center_y
-    )
+    try:
+        sy_mirr, sy_trans = _find_reflection_and_transmission_spots(
+            image, center_x=center_x, center_y=center_y
+        )
 
-    if sy_trans is not None:
-        shadow_edge = 0.5 * (sy_trans + sy_mirr)
-        center_y += shadow_edge
-        logger.info("Adjust using reflected and trismission spots: %.4f", shadow_edge)
-    else:
-        logger.debug("Incident angle refinement skipped (%s)")
+        if sy_trans is not None:
+            shadow_edge = 0.5 * (sy_trans + sy_mirr)
+            center_y += shadow_edge
+            logger.info(
+                "Adjust using reflected and transmission spots: %.4f", shadow_edge
+            )
+        else:
+            logger.debug("Incident angle refinement skipped (no transmission spot)")
+    except Exception as e:
+        logger.debug("Incident angle refinement failed: %s", str(e))
 
     return center_y
 
@@ -365,30 +375,30 @@ def _linear_plus_sigmoid(
     return a * x + b + L * expit(k * (x - x0))
 
 
+logging.getLogger(__name__)
+
+
 def _spot_sigma_from_profile(
-    profile: xr.DataArray, start_window: int = 5, max_window: int = 50
+    profile: xr.DataArray, max_sigma: float = 2.0  # in mm
 ) -> float:
     """
-    Helper: Fit a Lorentzian + linear background around the strongest peak
-    in a 1D diffraction profile. Start with a small window and
-    iteratively expand until the fit stabilizes.
+    Fit a Lorentzian around peaks in a 1D diffraction profile.
+    Iteratively expand window until fit stabilizes.
+    Returns sigma (HWHM), capped to avoid runaway values.
 
     Parameters
     ----------
     profile : xr.DataArray
-        1D profile with coordinate 'sx' (mm).
-    start_window : int
-        Initial half-width of the fitting window (points).
-        Also used as the step size for expansion.
-    max_window : int
-        Maximum half-width to try.
+        1D profile with coordinate 'sx' or 'sy'.
+    max_sigma : float, optional
+        Maximum allowed sigma in mm (default 2.0).
 
     Returns
     -------
-    sigma_mm : float
-        Lorentzian sigma (HWHM) in mm.
+    float
+        Estimated sigma (HWHM) in mm. Falls back to max_sigma if no stable fit.
     """
-    # choose coordinate name: prefer 'sx', fall back to 'sy'
+    # --- coordinate extraction ---
     if "sx" in profile.coords:
         x = profile["sx"].values.astype(float)
     elif "sy" in profile.coords:
@@ -397,57 +407,78 @@ def _spot_sigma_from_profile(
         raise AssertionError("Profile must have 'sx' or 'sy' coordinate")
 
     y = profile.values.astype(float)
+    dx = abs(x[1] - x[0])
     n = len(y)
 
-    if x.shape[0] != n:
-        raise RuntimeError("Coordinate length does not match profile length")
+    # window sizes in index units
+    start_window = int((0.5 * max_sigma) // dx)
+    max_window = int((2.0 * max_sigma) // dx)
 
-    i_max = int(np.argmax(y))
+    # --- find candidate peaks ---
+    peaks, _ = find_peaks(y, prominence=0.5)
+    if peaks.size == 0:
+        warnings.warn("No peaks detected, returning max_sigma")
+        return max_sigma
 
-    best_sigma = None
-    prev_sigma = None
+    # Sort peaks by height (strongest first)
+    peak_order = peaks[np.argsort(y[peaks])[::-1]]
 
-    for half in range(start_window, max_window + 1, start_window):
-        left = max(0, i_max - half)
-        right = min(n, i_max + half)
-        xw = x[left:right]
-        yw = y[left:right]
+    # --- try each peak until one works ---
+    for i_max in peak_order:
+        best_sigma = None
+        prev_sigma = None
 
-        if len(xw) < 5:
-            continue
+        for half in range(start_window, max_window + 1, start_window):
+            left = max(0, i_max - half)
+            right = min(n, i_max + half)
+            xw = x[left:right]
+            yw = y[left:right]
 
-        # Model: Lorentzian + linear background
-        lmod = LorentzianModel(prefix="l_")
-        bmod = LinearModel(prefix="b_")
-        model = lmod + bmod
+            if len(xw) < 5 or np.ptp(yw) == 0:
+                continue
 
-        params = model.make_params()
-        params["l_center"].set(value=x[i_max], min=xw.min(), max=xw.max())
-        params["l_sigma"].set(value=(xw[-1] - xw[0]) / 20, min=np.diff(xw).mean())
-        params["l_amplitude"].set(
-            value=(yw.max() - yw.min()) * (xw[-1] - xw[0]) / 10, min=0
-        )
-        params["b_slope"].set(value=0)
-        params["b_intercept"].set(value=yw.min())
+            # Normalize to [0,1]
+            yw = (yw - yw.min()) / np.ptp(yw)
 
-        try:
-            result = model.fit(yw, params, x=xw)
+            model = LorentzianModel(prefix="l_")
+            params = model.make_params()
+            params["l_center"].set(
+                value=x[i_max], min=x[i_max] - max_sigma, max=x[i_max] + max_sigma
+            )
+            params["l_sigma"].set(value=0.5, min=dx, max=0.5 * max_window)
+            params["l_amplitude"].set(value=1.0, min=0.5, max=1.2)
+
+            try:
+                result = model.fit(yw, params, x=xw, max_nfev=100)
+            except Exception as e:
+                logger.debug("Fit failed at window %d for peak %d: %s", half, i_max, e)
+                continue
+
+            redchi = getattr(result, "redchi", np.inf)
+            if not (result.success and redchi < 0.1):
+                logger.debug("Rejecting poor fit (redchi=%.2f)", redchi)
+                continue
+
             sigma = float(result.params["l_sigma"].value)
-        except Exception:
-            continue
+            logger.debug("Peak %d, window %d: sigma=%.4f", i_max, half, sigma)
 
-        # Check stability: if sigma stops changing much, accept it
-        if prev_sigma is not None and abs(sigma - prev_sigma) < 0.05 * sigma:
+            # stability check
+            if prev_sigma is not None and abs(sigma - prev_sigma) < 0.05 * sigma:
+                best_sigma = sigma
+                break
+
+            prev_sigma = sigma
             best_sigma = sigma
-            break
 
-        prev_sigma = sigma
-        best_sigma = sigma
+        if best_sigma is not None:
+            capped_sigma = min(best_sigma, max_sigma)
+            if capped_sigma < best_sigma:
+                logger.debug("Sigma capped: %.4f → %.4f", best_sigma, capped_sigma)
+            return capped_sigma
 
-    if best_sigma is None:
-        raise RuntimeError("No stable fit found")
-
-    return best_sigma
+    # --- if all peaks fail ---
+    warnings.warn("All peak fits failed, returning max_sigma")
+    return max_sigma
 
 
 def _find_reflection_and_transmission_spots(
@@ -492,6 +523,7 @@ def _find_reflection_and_transmission_spots(
     ).sum("sx")
 
     sigma = _spot_sigma_from_profile(vertical_profile) * 0.5
+
     vertical_profile = gaussian_filter_profile(vertical_profile, sigma=sigma)
 
     sy_coords = vertical_profile.sy.values - center_y
