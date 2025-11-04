@@ -129,8 +129,9 @@ def find_horizontal_center(
 
 def find_vertical_center(
     image: xr.DataArray,
-    n_stripes: int = 10,
     center_x: float = 0.0,
+    n_stripes: int = 10,
+    prominence: float = 0.1,
 ) -> float:
     """
     Estimate the vertical (sy) center of a RHEED image using the shadow edge.
@@ -142,12 +143,14 @@ def find_vertical_center(
     ----------
     image : xr.DataArray
         2D RHEED image with 'sx' and 'sy' coordinates.
-    n_stripes : int, optional
-        Number of vertical stripes along 'sx' to analyze (default 10).
     center_x : float, optional
         Horizontal center (sx) to subtract from coordinates before analysis
         (default 0.0). Useful to align profiles to a previously estimated
         horizontal center.
+    n_stripes : int, optional
+        Number of vertical stripes along 'sx' to analyze (default 10).
+    prominence : float, optional
+        Minimum prominence for peak detection (relative to normalized profile).
 
     Returns
     -------
@@ -183,7 +186,7 @@ def find_vertical_center(
         vals = profile_smoothed.values.astype(float)
 
         # Find all local maxima
-        peaks, _ = find_peaks(vals, prominence=0.1)
+        peaks, _ = find_peaks(vals, prominence=prominence)
         if peaks.size == 0:
             continue
 
