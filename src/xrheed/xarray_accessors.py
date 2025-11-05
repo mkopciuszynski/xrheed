@@ -101,13 +101,22 @@ class RHEEDAccessor:
 
     @property
     def beta(self) -> float:
-        """Alias for incident_angle (read-only)."""
+        """Alias for incident_angle (read/write)."""
         return self.incident_angle
+
+    @beta.setter
+    def beta(self, value: float) -> None:
+        self.incident_angle = value
+
 
     @property
     def alpha(self) -> Union[float, NDArray]:
-        """Alias for azimuthal_angle (read-only)."""
+        """Alias for azimuthal_angle (read/write)."""
         return self.azimuthal_angle
+
+    @alpha.setter
+    def alpha(self, value: float) -> None:
+        self.azimuthal_angle = value
 
     @property
     def screen_scale(self) -> float:
