@@ -235,14 +235,14 @@ class Ewald:
         """
 
         ewald_radius: float = self.ewald_radius
-        alpha: float = self.azimuthal_angle
-        beta: float = self.incident_angle
+        azimuthal_angle: float = self.azimuthal_angle
+        incident_angle: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
 
         inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
 
-        if alpha != 0:
-            inverse_lattice = inverse_lattice @ rotation_matrix(alpha).T
+        if azimuthal_angle != 0:
+            inverse_lattice = inverse_lattice @ rotation_matrix(azimuthal_angle).T
 
         gx: NDArray[np.float32] = inverse_lattice[:, 0] / self._lattice_scale
         gy: NDArray[np.float32] = inverse_lattice[:, 1] / self._lattice_scale
@@ -252,7 +252,7 @@ class Ewald:
         sy: NDArray[np.float32]
 
         sx, sy = convert_gx_gy_to_sx_sy(
-            gx, gy, ewald_radius, beta, screen_sample_distance, remove_outside=True
+            gx, gy, ewald_radius, incident_angle, screen_sample_distance, remove_outside=True
         )
 
         ind: NDArray[np.bool_] = (
@@ -265,7 +265,7 @@ class Ewald:
         sy = sy[ind]
 
         if self.mirror:
-            if alpha % 60 != 0:
+            if azimuthal_angle % 60 != 0:
                 sx = np.hstack([sx, -sx])
                 sy = np.hstack([sy, sy])
 

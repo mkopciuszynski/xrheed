@@ -37,8 +37,8 @@ def transform_image_to_kxky(
     # --- Physical and geometric parameters ---
     screen_sample_distance = rheed_data.ri.screen_sample_distance
     ewald_radius = rheed_data.ri.ewald_radius
-    beta = rheed_data.ri.beta
-    alpha = rheed_data.ri.alpha
+    incident_angle = rheed_data.ri.incident_angle
+    azimuthal_angle = rheed_data.ri.azimuthal_angle
 
     logger.info(
         "transform_image_to_kxky: rheed_data.ndim=%s rotate=%s point_symmetry=%s",
@@ -64,7 +64,7 @@ def transform_image_to_kxky(
         gx,
         gy,
         ewald_radius=ewald_radius,
-        beta=beta,
+        incident_angle=incident_angle,
         screen_sample_distance=screen_sample_distance,
         remove_outside=False,
     )
@@ -92,9 +92,9 @@ def transform_image_to_kxky(
     if rheed_data.ndim == IMAGE_NDIMS:
         logger.info(
             "transform_image_to_kxky: processing single image case with alpha=%.3f",
-            float(alpha),
+            float(azimuthal_angle),
         )
-        return _transform_single_image(rheed_data, float(alpha))
+        return _transform_single_image(rheed_data, float(azimuthal_angle))
 
     # --- Handle stack with alpha coordinate ---
     if rheed_data.ndim == STACK_NDIMS and "alpha" in rheed_data.coords:
@@ -103,7 +103,7 @@ def transform_image_to_kxky(
             rheed_data.sizes["alpha"],
         )
         transformed_slices = [
-            _transform_single_image(rheed_data.isel(alpha=i), float(alpha[i]))
+            _transform_single_image(rheed_data.isel(alpha=i), float(azimuthal_angle[i]))
             for i in range(rheed_data.sizes["alpha"])
         ]
         transformed_stack = xr.concat(transformed_slices, dim="alpha")
