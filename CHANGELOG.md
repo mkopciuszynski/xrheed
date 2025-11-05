@@ -18,12 +18,15 @@
 - Updated documentation for advanced `kx–ky` transformations using multiple (stack) images.  
  - Standardized logging across core modules (module-level loggers, lazy-style messages) to improve diagnostics.
  - Added documentation on logging usage and configuration (`docs/source/logging.rst`).
+ - Updated `preparation` module especially functions used to center the RHEED image.
 
 ### Removed
-- **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).  
+- **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).
+- **Breaking:** Removed from `ri` accessors `apply_image_center()`  
 
 ### Renamed
-- **Breaking:** Renamed `ewald_sphere_radius` → `ewald_radius` in RI accessors for naming consistency.  
+- **Breaking:** Renamed `ewald_sphere_radius` → `ewald_radius` in RI accessors for naming consistency.
+- **Breaking:** Replaced symbolic angle names `beta` and `alpha` with descriptive `incident_angle` and `azimuthal_angle` in xrheed API (aliases preserved).
 
 ### Split
 - **Breaking:** Replaced `apply_image_center()` with two clearer functions: `set_center_manual()` and `set_center_auto()`.
