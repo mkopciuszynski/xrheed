@@ -68,35 +68,53 @@ class RHEEDAccessor:
         return float(da.attrs.get("screen_sample_distance", 1.0))
 
     @property
-    def beta(self) -> float:
-        """Incident angle (beta) in degrees. Default: DEFAULT_BETA."""
+    def incident_angle(self) -> float:
+        """Incident angle in degrees. Stored in attrs as 'incident_angle'."""
         da = self._obj
-        return float(da.attrs.get("beta", DEFAULT_BETA))
+        return float(da.attrs.get("incident_angle", DEFAULT_BETA))
 
-    @beta.setter
-    def beta(self, value: float) -> None:
-        """Set the incident angle (beta) in degrees."""
+    @incident_angle.setter
+    def incident_angle(self, value: float) -> None:
+        """Set the incident angle in degrees."""
         if not isinstance(value, (int, float)):
-            raise ValueError(f"beta must be numeric, got {value!r}")
-        self._obj.attrs["beta"] = float(value)
+            raise ValueError(f"incident_angle must be numeric, got {value!r}")
+        self._obj.attrs["incident_angle"] = float(value)
 
     @property
-    def alpha(self) -> Union[float, NDArray]:
+    def azimuthal_angle(self) -> Union[float, NDArray]:
         """
-        Azimuthal angle (alpha) in degrees.
-        If present as a coordinate, returns the coordinate values; otherwise returns an attribute.
+        Azimuthal angle in degrees. Stored in attrs as 'azimuthal_angle'.
+        If present as a coordinate 'alpha', returns that instead.
         """
         da = self._obj
         if "alpha" in da.coords:
             return da.coords["alpha"].values
-        return float(da.attrs.get("alpha", DEFAULT_ALPHA))
+        return float(da.attrs.get("azimuthal_angle", DEFAULT_ALPHA))
+
+    @azimuthal_angle.setter
+    def azimuthal_angle(self, value: float) -> None:
+        """Set the azimuthal angle in degrees."""
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"azimuthal_angle must be numeric, got {value!r}")
+        self._obj.attrs["azimuthal_angle"] = float(value)
+
+    @property
+    def beta(self) -> float:
+        """Alias for incident_angle (read/write)."""
+        return self.incident_angle
+
+    @beta.setter
+    def beta(self, value: float) -> None:
+        self.incident_angle = value
+
+    @property
+    def alpha(self) -> Union[float, NDArray]:
+        """Alias for azimuthal_angle (read/write)."""
+        return self.azimuthal_angle
 
     @alpha.setter
     def alpha(self, value: float) -> None:
-        """Set the azimuthal angle (alpha) in degrees."""
-        if not isinstance(value, (int, float)):
-            raise ValueError(f"alpha must be numeric, got {value!r}")
-        self._obj.attrs["alpha"] = float(value)
+        self.azimuthal_angle = value
 
     @property
     def screen_scale(self) -> float:
@@ -192,8 +210,8 @@ class RHEEDAccessor:
             f"  Image shape: {da.shape}\n"
             f"  Screen scale: {self.screen_scale} px/mm\n"
             f"  Screen sample distance: {self.screen_sample_distance} mm\n"
-            f"  Beta (incident) angle: {self.beta:.2f} deg\n"
-            f"  Alpha (azimuthal) angle: {self.alpha:.2f} deg\n"
+            f"  Incident (beta) angle: {self.incident_angle:.2f} deg\n"
+            f"  Azimuthal (alpha) angle: {self.azimuthal_angle:.2f} deg\n"
             f"  Beam Energy: {self.beam_energy} eV\n"
         )
 
@@ -354,11 +372,11 @@ class RHEEDAccessor:
         )
 
         if update_incident_angle:
-            beta = find_incident_angle(da)
-            da.ri.beta = beta
+            incident_angle = find_incident_angle(da)
+            da.ri.incident_angle = incident_angle
             logger.info(
                 "Updated incident angle: %.4f",
-                float(beta),
+                float(incident_angle),
             )
 
     def get_roi_image(self) -> xr.DataArray:

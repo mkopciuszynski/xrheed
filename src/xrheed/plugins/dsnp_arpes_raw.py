@@ -19,8 +19,8 @@ class DsnpArpesRawPlugin(LoadRheedBase):
         "screen_center_sx_px": 740,
         "screen_center_sy_px": 155,
         "beam_energy": 19_400,  # eV
-        "alpha": 0.0,
-        "beta": 2.0,
+        "azimuthal_angle": 0.0,
+        "incident_angle": 2.0,
     }
 
     def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
