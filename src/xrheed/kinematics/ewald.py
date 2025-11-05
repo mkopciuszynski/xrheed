@@ -252,7 +252,12 @@ class Ewald:
         sy: NDArray[np.float32]
 
         sx, sy = convert_gx_gy_to_sx_sy(
-            gx, gy, ewald_radius, incident_angle, screen_sample_distance, remove_outside=True
+            gx,
+            gy,
+            ewald_radius,
+            incident_angle,
+            screen_sample_distance,
+            remove_outside=True,
         )
 
         ind: NDArray[np.bool_] = (

@@ -80,7 +80,6 @@ class RHEEDAccessor:
             raise ValueError(f"incident_angle must be numeric, got {value!r}")
         self._obj.attrs["incident_angle"] = float(value)
 
-
     @property
     def azimuthal_angle(self) -> Union[float, NDArray]:
         """
@@ -107,7 +106,6 @@ class RHEEDAccessor:
     @beta.setter
     def beta(self, value: float) -> None:
         self.incident_angle = value
-
 
     @property
     def alpha(self) -> Union[float, NDArray]:
