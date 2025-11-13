@@ -82,15 +82,13 @@ def load_data(
                 sorted(CANONICAL_STACK_DIMS),
             )
 
-        logger.info(
-            "Concatenating %d images along dimension '%s'", len(arrays), stack_dim
-        )
         da = xr.concat(arrays, dim=stack_dim)
         if stack_coords is not None:
-            logger.info(
-                "Assigning custom coordinates to stack dimension '%s'", stack_dim
-            )
             da = da.assign_coords({stack_dim: stack_coords})
+            logger.info(
+                "Concatenating %d images along dimension '%s'", len(arrays), stack_dim
+            )
+
         return da
 
     # --- Single-file case ---
@@ -98,7 +96,7 @@ def load_data(
     path = Path(path)
 
     if plugin is not None:
-        logger.info("Loading file '%s' using plugin '%s'", path, plugin)
+        logger.debug("Loading file '%s' using plugin '%s'", path, plugin)
         plugin_cls = PLUGINS[plugin]
         plugin_instance = plugin_cls()
         if not plugin_instance.is_file_accepted(path):

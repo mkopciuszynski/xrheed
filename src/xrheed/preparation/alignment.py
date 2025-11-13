@@ -66,7 +66,7 @@ def find_horizontal_center(
         approx_center = float(global_profile_smooth.idxmax(dim="sx").item())
     else:
         approx_center = float(np.average(x_coords, weights=heights))
-    logger.info("Global approx_center: %.4f", approx_center)
+    logger.debug("Global approx_center: %.4f", approx_center)
 
     global_max = global_profile_smooth.max()
 

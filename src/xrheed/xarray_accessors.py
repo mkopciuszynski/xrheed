@@ -335,9 +335,8 @@ class RHEEDAccessor:
                     .data
                 )
             logger.info(
-                "Manual centering applied to %d frames using method=%s; center_x=%.4f, center_y=%.4f",
+                "Centering applied to %d frames: center_x=%.4f, center_y=%.4f",
                 n_frames,
-                method,
                 float(cx0),
                 float(cy0),
             )
@@ -365,7 +364,7 @@ class RHEEDAccessor:
 
         self.set_center_manual(center_x, center_y)
 
-        logger.info(
+        logger.debug(
             "Applied automatic centering: center_x=%.4f, center_y=%.4f",
             float(center_x),
             float(center_y),
