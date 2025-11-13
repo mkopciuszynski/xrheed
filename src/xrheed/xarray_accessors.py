@@ -346,24 +346,32 @@ class RHEEDAccessor:
                 f"Unsupported ndim={da.ndim}, expected {IMAGE_NDIMS} or {STACK_NDIMS}"
             )
 
-    def set_center_auto(self, update_incident_angle: bool = False) -> None:
+    def set_center_auto(
+        self,
+        update_incident_angle: bool = False,
+        stack_index: int = 0,
+    ) -> None:
         """
-        Automatically determine and apply the image center using
-        `find_horizontal_center` and `find_vertical_center`.
+        Automatically determine and apply the image center.
 
-        Uses the first frame if the data is a stack.
-        If update_incident_angle is True, updates the incident angle based on the new center.
+        Parameters
+        ----------
+        update_incident_angle : bool, default False
+            If True, recomputes and updates the incident angle after centering.
+        stack_index : int, default 0
+            Frame index to use if the data is a stack; ignored otherwise.
         """
         da = self._obj
-        image = da[0] if da.ndim == STACK_NDIMS else da
+        image = da[stack_index] if da.ndim == STACK_NDIMS else da
 
+        # Compute center from ROI
         image_roi = image.ri.get_roi_image()
 
         center_x = find_horizontal_center(image_roi)
         center_y = find_vertical_center(image_roi, center_x=center_x)
 
+        # Apply center (mutates da)
         self.set_center_manual(center_x, center_y)
-
         logger.debug(
             "Applied automatic centering: center_x=%.4f, center_y=%.4f",
             float(center_x),
@@ -371,12 +379,12 @@ class RHEEDAccessor:
         )
 
         if update_incident_angle:
-            incident_angle = find_incident_angle(da)
+            # Re-select after mutation
+            image = da[stack_index] if da.ndim == STACK_NDIMS else da
+            image_roi = image.ri.get_roi_image()
+            incident_angle = find_incident_angle(image_roi)
             da.ri.incident_angle = incident_angle
-            logger.info(
-                "Updated incident angle: %.4f",
-                float(incident_angle),
-            )
+            logger.info("Updated incident angle: %.4f", float(incident_angle))
 
     def get_roi_image(self) -> xr.DataArray:
         """

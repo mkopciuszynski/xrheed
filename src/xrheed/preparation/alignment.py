@@ -12,6 +12,8 @@ from scipy.special import expit  # type: ignore
 
 from xrheed.preparation.filters import gaussian_filter_profile
 
+from ..constants import IMAGE_DIMS
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,8 +44,10 @@ def find_horizontal_center(
     """
     logger.debug("find_horizontal_profile called")
 
-    if "sx" not in image.coords or "sy" not in image.coords:
-        raise AssertionError("Image must have 'sx' and 'sy' coordinates")
+    if set(image.dims) != IMAGE_DIMS:
+        raise AssertionError(
+            f"Image dims mismatch: expected {IMAGE_DIMS}, got {set(image.dims)}"
+        )
 
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
@@ -158,8 +162,10 @@ def find_vertical_center(
         Estimated sy coordinate of the vertical center.
     """
     logger.debug("find_vertical_profile called center_x=%s", center_x)
-    if "sx" not in image.coords or "sy" not in image.coords:
-        raise AssertionError("Image must have 'sx' and 'sy' coordinates")
+    if set(image.dims) != IMAGE_DIMS:
+        raise AssertionError(
+            f"Image dims mismatch: expected {IMAGE_DIMS}, got {set(image.dims)}"
+        )
 
     nx: int = int(image.sizes["sx"])
     stripe_width: int = max(1, nx // n_stripes)
@@ -292,6 +298,11 @@ def find_incident_angle(
     """
     Find incident angle in degrees using reflection/transmission spots near sx=0.
     """
+    if set(image.dims) != IMAGE_DIMS:
+        raise AssertionError(
+            f"Image dims mismatch: expected {IMAGE_DIMS}, got {set(image.dims)}"
+        )
+
     screen_sample_distance: float = image.ri.screen_sample_distance
     logger.debug(
         "find_incident_angle: screen_sample_distance=%.4f, y_range=%s, prominence=%.3f",
@@ -572,6 +583,6 @@ def _calculate_incident_angle(
         beta_rad = np.arctan(0.5 * spot_distance / screen_sample_distance)
         beta_deg = np.degrees(beta_rad)
     else:
-        beta_rad = np.arctan(sy_mirr / screen_sample_distance)
+        beta_rad = np.arctan(-sy_mirr / screen_sample_distance)
         beta_deg = np.degrees(beta_rad)
     return beta_deg
