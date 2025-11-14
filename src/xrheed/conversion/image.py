@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
+from tqdm.notebook import tqdm
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import convert_gx_gy_to_sx_sy
@@ -102,10 +103,11 @@ def transform_image_to_kxky(
             "transform_image_to_kxky: processing stack with alpha coordinate, size=%d",
             rheed_data.sizes["alpha"],
         )
-        transformed_slices = [
-            _transform_single_image(rheed_data.isel(alpha=i), float(azimuthal_angle[i]))
-            for i in range(rheed_data.sizes["alpha"])
-        ]
+        transformed_slices = []
+        for i in tqdm(range(rheed_data.sizes["alpha"]), desc="Transforming slices"):
+            transformed_slices.append(
+                _transform_single_image(rheed_data.isel(alpha=i), float(azimuthal_angle[i]))
+            )
         transformed_stack = xr.concat(transformed_slices, dim="alpha")
         transformed_stack = transformed_stack.assign_coords(alpha=rheed_data.alpha)
         transformed_stack.attrs = rheed_data.attrs
@@ -139,8 +141,8 @@ def _rotate_trans_image(
     if trans_image.ndim != 2:
         raise ValueError("rotate_xarray expects a 2D DataArray")
 
-    logger.info(
-        "_rotate_trans_image: angle=%.3f mode=%s input_shape=%s",
+    logger.debug(
+        "called _rotate_trans_image: angle=%.3f mode=%s input_shape=%s",
         angle,
         mode,
         trans_image.shape,
@@ -178,7 +180,5 @@ def _rotate_trans_image(
         attrs=trans_image.attrs,
         name=trans_image.name,
     )
-
-    logger.debug("_rotate_trans_image: rotated shape=%s", rotated.shape)
 
     return rotated.where(rotated_mask)

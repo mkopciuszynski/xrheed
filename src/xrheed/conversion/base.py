@@ -95,8 +95,8 @@ def convert_gx_gy_to_sx_sy(
     # calculate the shift between the center of Ewald sphere and the center of reciprocal lattice
     delta_x: np.float32 = np.float32(k0 * np.cos(np.deg2rad(incident_angle)))
 
-    logger.info(
-        "convert_gx_gy_to_sx_sy: gx.shape=%s gy.shape=%s ewald_radius=%s beta=%s screen_sample_distance=%s remove_outside=%s",
+    logger.debug(
+        "called convert_gx_gy_to_sx_sy: gx.shape=%s gy.shape=%s ewald_radius=%s beta=%s screen_sample_distance=%s remove_outside=%s",
         getattr(gx, "shape", None),
         getattr(gy, "shape", None),
         ewald_radius,
