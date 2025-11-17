@@ -2,11 +2,11 @@ import os
 import sys
 from datetime import datetime
 
+from tqdm import tqdm
 import tqdm.auto
-from tqdm import tqdm as std_tqdm
 
-# When Sphinx executes notebooks, force tqdm to use the text progress bar
-tqdm.auto.tqdm = std_tqdm
+# Completely disable tqdm bars during Sphinx doc build
+tqdm.auto.tqdm = lambda *args, **kwargs: tqdm(*args, disable=True, **kwargs)
 
 sys.path.insert(0, os.path.abspath("../../."))
 
