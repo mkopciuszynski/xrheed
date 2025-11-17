@@ -21,14 +21,24 @@ from matplotlib.patches import Rectangle
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .constants import (DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_SCREEN_ROI_HEIGHT,
-                        DEFAULT_SCREEN_ROI_WIDTH, IMAGE_DIMS, IMAGE_NDIMS,
-                        K_INV_ANGSTROM, STACK_NDIMS)
+from .constants import (
+    DEFAULT_ALPHA,
+    DEFAULT_BETA,
+    DEFAULT_SCREEN_ROI_HEIGHT,
+    DEFAULT_SCREEN_ROI_WIDTH,
+    IMAGE_DIMS,
+    IMAGE_NDIMS,
+    K_INV_ANGSTROM,
+    STACK_NDIMS,
+)
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
-from .preparation.alignment import (find_horizontal_center,
-                                    find_incident_angle, find_vertical_center)
+from .preparation.alignment import (
+    find_horizontal_center,
+    find_incident_angle,
+    find_vertical_center,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +69,13 @@ class RHEEDAccessor:
 
     @property
     def incident_angle(self) -> float:
-        """Incident angle in degrees. Stored in attrs as 'incident_angle'."""
+        """
+        Incident angle in degrees. Stored in attrs as 'incident_angle'.
+        If present as a coordinate 'beta', returns that instead.
+        """
         da = self._obj
+        if da.ndim == STACK_NDIMS and "beta" in da.coords:
+            return da.coords["beta"].values
         return float(da.attrs.get("incident_angle", DEFAULT_BETA))
 
     @incident_angle.setter
@@ -77,7 +92,7 @@ class RHEEDAccessor:
         If present as a coordinate 'alpha', returns that instead.
         """
         da = self._obj
-        if "alpha" in da.coords:
+        if da.ndim == STACK_NDIMS and "alpha" in da.coords:
             return da.coords["alpha"].values
         return float(da.attrs.get("azimuthal_angle", DEFAULT_ALPHA))
 
