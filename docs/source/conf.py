@@ -1,13 +1,17 @@
 import os
 import sys
+import types
 from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../../."))
 
 # Disable TQDM in Spinx
 os.environ["TQDM_DISABLE"] = "1"
+# Prevent notebook imports entirely
+sys.modules["ipywidgets"] = types.ModuleType("ipywidgets")
+sys.modules["IPython.html.widgets"] = types.ModuleType("IPython.html.widgets")
 
-project = "xrheed"
+project = "xRHEED"
 
 # Import the package to get version
 try:
