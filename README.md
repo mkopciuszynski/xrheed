@@ -1,6 +1,6 @@
 # xRHEED
 
-📡 An **xarray-based toolkit** for RHEED image analysis.
+📡 **A flexible Python toolkit for RHEED image analysis**
 
 ---
 
@@ -95,10 +95,10 @@ profile = rheed_image.ri.get_profile(center=(0, -5), width=40, height=4,
 
 If you use **xRHEED** in your research, please cite it:
 
-> Kopciuszynski, M. [ORCID](https://orcid.org/0000-0001-7360-6829) (2025). *xRHEED: An xarray-based toolkit for RHEED image analysis*.  
+> Kopciuszynski, M. [ORCID](https://orcid.org/0000-0001-7360-6829) (2025). *xRHEED: A flexible Python toolkit for RHEED image analysis*.  
 > GitHub. https://github.com/mkopciuszynski/xrheed  
 > DOI: [10.5281/zenodo.17099751](https://doi.org/10.5281/zenodo.17099751)
 
 ---
 
-📚 👉 See the [full documentation](https://xrheed.readthedocs.io/en/latest/) for tutorials and advanced examples.
+📚 👉 See the [full documentation](https://xrheed.readthedocs.io/) for tutorials and advanced examples.
