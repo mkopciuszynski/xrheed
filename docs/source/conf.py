@@ -1,15 +1,20 @@
 import os
 import sys
 import types
+import warnings
 from datetime import datetime
+
+from tqdm import TqdmWarning
 
 sys.path.insert(0, os.path.abspath("../../."))
 
-# Disable TQDM in Spinx
-os.environ["TQDM_DISABLE"] = "1"
-# Prevent notebook imports entirely
+# Disable tqdm bars during docs build
+os.environ["TQDM_DISABLE"] = "1"  # disables all tqdm bars
+# Prevent notebook widget imports from causing warnings
 sys.modules["ipywidgets"] = types.ModuleType("ipywidgets")
 sys.modules["IPython.html.widgets"] = types.ModuleType("IPython.html.widgets")
+# Suppress tqdm warning about missing IProgress
+warnings.filterwarnings("ignore", category=TqdmWarning)
 
 project = "xRHEED"
 
