@@ -8,7 +8,7 @@ import xarray as xr
 from matplotlib.axes import Axes
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from ..constants import IMAGE_NDIMS, K_INV_ANGSTROM, STACK_NDIMS
 from ..conversion.base import convert_gx_gy_to_sx_sy

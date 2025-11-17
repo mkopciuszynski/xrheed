@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import convert_gx_gy_to_sx_sy
@@ -106,7 +106,9 @@ def transform_image_to_kxky(
         transformed_slices = []
         for i in tqdm(range(rheed_data.sizes["alpha"]), desc="Transforming slices"):
             transformed_slices.append(
-                _transform_single_image(rheed_data.isel(alpha=i), float(azimuthal_angle[i]))
+                _transform_single_image(
+                    rheed_data.isel(alpha=i), float(azimuthal_angle[i])
+                )
             )
         transformed_stack = xr.concat(transformed_slices, dim="alpha")
         transformed_stack = transformed_stack.assign_coords(alpha=rheed_data.alpha)

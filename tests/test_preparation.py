@@ -2,11 +2,9 @@ import unittest
 from pathlib import Path
 
 import xrheed
-from xrheed.preparation.alignment import (
-    _spot_sigma_from_profile,
-    find_horizontal_center,
-    find_vertical_center,
-)
+from xrheed.preparation.alignment import (_spot_sigma_from_profile,
+                                          find_horizontal_center,
+                                          find_vertical_center)
 
 # Expected centers for each dataset (cx, cy)
 DATAFILE_CENTER_MAP = {

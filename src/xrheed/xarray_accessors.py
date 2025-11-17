@@ -21,24 +21,14 @@ from matplotlib.patches import Rectangle
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
-from .constants import (
-    DEFAULT_ALPHA,
-    DEFAULT_BETA,
-    DEFAULT_SCREEN_ROI_HEIGHT,
-    DEFAULT_SCREEN_ROI_WIDTH,
-    IMAGE_DIMS,
-    IMAGE_NDIMS,
-    K_INV_ANGSTROM,
-    STACK_NDIMS,
-)
+from .constants import (DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_SCREEN_ROI_HEIGHT,
+                        DEFAULT_SCREEN_ROI_WIDTH, IMAGE_DIMS, IMAGE_NDIMS,
+                        K_INV_ANGSTROM, STACK_NDIMS)
 from .conversion.base import convert_sx_to_ky
 from .plotting.base import plot_image
 from .plotting.profiles import plot_profile
-from .preparation.alignment import (
-    find_horizontal_center,
-    find_incident_angle,
-    find_vertical_center,
-)
+from .preparation.alignment import (find_horizontal_center,
+                                    find_incident_angle, find_vertical_center)
 
 logger = logging.getLogger(__name__)
 
