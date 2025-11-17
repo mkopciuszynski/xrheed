@@ -2,13 +2,10 @@ import os
 import sys
 from datetime import datetime
 
-from tqdm import tqdm
-import tqdm.auto
-
-# Completely disable tqdm bars during Sphinx doc build
-tqdm.auto.tqdm = lambda *args, **kwargs: tqdm(*args, disable=True, **kwargs)
-
 sys.path.insert(0, os.path.abspath("../../."))
+
+# Disable TQDM in Spinx
+os.environ["TQDM_DISABLE"] = "1"
 
 project = "xrheed"
 
