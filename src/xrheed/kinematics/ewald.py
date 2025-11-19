@@ -53,6 +53,7 @@ class Ewald:
         """
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
+        self.ewald_azimuthal_rotation: float = 0.0
 
         if image is None:
             logger.warning("RHEED image not provided, default parameters are loaded.")
@@ -119,7 +120,7 @@ class Ewald:
             f"Ewald Class Object: {self.label}\n"
             f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
             f"  Azimuthal angle (alpha): {self.azimuthal_angle:.2f}°\n"
-            f"  Iincident angle (beta) : {self.incident_angle:.2f}°\n"
+            f"  Incident angle (beta)  : {self.incident_angle:.2f}°\n"
             f"  Lattice Scale          : {self.lattice_scale:.2f}\n"
             f"  Screen Scale           : {self.screen_scale:.2f} px/mm\n"
             f"  Sample-Screen Distance : {self.screen_sample_distance:.1f} mm\n"
@@ -171,6 +172,10 @@ class Ewald:
     def lattice_scale(self, value: float):
         self._lattice_scale = value
         self.calculate_ewald()
+
+    @property
+    def ewald_azimuthal_angle(self) -> float:
+        return self.ewald_azimuthal_rotation + self.azimuthal_angle
 
     @property
     def azimuthal_angle(self) -> float:
@@ -235,7 +240,7 @@ class Ewald:
         """
 
         ewald_radius: float = self.ewald_radius
-        azimuthal_angle: float = self.azimuthal_angle
+        azimuthal_angle: float = self.ewald_azimuthal_angle
         incident_angle: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
 
@@ -499,7 +504,8 @@ class Ewald:
         match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
         for i, alpha in enumerate(tqdm(alpha_vector)):
-            self.azimuthal_angle = alpha
+            self.ewald_azimuthal_rotation = alpha
+            self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
 
         return xr.DataArray(
@@ -591,12 +597,13 @@ class Ewald:
             self.lattice_scale = scale
             self.calculate_ewald()
 
-            match_phi = np.zeros_like(alpha_vector)
+            match_alpha = np.zeros_like(alpha_vector)
             for j, alpha in enumerate(alpha_vector):
-                self.azimuthal_angle = alpha
-                match_phi[j] = self.calculate_match(normalize=normalize)
+                self.ewald_azimuthal_rotation = alpha
+                self.calculate_ewald()
+                match_alpha[j] = self.calculate_match(normalize=normalize)
 
-            match_matrix[:, i] = match_phi
+            match_matrix[:, i] = match_alpha
 
         if flatten:
             # Step 1: Mean over alpha
