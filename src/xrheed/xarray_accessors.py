@@ -483,7 +483,12 @@ class RHEEDAccessor:
         )
 
         if show_origin:
-            fig, ax = plt.subplots()
+
+            # Use provided axis or create a new one
+            ax = kwargs.pop("   ax", None)
+            if ax is None:
+                _, ax = plt.subplots()  # discard fig, keep ax only
+
             self.plot_image(ax=ax, stack_index=stack_index, **kwargs)
             rect = Rectangle(
                 (center[0] - width / 2, center[1] - height / 2),
