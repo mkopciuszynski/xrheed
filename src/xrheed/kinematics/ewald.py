@@ -100,7 +100,7 @@ class Ewald:
         self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
         self.label: Optional[str] = lattice.label
 
-        self.mirror: bool = False
+        self.mirror_symmetry: bool = False
         self.ew_sx: NDArray[np.float32]
         self.ew_sy: NDArray[np.float32]
 
@@ -279,7 +279,7 @@ class Ewald:
         sx = sx[ind]
         sy = sy[ind]
 
-        if self.mirror:
+        if self.mirror_symmetry:
             if azimuthal_angle % 60 != 0:
                 sx = np.hstack([sx, -sx])
                 sy = np.hstack([sy, sy])
@@ -289,7 +289,7 @@ class Ewald:
         logger.debug(
             "calculate_ewald: generated %d spots (mirror=%s) ewald_roi=%.3f",
             sx.size,
-            self.mirror,
+            self.mirror_symmetry,
             getattr(self, "_ewald_roi", float("nan")),
         )
 
