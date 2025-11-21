@@ -84,7 +84,7 @@ class Ewald:
             self._image_data_available = True
 
         self._lattice_scale: float = 1.0
-        
+
         self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
         self._spot_h_px: int = int(self.SPOT_HEIGHT_MM * self.screen_scale)
         self.spot_structure: NDArray[np.bool_] = self._generate_spot_structure()
@@ -94,9 +94,7 @@ class Ewald:
         self.fine_scaling: float = 1.0
 
         self.ewald_radius: float = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
-        self._ewald_roi: float = self.ewald_radius * (
-            self.screen_roi_width / self.screen_sample_distance
-        )
+        self._ewald_roi: float = self._calc_ewald_roi()
 
         self._lattice: Lattice = copy.deepcopy(lattice)
         self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
@@ -174,6 +172,9 @@ class Ewald:
 
     @lattice_scale.setter
     def lattice_scale(self, value: float):
+        if abs(self._lattice_scale - value) > 0.5:
+            self.ewald_roi = self._calc_ewald_roi(value)
+            logging.info("New Ewald roi: %.2f", self.ewald_roi)
         self._lattice_scale = value
         self.calculate_ewald()
 
@@ -538,11 +539,8 @@ class Ewald:
 
         match_vector = np.zeros_like(scale_vector, dtype=np.uint32)
 
-        self.ewald_roi = (
-            self.ewald_radius
-            * (self.screen_roi_width / self.screen_sample_distance)
-            * scale_vector.max()
-        )
+        self.ewald_roi = self._calc_ewald_roi(scale_vector.max())
+
         self._inverse_lattice = self._prepare_inverse_lattice()
 
         for i, scale in enumerate(tqdm(scale_vector)):
@@ -590,11 +588,7 @@ class Ewald:
             (len(alpha_vector), len(scale_vector)), dtype=np.uint32
         )
 
-        self._ewald_roi = (
-            self.ewald_radius
-            * (self.screen_roi_width / self.screen_sample_distance)
-            * scale_vector.max()
-        )
+        self._ewald_roi = self._calc_ewald_roi(scale_vector.max())
         self._inverse_lattice = self._prepare_inverse_lattice()
 
         for i, scale in enumerate(tqdm(scale_vector, desc="Matching scales")):
@@ -733,3 +727,11 @@ class Ewald:
         )
 
         return mask
+
+    def _calc_ewald_roi(self, scale_max: float = 1.0) -> float:
+
+        return float(
+            self.ewald_radius
+            * (self.screen_roi_width / self.screen_sample_distance)
+            * scale_max
+        )
