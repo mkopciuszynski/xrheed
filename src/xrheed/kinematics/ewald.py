@@ -84,7 +84,7 @@ class Ewald:
             self._image_data_available = True
 
         self._lattice_scale: float = 1.0
-        self.use_cache: bool = True
+        
         self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
         self._spot_h_px: int = int(self.SPOT_HEIGHT_MM * self.screen_scale)
         self.spot_structure: NDArray[np.bool_] = self._generate_spot_structure()
@@ -106,6 +106,10 @@ class Ewald:
         self.ew_sx: NDArray[np.float32]
         self.ew_sy: NDArray[np.float32]
 
+        self.use_cache: bool = True
+        self.cache_dir: str = "cache"
+        self.cache_key: Optional[str] = None
+
         self.calculate_ewald()
         logger.info(
             "Initialized Ewald: label=%s image_provided=%s beam_energy=%.1f screen_scale=%.2f",
@@ -121,7 +125,7 @@ class Ewald:
             f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
             f"  Azimuthal angle (alpha): {self.azimuthal_angle:.2f}°\n"
             f"  Incident angle (beta)  : {self.incident_angle:.2f}°\n"
-            f"  Lattice Scale          : {self.lattice_scale:.2f}\n"
+            f"  Real Lattice Scale     : {self.lattice_scale:.2f}\n"
             f"  Screen Scale           : {self.screen_scale:.2f} px/mm\n"
             f"  Sample-Screen Distance : {self.screen_sample_distance:.1f} mm\n"
             f"  Screen Shift X         : {self.shift_x:.2f} mm\n"
@@ -411,7 +415,7 @@ class Ewald:
         """
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         mask = self._generate_mask()
 
