@@ -1,20 +1,13 @@
 import os
 import sys
-import types
 from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../../."))
 
-# --- Fix tqdm warning on ReadTheDocs ---
-# Create dummy modules to satisfy tqdm.autonotebook
-sys.modules["ipywidgets"] = types.ModuleType("ipywidgets")
-sys.modules["ipywidgets.widgets"] = types.ModuleType("ipywidgets.widgets")
-sys.modules["IPython"] = types.ModuleType("IPython")
-sys.modules["IPython.display"] = types.ModuleType("IPython.display")
-sys.modules["IPython.html"] = types.ModuleType("IPython.html")
-sys.modules["IPython.html.widgets"] = types.ModuleType("IPython.html.widgets")
+# Force tqdm to terminal mode (bypasses ipywidgets)
+os.environ["TQDM_NOTEBOOK"] = "0"
 
-# Disable actual progress bar output
+# optional - disable output entirely
 os.environ["TQDM_DISABLE"] = "1"
 
 project = "xRHEED"
