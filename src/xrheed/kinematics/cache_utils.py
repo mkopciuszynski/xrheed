@@ -1,5 +1,6 @@
 import functools
 from pathlib import Path
+
 import dill
 
 
@@ -39,7 +40,6 @@ def smart_cache(method):
 
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
-
         if not self.use_cache:
             return method(self, *args, **kwargs)
 

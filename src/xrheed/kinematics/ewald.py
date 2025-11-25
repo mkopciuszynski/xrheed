@@ -728,7 +728,6 @@ class Ewald:
         return mask
 
     def _calc_ewald_roi(self, scale_max: float = 1.0) -> float:
-
         return float(
             self.ewald_radius
             * (self.screen_roi_width / self.screen_sample_distance)
