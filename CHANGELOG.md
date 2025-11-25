@@ -1,35 +1,34 @@
 # Changelog
 
 <a name="2.0.0"></a>
-## [2.0.0] – 2025-xx-xx
+## [2.0.0] – 2025-11-25
 
 ### Added
 - Added `file_name` and `file_creation_time` attributes to loaded images.  
 - Added new example images for the 3D stacking notebook.  
 - Added support for image stacks with `alpha` coordinates in `conversion.image.transform_image_to_kxky`.  
 - Added full support for stack images in `kinematics.Ewald`.  
-- Introduced `enable_logging()` utility for easier logging configuration.  
 
 ### Changed
-- Refactored and simplified the data loading logic for maintainability.  
-- Refactored RI accessors to work with both 2D and 3D (stacked) images.  
-- Improved profile plotting and representation to support reduction along `sx`, `sy`, and other dimensions (including 3D stacks).  
+- Refactored and simplified data loading logic for maintainability.  
+- Refactored RI accessors to support both 2D and 3D (stacked) images.  
+- Improved profile plotting and representation to allow reduction along `sx`, `sy`, and other dimensions (including 3D stacks).  
 - Updated ARHEED `kx–ky` transformation visuals with new example images.  
 - Updated documentation for advanced `kx–ky` transformations using multiple (stack) images.  
- - Standardized logging across core modules (module-level loggers, lazy-style messages) to improve diagnostics.
- - Added documentation on logging usage and configuration (`docs/source/logging.rst`).
- - Updated `preparation` module especially functions used to center the RHEED image.
+- Standardized logging across core modules (module-level loggers, lazy-style messages).  
+- Added documentation on logging usage and configuration (`docs/source/logging.rst`).  
+- Updated `preparation` module functions for centering RHEED images and refining incident angle detection.  
 
 ### Removed
-- **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).
-- **Breaking:** Removed from `ri` accessors `apply_image_center()`  
+- **Breaking:** Removed `load_data_manual()`. The unified `load_data()` now handles both automatic and manual loading (manual mode applies when no plugin is provided).  
+- **Breaking:** Removed `apply_image_center()` from RI accessors.  
 
 ### Renamed
-- **Breaking:** Renamed `ewald_sphere_radius` → `ewald_radius` in RI accessors for naming consistency.
-- **Breaking:** Replaced symbolic angle names `beta` and `alpha` with descriptive `incident_angle` and `azimuthal_angle` in xrheed API (aliases preserved).
+- **Breaking:** Renamed `ewald_sphere_radius` → `ewald_radius` in RI accessors for naming consistency.  
+- **Breaking:** Replaced symbolic angle names `beta` and `alpha` with descriptive `incident_angle` and `azimuthal_angle` in the xrheed API (aliases preserved).  
 
 ### Split
-- **Breaking:** Replaced `apply_image_center()` with two clearer functions: `set_center_manual()` and `set_center_auto()`.
+- **Breaking:** Replaced `apply_image_center()` with two clearer functions: `set_center_manual()` and `set_center_auto()`.  
 
 
 <a name="1.3.4"></a>

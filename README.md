@@ -14,11 +14,6 @@
 
 ---
 
-## 🚧 Under construction!
-The main version of this repository is under extensive development now towards the next major release v2.0.
-
-Please use the last stable release.
-
 ## 🔬 What is RHEED?
 
 **Reflection High-Energy Electron Diffraction (RHEED)** is an experimental technique used to monitor and control the quality of crystal surfaces.  
