@@ -280,9 +280,8 @@ class Ewald:
         sy = sy[ind]
 
         if self.mirror_symmetry:
-            if azimuthal_angle % 60 != 0:
-                sx = np.hstack([sx, -sx])
-                sy = np.hstack([sy, sy])
+            sx = np.hstack([sx, -sx])
+            sy = np.hstack([sy, sy])
 
         self.ew_sx = sx
         self.ew_sy = sy
