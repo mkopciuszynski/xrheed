@@ -175,11 +175,11 @@ class Lattice:
             )
 
         elif (cubic_type, plane) == ("FCC", "100"):
-            a1 = np.array([a, 0, 0], dtype=np.float32)
-            a2 = np.array([a * 0.5, a * 0.5, 0], dtype=np.float32)
+            a1 = np.array([a * 0.5, a * 0.5, 0], dtype=np.float32)
+            a2 = np.array([-a * 0.5, a * 0.5, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "110"):
-            a1 = np.array([a * np.sqrt(2), 0, 0], dtype=np.float32)
+            a1 = np.array([a * np.sqrt(2) * 0.5, 0, 0], dtype=np.float32)
             a2 = np.array([0, a, 0], dtype=np.float32)
 
         elif (cubic_type, plane) == ("FCC", "111"):
