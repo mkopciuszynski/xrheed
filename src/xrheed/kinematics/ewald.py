@@ -487,7 +487,10 @@ class Ewald:
 
     @smart_cache
     def match_alpha(
-        self, alpha_vector: NDArray, normalize: bool = True
+        self,
+        alpha_vector: NDArray,
+        normalize: bool = True,
+        show_progress: bool = False,
     ) -> xr.DataArray:
         """
         Calculate match coefficients over a range of azimuthal angles.
@@ -498,6 +501,8 @@ class Ewald:
             Array of alpha (azimuthal) angles in degrees.
         normalize : bool, optional
             If True, normalize the coefficients (default: True).
+        show_progress : bool, optional
+            If True, show the tqdm progress bar (default: False).
 
         Returns
         -------
@@ -507,7 +512,7 @@ class Ewald:
 
         match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
-        for i, alpha in enumerate(tqdm(alpha_vector)):
+        for i, alpha in enumerate(tqdm(alpha_vector, disable=not show_progress)):
             self.ewald_azimuthal_rotation = alpha
             self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
@@ -518,7 +523,10 @@ class Ewald:
 
     @smart_cache
     def match_scale(
-        self, scale_vector: NDArray, normalize: bool = True
+        self,
+        scale_vector: NDArray,
+        normalize: bool = True,
+        show_progress: bool = False,
     ) -> xr.DataArray:
         """
         Calculate the match coefficient for a series of lattice scale values.
@@ -529,6 +537,8 @@ class Ewald:
             Array of scale values to test.
         normalize : bool, optional
             If True, normalize the match coefficient (default: True).
+        show_progress : bool, optional
+            If True, show the tqdm progress bar (default: False).
 
         Returns
         -------
@@ -542,7 +552,7 @@ class Ewald:
 
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-        for i, scale in enumerate(tqdm(scale_vector)):
+        for i, scale in enumerate(tqdm(scale_vector, disable=not show_progress)):
             self.lattice_scale = scale
             self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
