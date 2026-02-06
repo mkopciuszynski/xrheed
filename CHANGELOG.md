@@ -1,5 +1,17 @@
 # Changelog
 
+<a name="2.x.x"></a>
+## [2.0.x] – 2026-xx-xx
+
+### Added
+- Added `show_progress` to `match_alpha` and `match_scale methods` 
+
+### Fixed 
+- Fixed the FCC primitive vectors generation in lattice module.
+
+### Changed
+- Progress bar generated using tqdm in  `match_alpha` and `match_scale methods` is disabled by default now.
+
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-11-25
 
