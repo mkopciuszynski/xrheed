@@ -25,7 +25,7 @@ def transform_image_to_kxky(
     rheed_data : xr.DataArray
         RHEED image or stack with coordinates ('sx', 'sy'), optionally 'alpha'.
     rotate : bool, optional
-        If True, rotate the transformed image(s) by the incident angle alpha.
+        If True, rotate the transformed image(s) by the incident angle (alpha).
     point_symmetry : bool, optional
         If True, combine with a 180°-rotated copy to enforce point symmetry.
 
@@ -78,11 +78,11 @@ def transform_image_to_kxky(
     )
 
     # --- Helper to process a single image ---
-    def _transform_single_image(image: xr.DataArray, angle: float) -> xr.DataArray:
+    def _transform_single_image(image: xr.DataArray, azimuthal_angle: float) -> xr.DataArray:
         """Transform and optionally rotate a single RHEED frame."""
         transformed = image.interp(sx=sx, sy=sy, method="linear")
         if rotate:
-            transformed = _rotate_trans_image(transformed, angle)
+            transformed = _rotate_trans_image(transformed, azimuthal_angle)
         if point_symmetry:
             rotated_180 = _rotate_trans_image(transformed, 180)
             transformed = xr.where(np.isnan(transformed), rotated_180, transformed)
