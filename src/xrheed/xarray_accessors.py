@@ -74,7 +74,7 @@ class RHEEDAccessor:
         If present as a coordinate 'beta', returns that instead.
         """
         da = self._obj
-        if da.ndim == STACK_NDIMS and "beta" in da.coords:
+        if "beta" in da.coords:
             return da.coords["beta"].values
         return float(da.attrs.get("incident_angle", DEFAULT_BETA))
 
@@ -274,21 +274,6 @@ class RHEEDAccessor:
         """
         da = self._obj
 
-        def _first_float(val):
-            if isinstance(val, float):
-                return val
-            elif isinstance(val, (list, np.ndarray)):
-                return float(val[0])
-            else:
-                return float(val)
-
-        logger.debug(
-            "set_center_manual called: center_x=%.4f, center_y=%.4f, method=%s",
-            _first_float(center_x),
-            _first_float(center_y),
-            method,
-        )
-
         missing = IMAGE_DIMS - da.coords.keys()
         if missing:
             raise ValueError(f"Missing required coordinate(s): {sorted(missing)}")
@@ -301,8 +286,8 @@ class RHEEDAccessor:
             stack_dim = da.dims[0]
             n_frames = da.sizes[stack_dim]
 
-            cx = np.atleast_1d(center_x)
-            cy = np.atleast_1d(center_y)
+            cx = np.asarray(center_x).copy()
+            cy = np.asarray(center_y).copy()
 
             # Broadcast scalars
             if cx.size == 1:
@@ -323,8 +308,12 @@ class RHEEDAccessor:
 
             # Normalize shifts relative to first frame
             cx0, cy0 = cx[0], cy[0]
+            
             da["sx"] = da.sx - cx0
             da["sy"] = da.sy - cy0
+
+            sx_origin = da.sx.copy()
+            sy_origin = da.sy.copy()
 
             cx -= cx0
             cy -= cy0
@@ -333,7 +322,8 @@ class RHEEDAccessor:
             for i in range(n_frames):
                 if i == 0:
                     continue  # first frame already shifted
-                new_coords = {"sx": da.sx - cx[i], "sy": da.sy - cy[i]}
+                new_coords = {"sx": sx_origin + cx[i],
+                              "sy": sy_origin + cy[i]}
                 da.data[i] = (
                     da.isel({stack_dim: i})
                     .interp(new_coords, method=method, kwargs={"fill_value": 0})
