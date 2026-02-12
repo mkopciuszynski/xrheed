@@ -5,6 +5,8 @@ import xarray as xr
 from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 from tqdm.auto import tqdm
+from typing import Union
+import warnings
 
 from ..constants import IMAGE_NDIMS, STACK_NDIMS
 from .base import convert_gx_gy_to_sx_sy
@@ -16,6 +18,7 @@ def transform_image_to_kxky(
     rheed_data: xr.DataArray,
     rotate: bool = True,
     point_symmetry: bool = False,
+    n_fold_symmetry: Union[int, None] = None,
 ) -> xr.DataArray:
     """
     Transform a RHEED image or stack into kx-ky coordinates.
@@ -23,11 +26,11 @@ def transform_image_to_kxky(
     Parameters
     ----------
     rheed_data : xr.DataArray
-        RHEED image or stack with coordinates ('sx', 'sy'), optionally 'alpha'.
+        RHEED image or stack with coordinates ('sx', 'sy'), optionally 'azimuthal_angle'.
     rotate : bool, optional
-        If True, rotate the transformed image(s) by the incident angle alpha.
+        If True, rotate the transformed image(s) by the azimuthal angle.
     point_symmetry : bool, optional
-        If True, combine with a 180°-rotated copy to enforce point symmetry.
+        If True, combine with a 180deg-rotated copy to enforce point symmetry.
 
     Returns
     -------
@@ -42,13 +45,14 @@ def transform_image_to_kxky(
     azimuthal_angle = rheed_data.ri.azimuthal_angle
 
     logger.info(
-        "transform_image_to_kxky: rheed_data.ndim=%s rotate=%s point_symmetry=%s",
+        "transform_image_to_kxky: rheed_data.ndim=%s rotate=%s n_fold_symmetry=%s",
         rheed_data.ndim,
         rotate,
-        point_symmetry,
+        n_fold_symmetry,
     )
 
     # --- Target coordinate grid ---
+    # TODO add kwargs to set this by user
     kx: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
     ky: NDArray[np.float32] = np.arange(-10, 10, 0.01, dtype=np.float32)
     gx, gy = np.meshgrid(kx, ky, indexing="ij")
@@ -77,15 +81,34 @@ def transform_image_to_kxky(
         "transform_image_to_kxky: converted sx/sy shapes %s %s", sx.shape, sy.shape
     )
 
-    # --- Helper to process a single image ---
-    def _transform_single_image(image: xr.DataArray, angle: float) -> xr.DataArray:
-        """Transform and optionally rotate a single RHEED frame."""
-        transformed = image.interp(sx=sx, sy=sy, method="linear")
+    
+    def _transform_single_image(image: xr.DataArray, 
+                                angle: float) -> xr.DataArray:
+        
+        transformed_base = image.interp(sx=sx, sy=sy, method="linear")
+
+        # Primary rotation - according to azimuthal orientation
         if rotate:
-            transformed = _rotate_trans_image(transformed, angle)
-        if point_symmetry:
-            rotated_180 = _rotate_trans_image(transformed, 180)
-            transformed = xr.where(np.isnan(transformed), rotated_180, transformed)
+            transformed_base = _rotate_trans_image(transformed_base, angle)
+
+        # n-fold rotational symmetry
+        if n_fold_symmetry is not None and n_fold_symmetry > 1:
+            
+            symmetry_images = []
+            symmetry_images.append(transformed_base)
+
+            rotation_step = 360.0 / n_fold_symmetry
+
+            for i in range(1, n_fold_symmetry):
+                rot_angle = i * rotation_step
+                rotated = _rotate_trans_image(transformed_base, rot_angle)
+                symmetry_images.append(rotated)
+        
+            symmetry_stack = xr.concat(symmetry_images, dim="n")
+            transformed = symmetry_stack.max("n")
+        else:
+            transformed = transformed_base
+
         transformed.attrs = image.attrs
         return transformed
 
