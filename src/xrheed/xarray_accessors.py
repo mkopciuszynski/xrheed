@@ -92,7 +92,7 @@ class RHEEDAccessor:
         If present as a coordinate 'alpha', returns that instead.
         """
         da = self._obj
-        if da.ndim == STACK_NDIMS and "alpha" in da.coords:
+        if "alpha" in da.coords:
             return da.coords["alpha"].values
         return float(da.attrs.get("azimuthal_angle", DEFAULT_ALPHA))
 
