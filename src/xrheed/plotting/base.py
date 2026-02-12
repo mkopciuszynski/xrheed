@@ -72,6 +72,9 @@ def plot_image(
         ax.scatter(
             0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100
         )
+        ax.scatter(
+            0.0, -specular_y, marker="o", edgecolors="c", facecolors="none", s=10
+        )
 
     roi_width: float = rheed_image.ri.screen_roi_width
     roi_height: float = rheed_image.ri.screen_roi_height
