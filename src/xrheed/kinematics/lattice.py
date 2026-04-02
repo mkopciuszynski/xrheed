@@ -298,7 +298,11 @@ class Lattice:
         self._regenerate_real_reciprocal()
 
     def plot_real(
-        self, ax: Optional[Axes] = None, space_size: float = 10.0, **kwargs
+        self,
+        ax: Optional[Axes] = None,
+        space_size: float = 10.0,
+        show_vectors: bool = True,
+        **kwargs,
     ) -> Axes:
         """
         Plot the real-space lattice points and basis vectors on a 2D matplotlib Axes.
@@ -306,6 +310,7 @@ class Lattice:
         Args:
             ax (plt.Axes, optional): Matplotlib Axes object to plot on. If None, a new figure and axes are created.
             space_size (float): Range for axis limits.
+            show_vectors (bool): Whether to draw the a1 and a2 basis vectors.
             **kwargs: Additional keyword arguments passed to plt.plot.
 
         Returns:
@@ -320,31 +325,33 @@ class Lattice:
         ax.scatter(
             self.real_lattice[:, 0], self.real_lattice[:, 1], label=self.label, **kwargs
         )
-        # Plot a1 and a2 vectors from origin
-        ax.arrow(
-            0,
-            0,
-            self.a1[0],
-            self.a1[1],
-            head_width=0.3,
-            head_length=1,
-            fc="r",
-            ec="r",
-            length_includes_head=True,
-            label="a1",
-        )
-        ax.arrow(
-            0,
-            0,
-            self.a2[0],
-            self.a2[1],
-            head_width=0.3,
-            head_length=1,
-            fc="g",
-            ec="g",
-            length_includes_head=True,
-            label="a2",
-        )
+
+        if show_vectors:
+            # Plot a1 and a2 vectors from origin
+            ax.arrow(
+                0,
+                0,
+                self.a1[0],
+                self.a1[1],
+                head_width=0.3,
+                head_length=1,
+                fc="r",
+                ec="r",
+                length_includes_head=True,
+                label="a1",
+            )
+            ax.arrow(
+                0,
+                0,
+                self.a2[0],
+                self.a2[1],
+                head_width=0.3,
+                head_length=1,
+                fc="g",
+                ec="g",
+                length_includes_head=True,
+                label="a2",
+            )
 
         ax.legend()
         ax.set_xlim(-space_size, space_size)
@@ -352,6 +359,7 @@ class Lattice:
         ax.set_xlabel("$x$ (Å)")
         ax.set_ylabel("$y$ (Å)")
         ax.set_aspect(1)
+
         return ax
 
     def plot_reciprocal(
