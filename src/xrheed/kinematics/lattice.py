@@ -17,7 +17,7 @@ AllowedCubicTypes = Literal["SC", "BCC", "FCC"]
 AllowedPlanes = Literal["111", "110", "100"]
 
 DEFAULT_REAL_LATTICE_SIZE = 10.0
-DEFAULT_RECIPROCAL_LATTICE_SIZE = 70.0
+DEFAULT_RECIPROCAL_LATTICE_SIZE = 5.0
 
 
 class Lattice:
