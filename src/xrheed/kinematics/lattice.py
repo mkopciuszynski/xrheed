@@ -16,6 +16,9 @@ Vector = NDArray[np.float32]
 AllowedCubicTypes = Literal["SC", "BCC", "FCC"]
 AllowedPlanes = Literal["111", "110", "100"]
 
+DEFAULT_REAL_LATTICE_SIZE = 10.0
+DEFAULT_RECIPROCAL_LATTICE_SIZE = 70.0
+
 
 class Lattice:
     """
@@ -64,12 +67,14 @@ class Lattice:
         self.b2: Vector
         self.b1, self.b2 = Lattice._calc_reciprocal_vectors(self.a1, self.a2)
 
-        self.real_lattice: NDArray[np.float32] = Lattice.generate_lattice(
-            self.a1, self.a2
-        )
-        self.reciprocal_lattice: NDArray[np.float32] = Lattice.generate_lattice(
-            self.b1, self.b2
-        )
+        self.real_lattice: NDArray[np.float32]
+        self.reciprocal_lattice: NDArray[np.float32]
+
+        self._real_size: float = DEFAULT_REAL_LATTICE_SIZE
+        self._reciprocal_size: float = DEFAULT_RECIPROCAL_LATTICE_SIZE
+
+        self._regenerate_real_reciprocal()
+
         logger.debug(
             "Lattice initialized: label=%s a1=%s a2=%s b1=%s b2=%s",
             self.label,
@@ -95,6 +100,44 @@ class Lattice:
         new_lattice.real_lattice = self.real_lattice.copy()
         new_lattice.reciprocal_lattice = self.reciprocal_lattice.copy()
         return new_lattice
+
+    @property
+    def real_lattice_size(self) -> float:
+        """Get the current real lattice generation radius."""
+        return self._real_size
+
+    @real_lattice_size.setter
+    def real_lattice_size(self, size: float) -> None:
+        """Set new real lattice radius and regenerate the real-space lattice."""
+        if size <= 0:
+            raise ValueError("real_lattice_size must be positive.")
+
+        self._real_size = float(size)
+        self.real_lattice = Lattice.generate_lattice(
+            self.a1, self.a2, space_size=self._real_size
+        )
+
+    @property
+    def reciprocal_lattice_size(self) -> float:
+        return self._reciprocal_size
+
+    @reciprocal_lattice_size.setter
+    def reciprocal_lattice_size(self, size: float) -> None:
+        if size <= 0:
+            raise ValueError("reciprocal_lattice_size must be positive.")
+
+        self._reciprocal_size = float(size)
+        self.reciprocal_lattice = Lattice.generate_lattice(
+            self.b1, self.b2, space_size=self._reciprocal_size
+        )
+
+    def _regenerate_real_reciprocal(self):
+        self.real_lattice = Lattice.generate_lattice(
+            self.a1, self.a2, space_size=self._real_size
+        )
+        self.reciprocal_lattice = Lattice.generate_lattice(
+            self.b1, self.b2, space_size=self._reciprocal_size
+        )
 
     def __deepcopy__(self, memo: dict[int, object]) -> Lattice:
         """
@@ -235,8 +278,7 @@ class Lattice:
 
         self.b1, self.b2 = Lattice._calc_reciprocal_vectors(self.a1, self.a2)
 
-        self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self._regenerate_real_reciprocal()
 
     def scale(self, lattice_scale: float = 1.0) -> None:
         """
@@ -253,8 +295,7 @@ class Lattice:
         self.b1 = self.b1 / lattice_scale
         self.b2 = self.b2 / lattice_scale
 
-        self.real_lattice = Lattice.generate_lattice(self.a1, self.a2)
-        self.reciprocal_lattice = Lattice.generate_lattice(self.b1, self.b2)
+        self._regenerate_real_reciprocal()
 
     def plot_real(
         self, ax: Optional[Axes] = None, space_size: float = 10.0, **kwargs
