@@ -486,7 +486,7 @@ class Lattice:
         distances = np.linalg.norm(lattice, axis=1)
         lattice = lattice[distances <= space_size]
 
-        return lattice
+        return lattice.astype(np.float32)
 
 
 def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
