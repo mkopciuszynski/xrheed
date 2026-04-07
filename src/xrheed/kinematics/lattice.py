@@ -353,7 +353,6 @@ class Lattice:
                 label="a2",
             )
 
-        ax.legend()
         ax.set_xlim(-space_size, space_size)
         ax.set_ylim(-space_size, space_size)
         ax.set_xlabel("$x$ (Å)")
