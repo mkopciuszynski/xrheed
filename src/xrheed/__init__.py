@@ -2,6 +2,13 @@
 xRHEED: An xarray-based toolkit for RHEED image analysis.
 """
 
+import os
+import warnings
+from tqdm import TqdmWarning
+
+if os.environ.get("READTHEDOCS") == "True":
+    warnings.filterwarnings("ignore", category=TqdmWarning)
+
 import importlib
 import logging
 import pkgutil
