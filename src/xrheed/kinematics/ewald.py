@@ -64,7 +64,7 @@ class Ewald:
             self.screen_roi_width: float = 60
             self.screen_roi_height: float = 80
             self._incident_angle: Union[float, NDArray[np.float32]] = 1.0
-            self._azimuthal_angle: Union[float, NDArray[np.float32]] = 0.0
+            self._image_azimuthal_angle: Union[float, NDArray[np.float32]] = 0.0
             self._image_data_available: bool = False
         else:
             if image.ndim == IMAGE_NDIMS:
@@ -80,7 +80,7 @@ class Ewald:
             self.screen_roi_height = float(image.ri.screen_roi_height)
 
             self._incident_angle = image.ri.incident_angle
-            self._azimuthal_angle = image.ri.azimuthal_angle
+            self._image_azimuthal_angle = image.ri.azimuthal_angle
             self._image_data_available = True
 
         self._lattice_scale: float = 1.0
@@ -120,16 +120,16 @@ class Ewald:
     def __repr__(self) -> str:
         return (
             f"Ewald Class Object: {self.label}\n"
-            f"  Ewald Radius           : {self.ewald_radius:.2f} 1/Å\n"
-            f"  Azimuthal angle (alpha): {self.azimuthal_angle:.2f}°\n"
-            f"  Incident angle (beta)  : {self.incident_angle:.2f}°\n"
-            f"  Real Lattice Scale     : {self.lattice_scale:.2f}\n"
-            f"  Screen Scale           : {self.screen_scale:.2f} px/mm\n"
-            f"  Sample-Screen Distance : {self.screen_sample_distance:.1f} mm\n"
-            f"  Screen Shift X         : {self.shift_x:.2f} mm\n"
-            f"  Screen Shift Y         : {self.shift_y:.2f} mm\n"
-            f"  Reciprocal Vector b1   : [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/Å\n"
-            f"  Reciprocal Vector b2   : [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/Å\n"
+            f"  Ewald Radius            : {self.ewald_radius:.2f} 1/Å\n"
+            f"  Image azimuthal angle:  : {self.image_azimuthal_angle:.2f}°\n"
+            f"  Incident angle          : {self.incident_angle:.2f}°\n"
+            f"  Real Lattice Scale      : {self.lattice_scale:.2f}\n"
+            f"  Screen Scale            : {self.screen_scale:.2f} px/mm\n"
+            f"  Sample-Screen Distance  : {self.screen_sample_distance:.1f} mm\n"
+            f"  Screen Shift X          : {self.shift_x:.2f} mm\n"
+            f"  Screen Shift Y          : {self.shift_y:.2f} mm\n"
+            f"  Reciprocal Vector b1    : [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/Å\n"
+            f"  Reciprocal Vector b2    : [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/Å\n"
         )
 
     def __copy__(self) -> "Ewald":
@@ -143,7 +143,7 @@ class Ewald:
         """
 
         new_ewald = Ewald(self._lattice, self.image)
-        new_ewald.azimuthal_angle = self.azimuthal_angle
+        new_ewald.image_azimuthal_angle = self.image_azimuthal_angle
         new_ewald.incident_angle = self.incident_angle
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
@@ -180,19 +180,19 @@ class Ewald:
 
     @property
     def ewald_azimuthal_angle(self) -> float:
-        return self.ewald_azimuthal_rotation + self.azimuthal_angle
+        return self.ewald_azimuthal_rotation + self.image_azimuthal_angle
 
     @property
-    def azimuthal_angle(self) -> float:
-        if isinstance(self._azimuthal_angle, np.ndarray):
-            return self._azimuthal_angle[self._stack_index]
-        return self._azimuthal_angle
+    def image_azimuthal_angle(self) -> float:
+        if isinstance(self._image_azimuthal_angle, np.ndarray):
+            return self._image_azimuthal_angle[self._stack_index]
+        return self._image_azimuthal_angle
 
-    @azimuthal_angle.setter
-    def azimuthal_angle(self, value: float):
-        if isinstance(self._azimuthal_angle, np.ndarray):
+    @image_azimuthal_angle.setter
+    def image_azimuthal_angle(self, value: float):
+        if isinstance(self._image_azimuthal_angle, np.ndarray):
             raise ValueError("Cannot set alpha individually for stack images.")
-        self._azimuthal_angle = value
+        self._image_azimuthal_angle = value
         self.calculate_ewald()
 
     @property
@@ -246,7 +246,7 @@ class Ewald:
 
         ewald_radius: float = self.ewald_radius
         azimuthal_angle: float = self.ewald_azimuthal_angle
-        incident_angle: float = self.incident_angle
+        image_incident_angle: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
 
         inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
@@ -265,7 +265,7 @@ class Ewald:
             gx,
             gy,
             ewald_radius,
-            incident_angle,
+            image_incident_angle,
             screen_sample_distance,
             remove_outside=True,
         )
