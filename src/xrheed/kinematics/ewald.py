@@ -180,7 +180,7 @@ class Ewald:
 
     @property
     def ewald_azimuthal_angle(self) -> float:
-        return self.ewald_azimuthal_rotation + self.image_azimuthal_angle
+        return self.image_azimuthal_angle + self.ewald_azimuthal_rotation
 
     @property
     def image_azimuthal_angle(self) -> float:
@@ -245,27 +245,55 @@ class Ewald:
         """
 
         ewald_radius: float = self.ewald_radius
-        azimuthal_angle: float = self.ewald_azimuthal_angle
-        image_incident_angle: float = self.incident_angle
+
+        image_azimuthal_angle: float = self.image_azimuthal_angle
+        ewald_azimuthal_rotation: float = self.ewald_azimuthal_rotation
+
+        incident_angle: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
+
+        # Arrays for reciprocal kx and ky coordinates
+        gx: NDArray[np.float32]
+        gy: NDArray[np.float32]
+        # Arrays for the calculated spot positions
+        sx: NDArray[np.float32]
+        sy: NDArray[np.float32]
 
         inverse_lattice: NDArray[np.float32] = self._inverse_lattice.copy()
 
-        if azimuthal_angle != 0:
-            inverse_lattice = inverse_lattice @ rotation_matrix(azimuthal_angle).T
+        # Fine scaling
+        inverse_lattice /= self._lattice_scale
 
-        gx: NDArray[np.float32] = inverse_lattice[:, 0] / self._lattice_scale
-        gy: NDArray[np.float32] = inverse_lattice[:, 1] / self._lattice_scale
+        # Ewald +/- rotation in respect to the image azimuthal angle
+        if not np.isclose(ewald_azimuthal_rotation, 0.0):
+            rotated_p = inverse_lattice @ rotation_matrix(
+                image_azimuthal_angle + ewald_azimuthal_rotation
+            )
 
-        # calculate the spot positions
-        sx: NDArray[np.float32]
-        sy: NDArray[np.float32]
+            to_stack = [rotated_p]
+
+            if self.mirror_symmetry:
+                rotated_n = inverse_lattice @ rotation_matrix(
+                    image_azimuthal_angle - ewald_azimuthal_rotation
+                )
+                to_stack.insert(0, rotated_n)
+
+            stacked = np.vstack(to_stack)
+            gx, gy = stacked.T[:2]
+
+        # Image rotation only
+        elif not np.isclose(image_azimuthal_angle, 0.0):
+            rotated = inverse_lattice @ rotation_matrix(image_azimuthal_angle)
+            gx, gy = rotated.T[:2]
+
+        else:
+            gx, gy = inverse_lattice.T[:2]
 
         sx, sy = convert_gx_gy_to_sx_sy(
             gx,
             gy,
             ewald_radius,
-            image_incident_angle,
+            incident_angle,
             screen_sample_distance,
             remove_outside=True,
         )
@@ -278,10 +306,6 @@ class Ewald:
 
         sx = sx[ind]
         sy = sy[ind]
-
-        if self.mirror_symmetry:
-            sx = np.hstack([sx, -sx])
-            sy = np.hstack([sy, sy])
 
         self.ew_sx = sx
         self.ew_sy = sy
@@ -603,7 +627,9 @@ class Ewald:
         self._ewald_roi = self._calc_ewald_roi(scale_vector.max())
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-        for i, scale in enumerate(tqdm(scale_vector, disable=tqdm_disable, desc="Matching scales")):
+        for i, scale in enumerate(
+            tqdm(scale_vector, disable=tqdm_disable, desc="Matching scales")
+        ):
             self.lattice_scale = scale
             self.calculate_ewald()
 
