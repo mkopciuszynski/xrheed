@@ -490,7 +490,7 @@ class Ewald:
         self,
         alpha_vector: NDArray,
         normalize: bool = True,
-        show_progress: bool = False,
+        tqdm_disable: bool = True,
     ) -> xr.DataArray:
         """
         Calculate match coefficients over a range of azimuthal angles.
@@ -501,8 +501,8 @@ class Ewald:
             Array of alpha (azimuthal) angles in degrees.
         normalize : bool, optional
             If True, normalize the coefficients (default: True).
-        show_progress : bool, optional
-            If True, show the tqdm progress bar (default: False).
+        tqdm_disable : bool, optional
+            If False, show the tqdm progress bar (default: True).
 
         Returns
         -------
@@ -512,7 +512,7 @@ class Ewald:
 
         match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
 
-        for i, alpha in enumerate(tqdm(alpha_vector, disable=not show_progress)):
+        for i, alpha in enumerate(tqdm(alpha_vector, disable=tqdm_disable)):
             self.ewald_azimuthal_rotation = alpha
             self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
