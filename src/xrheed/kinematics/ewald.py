@@ -526,7 +526,7 @@ class Ewald:
         self,
         scale_vector: NDArray,
         normalize: bool = True,
-        show_progress: bool = False,
+        tqdm_disable: bool = True,
     ) -> xr.DataArray:
         """
         Calculate the match coefficient for a series of lattice scale values.
@@ -537,8 +537,8 @@ class Ewald:
             Array of scale values to test.
         normalize : bool, optional
             If True, normalize the match coefficient (default: True).
-        show_progress : bool, optional
-            If True, show the tqdm progress bar (default: False).
+        tqdm_disable : bool, optional
+            If False, show the tqdm progress bar (default: True).
 
         Returns
         -------
@@ -552,7 +552,7 @@ class Ewald:
 
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-        for i, scale in enumerate(tqdm(scale_vector, disable=not show_progress)):
+        for i, scale in enumerate(tqdm(scale_vector, disable=tqdm_disable)):
             self.lattice_scale = scale
             self.calculate_ewald()
             match_vector[i] = self.calculate_match(normalize=normalize)
@@ -570,6 +570,7 @@ class Ewald:
         scale_vector: NDArray,
         normalize: bool = True,
         flatten: bool = True,
+        tqdm_disable: bool = True,
     ) -> xr.DataArray:
         """
         Calculate the match coefficient for a grid of alpha angles and scale values.
@@ -586,6 +587,8 @@ class Ewald:
             If True, the result map is flatten by subtracting quadratic
             background fitted along scale direction
               (default: True).
+        tqdm_disable : bool, optional
+            If False, show the tqdm progress bar (default: True).
 
         Returns
         -------
@@ -600,7 +603,7 @@ class Ewald:
         self._ewald_roi = self._calc_ewald_roi(scale_vector.max())
         self._inverse_lattice = self._prepare_inverse_lattice()
 
-        for i, scale in enumerate(tqdm(scale_vector, desc="Matching scales")):
+        for i, scale in enumerate(tqdm(scale_vector, disable=tqdm_disable, desc="Matching scales")):
             self.lattice_scale = scale
             self.calculate_ewald()
 
