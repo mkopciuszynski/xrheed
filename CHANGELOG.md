@@ -4,20 +4,21 @@
 ## [2.1.0] – 2026-xx-xx
 
 ### Added
-- `show_vectors` option in `plot_real()` to toggle basis vector arrows (default: True).
-- `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice` with validated setters and on‑demand regeneration.
-- `tqdm_disable` argument in matching functions inside `ewald` class that could be used to show the tqdm progress bar (when set to `False`).
+- `show_vectors` option in `plot_real()` to toggle basis vector arrows (default: `True`).
+- `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice`, with validated setters and on-demand regeneration.
+- `tqdm_disable` argument in matching functions of the `ewald` class to control progress bar display (`False` enables tqdm).
 
 ### Changed
 - Legend is now hidden by default in `plot_real()`.
-- Progress bar (tqdm) in `match_alpha` and `match_scale` is disabled by default.
-- Default space size parameters updated.
+- Progress bars (`tqdm`) in `match_alpha` and `match_scale` are now disabled by default.
+- Updated default space size parameters.
+- Updated `mirror_symmetry` behavior in `ewald`: when enabled, lattice points are generated using both positive and negative Ewald azimuthal rotations (± rotation angle relative to the image azimuth).
 
 ### Fixed
 - Corrected FCC primitive vector generation in the `lattice` module.
-- Fixed `azimuthal_angle` property for single images in stacks.
-- Resolved type error via explicit float32 casting.
-- Multiple minor bug fixes and internal refactors.
+- Fixed `azimuthal_angle` property handling for single images in stacks.
+- Resolved type issues via explicit `float32` casting.
+- Various minor bug fixes and internal refactors.
 
 
 <a name="2.0.0"></a>
