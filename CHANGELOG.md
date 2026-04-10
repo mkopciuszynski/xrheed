@@ -1,16 +1,24 @@
 # Changelog
 
-<a name="2.x.x"></a>
-## [2.0.x] – 2026-xx-xx
+<a name="2.1.0"></a>
+## [2.1.0] – 2026-xx-xx
 
 ### Added
-- Added `show_progress` to `match_alpha` and `match_scale methods` 
-
-### Fixed 
-- Fixed the FCC primitive vectors generation in lattice module.
+- `show_vectors` option in `plot_real()` to toggle basis vector arrows (default: True).
+- `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice` with validated setters and on‑demand regeneration.
+- `tqdm_disable` argument in matching functions inside `ewald` class that could be used to show the tqdm progress bar (when set to `False`).
 
 ### Changed
-- Progress bar generated using tqdm in  `match_alpha` and `match_scale methods` is disabled by default now.
+- Legend is now hidden by default in `plot_real()`.
+- Progress bar (tqdm) in `match_alpha` and `match_scale` is disabled by default.
+- Default space size parameters updated.
+
+### Fixed
+- Corrected FCC primitive vector generation in the `lattice` module.
+- Fixed `azimuthal_angle` property for single images in stacks.
+- Resolved type error via explicit float32 casting.
+- Multiple minor bug fixes and internal refactors.
+
 
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-11-25
