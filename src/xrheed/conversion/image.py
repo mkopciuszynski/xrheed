@@ -1,5 +1,7 @@
 import logging
 
+import warnings
+
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
@@ -25,7 +27,7 @@ def transform_image_to_kxky(
     rheed_data : xr.DataArray
         RHEED image or stack with coordinates ('sx', 'sy'), optionally 'alpha'.
     rotate : bool, optional
-        If True, rotate the transformed image(s) by the incident angle (alpha).
+        If True, rotate the transformed image(s) by the azimuthal angle (alpha).
     point_symmetry : bool, optional
         If True, combine with a 180°-rotated copy to enforce point symmetry.
 
@@ -78,7 +80,9 @@ def transform_image_to_kxky(
     )
 
     # --- Helper to process a single image ---
-    def _transform_single_image(image: xr.DataArray, azimuthal_angle: float) -> xr.DataArray:
+    def _transform_single_image(
+        image: xr.DataArray, azimuthal_angle: float
+    ) -> xr.DataArray:
         """Transform and optionally rotate a single RHEED frame."""
         transformed = image.interp(sx=sx, sy=sy, method="linear")
         if rotate:
@@ -97,10 +101,16 @@ def transform_image_to_kxky(
         )
         return _transform_single_image(rheed_data, float(azimuthal_angle))
 
-    # --- Handle stack with alpha coordinate ---
+    # --- Handle stack (DEPRECATED alpha-based path) ---
     if rheed_data.ndim == STACK_NDIMS and "alpha" in rheed_data.coords:
+        warnings.warn(
+            "Stack based transformation is DEPRECATED. Transform slides separately.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         logger.info(
-            "transform_image_to_kxky: processing stack with alpha coordinate, size=%d",
+            "transform_image_to_kxky: DEPRECATED stack path using alpha, size=%d",
             rheed_data.sizes["alpha"],
         )
         transformed_slices = []
