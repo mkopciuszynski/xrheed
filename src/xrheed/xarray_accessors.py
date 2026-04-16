@@ -308,7 +308,7 @@ class RHEEDAccessor:
 
             # Normalize shifts relative to first frame
             cx0, cy0 = cx[0], cy[0]
-            
+
             da["sx"] = da.sx - cx0
             da["sy"] = da.sy - cy0
 
@@ -322,8 +322,7 @@ class RHEEDAccessor:
             for i in range(n_frames):
                 if i == 0:
                     continue  # first frame already shifted
-                new_coords = {"sx": sx_origin + cx[i],
-                              "sy": sy_origin + cy[i]}
+                new_coords = {"sx": sx_origin + cx[i], "sy": sy_origin + cy[i]}
                 da.data[i] = (
                     da.isel({stack_dim: i})
                     .interp(new_coords, method=method, kwargs={"fill_value": 0})
