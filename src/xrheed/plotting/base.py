@@ -59,10 +59,11 @@ def plot_image(
         fig, ax = plt.subplots(figsize=(6, 4))
 
     rheed_image.plot(ax=ax, **kwargs)
+    ax.set_aspect(1.0)
 
     if show_center_lines:
-        ax.axhline(y=0.0, linewidth=1.0, linestyle="--")
-        ax.axvline(x=0.0, linewidth=1.0, linestyle="--")
+        ax.axhline(y=0.0, linewidth=1.0, color="c", linestyle="-", alpha=0.8)
+        ax.axvline(x=0.0, linewidth=1.0, color="c", linestyle="-", alpha=0.8)
 
     if show_specular_spot:
         specular_y = (
@@ -73,15 +74,14 @@ def plot_image(
             0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100
         )
         ax.scatter(
-            0.0, -specular_y, marker="o", edgecolors="c", facecolors="none", s=10
+            0.0, -specular_y, marker="o", edgecolors="m", facecolors="none", s=50
         )
 
     roi_width: float = rheed_image.ri.screen_roi_width
     roi_height: float = rheed_image.ri.screen_roi_height
 
-    ax.set_aspect(1)
     ax.set_xlim(-roi_width, roi_width)
-    ax.set_ylim(-roi_height, 10)
+    ax.set_ylim(-roi_height, rheed_image.sy.max())
     ax.set_xlabel("Screen X (mm)")
     ax.set_ylabel("Screen Y (mm)")
 
