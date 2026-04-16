@@ -585,4 +585,4 @@ def _calculate_incident_angle(
     else:
         beta_rad = np.arctan(-sy_mirr / screen_sample_distance)
         beta_deg = np.degrees(beta_rad)
-    return beta_deg
+    return float(beta_deg)
