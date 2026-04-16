@@ -5,7 +5,15 @@ Global constants for xrheed.
 # -----------------------------
 # Canonical dimension names
 # -----------------------------
-CANONICAL_STACK_DIMS = {"frame", "alpha", "beta", "coverage", "time", "temperature", "current"}
+CANONICAL_STACK_DIMS = {
+    "frame",
+    "alpha",
+    "beta",
+    "coverage",
+    "time",
+    "temperature",
+    "current",
+}
 
 # -----------------------------
 # Expected dimensionality
