@@ -7,7 +7,7 @@
    viewBox="0 0 75 35"
    version="1.1"
    id="svg1"
-   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    sodipodi:docname="xRHEED_geometry.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -23,9 +23,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
-     inkscape:zoom="1.0955441"
-     inkscape:cx="348.68519"
-     inkscape:cy="222.26399"
+     inkscape:zoom="2.1910882"
+     inkscape:cx="525.08156"
+     inkscape:cy="229.79449"
      inkscape:window-width="1920"
      inkscape:window-height="1027"
      inkscape:window-x="-8"
@@ -175,25 +175,6 @@
          transform="scale(-0.5)"
          id="path6-8" />
     </marker>
-    <marker
-       style="overflow:visible"
-       id="ConcaveTriangle-2"
-       refX="0"
-       refY="0"
-       orient="auto-start-reverse"
-       inkscape:stockid="Concave triangle arrow"
-       markerWidth="1"
-       markerHeight="1"
-       viewBox="0 0 1 1"
-       inkscape:isstock="true"
-       inkscape:collect="always"
-       preserveAspectRatio="xMidYMid">
-      <path
-         transform="scale(0.7)"
-         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
-         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
-         id="path12-3" />
-    </marker>
   </defs>
   <g
      inkscape:groupmode="layer"
@@ -322,6 +303,12 @@
      id="layer1"
      style="display:inline">
     <path
+       id="path10-6"
+       style="display:inline;fill:none;fill-opacity:0.171662;stroke:#333333;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#DartArrow)"
+       transform="scale(-1,1)"
+       d="m -44.147613,17.312652 c -0.519483,-1.875819 -0.730053,-3.423059 -0.924694,-4.746142"
+       sodipodi:nodetypes="cc" />
+    <path
        style="fill:#000000;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#DartArrow)"
        d="M 0.8660254,12.5 H 64.951905"
        id="path1"
@@ -357,7 +344,7 @@
        id="path16"
        sodipodi:nodetypes="cc" />
     <path
-       style="fill:none;fill-opacity:0.171662;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ConcaveTriangle);marker-end:url(#ConcaveTriangle)"
+       style="fill:none;fill-opacity:0.171662;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#DartArrow)"
        id="path8"
        sodipodi:type="arc"
        sodipodi:cx="12.990381"
@@ -366,11 +353,11 @@
        sodipodi:ry="1"
        sodipodi:start="5.3774295"
        sodipodi:end="4.0142573"
-       sodipodi:open="true"
        sodipodi:arc-type="arc"
-       d="m 15.128047,21.713108 a 3.4641018,1 0 0 1 1.145924,1.105488 3.4641018,1 0 0 1 -3.226277,0.681267 A 3.4641018,1 0 0 1 9.7451032,22.849782 3.4641018,1 0 0 1 10.7637,21.733956" />
+       d="m 15.128047,21.713108 a 3.4641018,1 0 0 1 1.145924,1.105488 3.4641018,1 0 0 1 -3.226277,0.681267 A 3.4641018,1 0 0 1 9.7451032,22.849782 3.4641018,1 0 0 1 10.7637,21.733956"
+       sodipodi:open="true" />
     <path
-       style="fill:none;fill-opacity:0.171662;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ConcaveTriangle);marker-end:url(#ConcaveTriangle)"
+       style="fill:none;fill-opacity:0.171662;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#DartArrow)"
        id="path10"
        sodipodi:type="arc"
        sodipodi:cx="12.990381"
@@ -378,16 +365,10 @@
        sodipodi:rx="11.635656"
        sodipodi:ry="11.635656"
        sodipodi:start="3.037444"
-       sodipodi:end="3.0917472"
+       sodipodi:end="3.1416918"
        sodipodi:arc-type="arc"
-       d="M 1.4177735,13.709648 A 11.635656,11.635656 0 0 1 1.3691767,13.079744"
+       d="M 1.4177735,13.709648 A 11.635656,11.635656 0 0 1 1.3547249,12.498846"
        sodipodi:open="true" />
-    <path
-       id="path10-6"
-       style="display:inline;fill:none;fill-opacity:0.171662;stroke:#4d4d4d;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#ConcaveTriangle-2);marker-end:url(#ConcaveTriangle-2)"
-       transform="scale(-1,1)"
-       d="m -44.115341,17.425604 c -0.519483,-1.875819 -0.762325,-2.919879 -0.956966,-4.242962"
-       sodipodi:nodetypes="cc" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ConcaveTriangle)"
        d="m 56.291651,12.5 3.144485,1.796656"
@@ -395,9 +376,9 @@
        sodipodi:nodetypes="cc" />
     <path
        id="circle45-8"
-       style="fill:none;stroke:#4d4d4d;stroke-width:0.0999998;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#marker47);marker-end:url(#marker47)"
+       style="fill:none;stroke:#333333;stroke-width:0.0999998;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#marker21)"
        inkscape:label="circle_xz"
-       d="m 61.464942,10.290174 c 0.137952,1.453138 0.113228,2.949685 -0.279437,4.28715"
+       d="m 61.350843,9.6740418 c 0.3091,1.4074982 0.227327,3.5658172 -0.165338,4.9032822"
        sodipodi:nodetypes="cc" />
     <path
        style="fill:none;stroke:#4d4d4d;stroke-width:0.0999997;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.0999997, 0.299999;stroke-dashoffset:0"
@@ -414,7 +395,7 @@
        sodipodi:arc-type="arc"
        d="m 60.08279,10.331143 a 3.9092031,7.8752384 0 0 1 -2.732633,9.399712 3.9092031,7.8752384 0 0 1 -4.780056,-5.092173" />
     <path
-       style="fill:none;stroke:#4d4d4d;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ConcaveTriangle)"
+       style="fill:none;stroke:#333333;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:;marker-end:url(#DartArrow)"
        d="M 56.291651,12.5 57.5421,18.814959"
        id="path20"
        sodipodi:nodetypes="cc" />
