@@ -23,9 +23,30 @@ class Ewald:
     """
     Class for calculating and analyzing the Ewald sphere construction in RHEED.
 
-    Supports single images or image stacks (additional first dimension). Provides
-    functionality for generating reciprocal lattice spots, simulating their appearance
-    on a RHEED screen, and matching them with experimental data.
+    This class combines experimental RHEED image metadata with a reciprocal
+    lattice model to predict diffraction spot positions on the screen.
+
+    Azimuthal angle convention
+    --------------------------
+    Three azimuthal angles are distinguished:
+
+    * image_azimuthal_angle
+        Experimental azimuth of the RHEED image, read from image metadata.
+        This value defines the reference frame and is treated as immutable.
+
+    * ewald_azimuthal_rotation
+        User-defined relative rotation of the Ewald construction with respect
+        to the image azimuth. This does not modify the image metadata.
+
+    * Ewald azimuthal angles (effective)
+        The azimuthal angles actually used in the Ewald construction, derived as
+
+            image_azimuthal_angle ± ewald_azimuthal_rotation
+
+        When mirror symmetry is enabled, both ± rotations are used.
+
+    This separation preserves the experimental reference frame while allowing
+    controlled relative rotation of the theoretical Ewald construction.
     """
 
     # Class constants
@@ -53,7 +74,6 @@ class Ewald:
         """
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
-        self.ewald_azimuthal_rotation: float = 0.0
 
         if image is None:
             logger.warning("RHEED image not provided, default parameters are loaded.")
@@ -95,6 +115,7 @@ class Ewald:
 
         self.ewald_radius: float = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
         self._ewald_roi: float = self._calc_ewald_roi()
+        self._ewald_azimuthal_rotation: float = 0.0
 
         self._lattice: Lattice = copy.deepcopy(lattice)
         self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
@@ -143,7 +164,7 @@ class Ewald:
         """
 
         new_ewald = Ewald(self._lattice, self.image)
-        new_ewald.image_azimuthal_angle = self.image_azimuthal_angle
+        new_ewald.ewald_azimuthal_rotation = self.ewald_azimuthal_rotation
         new_ewald.incident_angle = self.incident_angle
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
@@ -179,21 +200,23 @@ class Ewald:
         self.calculate_ewald()
 
     @property
-    def ewald_azimuthal_angle(self) -> float:
-        return self.image_azimuthal_angle + self.ewald_azimuthal_rotation
-
-    @property
     def image_azimuthal_angle(self) -> float:
         if isinstance(self._image_azimuthal_angle, np.ndarray):
             return self._image_azimuthal_angle[self._stack_index]
         return self._image_azimuthal_angle
 
-    @image_azimuthal_angle.setter
-    def image_azimuthal_angle(self, value: float):
-        if isinstance(self._image_azimuthal_angle, np.ndarray):
-            raise ValueError("Cannot set alpha individually for stack images.")
-        self._image_azimuthal_angle = value
+    @property
+    def ewald_azimuthal_rotation(self) -> float:
+        return self._ewald_azimuthal_rotation
+
+    @ewald_azimuthal_rotation.setter
+    def ewald_azimuthal_rotation(self, value: float):
+        self._ewald_azimuthal_rotation = float(value)
         self.calculate_ewald()
+
+    @property
+    def ewald_azimuthal_angle(self) -> float:
+        return self.image_azimuthal_angle + self._ewald_azimuthal_rotation
 
     @property
     def incident_angle(self) -> float:
@@ -246,9 +269,6 @@ class Ewald:
 
         ewald_radius: float = self.ewald_radius
 
-        image_azimuthal_angle: float = self.image_azimuthal_angle
-        ewald_azimuthal_rotation: float = self.ewald_azimuthal_rotation
-
         incident_angle: float = self.incident_angle
         screen_sample_distance: float = self.screen_sample_distance
 
@@ -264,30 +284,30 @@ class Ewald:
         # Fine scaling
         inverse_lattice /= self._lattice_scale
 
-        # Ewald +/- rotation in respect to the image azimuthal angle
-        if not np.isclose(ewald_azimuthal_rotation, 0.0):
-            rotated_p = inverse_lattice @ rotation_matrix(
-                image_azimuthal_angle + ewald_azimuthal_rotation
-            )
+        # Effective azimuthal angles used for the Ewald construction
+        image_azimuthal_angle: float = self.image_azimuthal_angle
+        ewald_azimuthal_rotation: float = self.ewald_azimuthal_rotation
 
-            to_stack = [rotated_p]
-
-            if self.mirror_symmetry:
-                rotated_n = inverse_lattice @ rotation_matrix(
-                    image_azimuthal_angle - ewald_azimuthal_rotation
-                )
-                to_stack.insert(0, rotated_n)
-
-            stacked = np.vstack(to_stack)
-            gx, gy = stacked.T[:2]
-
-        # Image rotation only
-        elif not np.isclose(image_azimuthal_angle, 0.0):
-            rotated = inverse_lattice @ rotation_matrix(image_azimuthal_angle)
-            gx, gy = rotated.T[:2]
-
+        # Determine which azimuthal angles are used to rotate the reciprocal lattice
+        if np.isclose(ewald_azimuthal_rotation, 0.0):
+            # No relative rotation: use the image azimuthal angle only
+            ewald_azimuthal_angles = [image_azimuthal_angle]
         else:
-            gx, gy = inverse_lattice.T[:2]
+            # Relative rotation with respect to the image azimuthal angle
+            ewald_azimuthal_angles = [image_azimuthal_angle + ewald_azimuthal_rotation]
+            if self.mirror_symmetry:
+                ewald_azimuthal_angles.insert(
+                    0, image_azimuthal_angle - ewald_azimuthal_rotation
+                )
+
+        # Apply azimuthal rotations to the inverse lattice and stack results
+        rotated_inverse_lattices = [
+            inverse_lattice @ rotation_matrix(azimuthal_angle)
+            for azimuthal_angle in ewald_azimuthal_angles
+        ]
+
+        stacked = np.vstack(rotated_inverse_lattices)
+        gx, gy = stacked.T[:2]
 
         sx, sy = convert_gx_gy_to_sx_sy(
             gx,
