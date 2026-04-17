@@ -4,22 +4,33 @@
 ## [2.1.0] – 2026-xx-xx
 
 ### Added
-- `show_vectors` option in `plot_real()` to toggle basis vector arrows (default: `True`).
-- `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice`, with validated setters and on-demand regeneration.
-- `tqdm_disable` argument in matching functions of the `ewald` class to control progress bar display (`False` enables tqdm).
+- `show_vectors` option in `plot_real()` to toggle display of basis vector arrows (default: `True`).
+- `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice`, with validated setters and on-demand lattice regeneration.
+- `tqdm_disable` argument in matching functions of the `ewald` class to control progress bar visibility (`False` enables `tqdm`).
 
 ### Changed
 - Legend is now hidden by default in `plot_real()`.
-- Progress bars (`tqdm`) in `match_alpha` and `match_scale` are now disabled by default.
+- Progress bars (`tqdm`) in `match_alpha` and `match_scale` are disabled by default.
 - Updated default space size parameters.
 - Updated `mirror_symmetry` behavior in `ewald`: when enabled, lattice points are generated using both positive and negative Ewald azimuthal rotations (± rotation angle relative to the image azimuth).
+- Introduced clearer and more descriptive azimuth-related properties in `ewald`:
+  - `image_azimuthal_angle`
+  - `ewald_azimuthal_angle`
+  - `ewald_azimuthal_rotation`  
+  These distinguish the RHEED image azimuthal orientation (typically defined with respect to high-symmetry directions such as `[11̄-2]`) from the Ewald construction rotation used for rotated lattices (e.g. √7x√7 reconstructions).
+- Improved line rendering and spot markers in `plot_image()`.
+- Deprecated multi-image transformation to `kxky` with a warning.
+- Updated example notebooks.
 
 ### Fixed
 - Corrected FCC primitive vector generation in the `lattice` module.
-- Fixed `azimuthal_angle` property handling for single images in stacks.
+- Fixed `azimuthal_angle` property handling for single images in image stacks.
 - Resolved type issues via explicit `float32` casting.
+- Fixed orientation arrows in geometry figures in the documentation to use single-headed arrows for indicating the positive angular direction.
 - Various minor bug fixes and internal refactors.
 
+### Improved
+- Improved documentation of the geometry convention to clarify angular definitions and rotation directions.
 
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-11-25
