@@ -16,6 +16,7 @@ class TestLattice(unittest.TestCase):
     def test_from_bulk_cubic(self):
         a = 5.43
         a_surf = a / np.sqrt(2)
+
         lattice = Lattice.from_bulk_cubic(a=a, cubic_type="FCC", plane="111")
         np.testing.assert_array_almost_equal(
             lattice.a1, np.array([0.0, a_surf, 0.0]), decimal=3
@@ -30,7 +31,9 @@ class TestLattice(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             lattice.a1, np.array([a * np.sqrt(2), 0.0, 0.0]), decimal=3
         )
-        np.testing.assert_array_almost_equal(lattice.a2, np.array([0, a, 0]), decimal=3)
+        np.testing.assert_array_almost_equal(
+            lattice.a2, np.array([0.0, a, 0.0]), decimal=3
+        )
 
     def test_hex_lattice(self):
         a = 3.84
@@ -44,13 +47,17 @@ class TestLattice(unittest.TestCase):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
+
+        # +90° CCW (right-handed, active)
         lattice.rotate(90)
         np.testing.assert_array_almost_equal(
-            lattice.a1, np.array([0.0, -1.0, 0.0]), decimal=4
+            lattice.a1, np.array([0.0, 1.0, 0.0]), decimal=4
         )
         np.testing.assert_array_almost_equal(
-            lattice.a2, np.array([1.0, 0.0, 0.0]), decimal=4
+            lattice.a2, np.array([-1.0, 0.0, 0.0]), decimal=4
         )
+
+        # back to identity
         lattice.rotate(-90)
         np.testing.assert_array_almost_equal(
             lattice.a1, np.array([1.0, 0.0, 0.0]), decimal=4
@@ -71,11 +78,13 @@ class TestLattice(unittest.TestCase):
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
+
         lattice_copy = lattice.__copy__()
         lattice_deepcopy = lattice.__deepcopy__({})
+
         np.testing.assert_array_equal(lattice.a1, lattice_copy.a1)
         np.testing.assert_array_equal(lattice.a2, lattice_deepcopy.a2)
-        # Ensure they are not the same object
+
         self.assertIsNot(lattice, lattice_copy)
         self.assertIsNot(lattice, lattice_deepcopy)
 
@@ -94,22 +103,24 @@ class TestLattice(unittest.TestCase):
             Lattice([1, 0, 0, 0], [0, 1])
 
     def test_plot_methods(self):
-        # Just check that plotting does not raise exceptions
+        # Ensure plotting does not raise exceptions
         a1 = [1.0, 0.0]
         a2 = [0.0, 1.0]
         lattice = Lattice(a1, a2)
+
         lattice.plot_real()
         lattice.plot_reciprocal()
 
     def test_generate_lattice(self):
-        a1 = np.array([3.84, 0, 0])
-        a2 = np.array([1.92, 3.325, 0])
+        a1 = np.array([3.84, 0.0, 0.0])
+        a2 = np.array([1.92, 3.325, 0.0])
         points = Lattice.generate_lattice(a1, a2, space_size=10.0)
+
         assert points.ndim == 2
         assert points.shape[1] == 3
 
     def test_repr(self):
-        a1 = [3.84, 0]
+        a1 = [3.84, 0.0]
         a2 = [1.92, 3.325]
         lattice = Lattice(a1, a2)
         s = repr(lattice)
@@ -118,11 +129,9 @@ class TestLattice(unittest.TestCase):
     def test_rotation_matrix(self):
         mat = rotation_matrix(90)
         assert mat.shape == (3, 3)
-        # 90 degree rotation should swap x and y
-        v = np.array([1, 0, 0], dtype=np.float32)
+
+        v = np.array([1.0, 0.0, 0.0], dtype=np.float32)
         v_rot = mat @ v
-        assert np.allclose(v_rot[:2], [0, -1], atol=0.001)
 
-
-if __name__ == "__main__":
-    unittest.main()
+        # +90° CCW rotation: x → +y
+        assert np.allclose(v_rot[:2], [0.0, 1.0], atol=1e-3)
