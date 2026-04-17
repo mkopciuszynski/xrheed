@@ -650,6 +650,13 @@ class Ewald:
         for i, scale in enumerate(
             tqdm(scale_vector, disable=tqdm_disable, desc="Matching scales")
         ):
+            logger.info(
+                "Matching scale %d/%d: lattice_scale=%.2f",
+                i + 1,
+                len(scale_vector),
+                scale,
+            )
+
             self.lattice_scale = scale
             self.calculate_ewald()
 
