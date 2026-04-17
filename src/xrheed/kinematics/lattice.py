@@ -498,20 +498,27 @@ class Lattice:
 
 def rotation_matrix(alpha: float = 0.0) -> NDArray[np.float32]:
     """
-    Generate a 3D rotation matrix for a given angle alpha (in degrees) about the z-axis.
+    Construct a 3x3 right-handed rotation matrix representing an active rotation
+    about the global z-axis.
+
+    The rotation follows the right-hand rule: a positive angle corresponds to a
+    counterclockwise rotation when looking along the +z axis toward the origin.
+    The matrix is intended to be applied to 3D column vectors.
 
     Args:
         alpha (float): Rotation angle in degrees.
 
     Returns:
-        NDArray[np.float32]: 3x3 rotation matrix for rotation about the z-axis.
+        NDArray[np.float32]: A 3x3 rotation matrix R_z(alpha) such that:
+            - the z-component remains unchanged,
+            - the x-axis rotates toward the y-axis for alpha > 0.
     """
     alpha_rad = np.float32(np.deg2rad(alpha))
 
     return np.array(
         [
-            [np.cos(alpha_rad), np.sin(alpha_rad), 0.0],
-            [-np.sin(alpha_rad), np.cos(alpha_rad), 0.0],
+            [np.cos(alpha_rad), -np.sin(alpha_rad), 0.0],
+            [np.sin(alpha_rad), np.cos(alpha_rad), 0.0],
             [0.0, 0.0, 1.0],
         ],
         dtype=np.float32,
