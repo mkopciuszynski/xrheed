@@ -17,10 +17,17 @@
   - `image_azimuthal_angle`
   - `ewald_azimuthal_angle`
   - `ewald_azimuthal_rotation`  
-  These distinguish the RHEED image azimuthal orientation (typically defined with respect to high-symmetry directions such as `[11̄-2]`) from the Ewald construction rotation used for rotated lattices (e.g. √7x√7 reconstructions).
+  These distinguish the RHEED image azimuthal orientation (typically defined with respect to high-symmetry directions such as `[11-2]`) from the Ewald construction rotation used for rotated lattices (e.g. √7×√7 reconstructions).
 - Improved line rendering and spot markers in `plot_image()`.
 - Deprecated multi-image transformation to `kxky` with a warning.
 - Updated example notebooks.
+
+### Deprecated
+- Setting `image_azimuthal_angle` directly.
+  The image azimuth is now treated as an immutable experimental reference.
+  A deprecated setter is retained for backward compatibility when the image azimuth
+  is scalar; assignments emit a `DeprecationWarning` and are interpreted as setting
+  `ewald_azimuthal_rotation`.
 
 ### Fixed
 - Corrected FCC primitive vector generation in the `lattice` module.
