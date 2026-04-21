@@ -1,7 +1,7 @@
 # Changelog
 
 <a name="2.1.0"></a>
-## [2.1.0] – 2026-xx-xx
+## [2.1.0] – 2026-04-21
 
 ### Added
 - `show_vectors` option in `plot_real()` to toggle display of basis vector arrows (default: `True`).
