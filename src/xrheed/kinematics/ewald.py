@@ -1,6 +1,7 @@
 import copy
 import logging
 from typing import Optional, Union
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -204,6 +205,30 @@ class Ewald:
         if isinstance(self._image_azimuthal_angle, np.ndarray):
             return self._image_azimuthal_angle[self._stack_index]
         return self._image_azimuthal_angle
+
+    @image_azimuthal_angle.setter
+    def image_azimuthal_angle(self, value: float):
+        """
+        Deprecated setter.
+
+        Historically this modified the azimuthal angle of the image.
+        Now the image azimuthal angle is treated as not mutable physical property.
+        """
+        if isinstance(self._image_azimuthal_angle, np.ndarray):
+            raise TypeError(
+                "image_azimuthal_angle is derived from stacked image metadata "
+                "and cannot be set directly."
+            )
+
+        warnings.warn(
+            "Setting image_azimuthal_angle is deprecated and will be removed "
+            "in a future version. Use ewald_azimuthal_rotation instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        # Interpret old behavior as a relative rotation
+        self.ewald_azimuthal_rotation = float(value) - self._image_azimuthal_angle
 
     @property
     def ewald_azimuthal_rotation(self) -> float:
