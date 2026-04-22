@@ -1,7 +1,7 @@
 # Changelog
 
 <a name="2.1.0"></a>
-## [2.1.0] – 2026-04-21
+## [2.1.0] – 2026-04-23
 
 ### Added
 - `show_vectors` option in `plot_real()` to toggle display of basis vector arrows (default: `True`).
@@ -35,6 +35,7 @@
 - Resolved type issues via explicit `float32` casting.
 - Fixed orientation arrows in geometry figures in the documentation to use single-headed arrows for indicating the positive angular direction.
 - Various minor bug fixes and internal refactors.
+- Fix xarray FutureWarning
 
 ### Improved
 - Improved documentation of the geometry convention to clarify angular definitions and rotation directions.
