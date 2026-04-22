@@ -117,7 +117,7 @@ def high_pass_filter(
             da_slice.values = filtered_slice
             filtered_slices.append(da_slice)
 
-        filtered = xr.concat(filtered_slices, dim=stack_dim)
+        filtered = xr.concat(filtered_slices, dim=stack_dim, coords="minimal")
         filtered = filtered.assign_coords({stack_dim: rheed_data[stack_dim]})
 
     else:
