@@ -5,7 +5,7 @@ import xarray as xr
 from numpy.typing import NDArray
 from scipy.ndimage import gaussian_filter, gaussian_filter1d  # type: ignore
 
-from ..constants import IMAGE_NDIMS, STACK_NDIMS
+from ..constants import IMAGE_NDIMS
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def high_pass_filter(
     sigma: float = 1.0,
 ) -> xr.DataArray:
     """
-    Apply a high-pass filter to a RHEED image or stack using Gaussian filtering.
+    Vectorized high-pass filter to a RHEED image or stack using Gaussian filtering.
 
     Parameters
     ----------
@@ -97,36 +97,30 @@ def high_pass_filter(
     if "screen_scale" not in rheed_data.attrs:
         raise ValueError("rheed_data must have 'screen_scale' attribute")
 
+    # --- Convert sigma to pixels ---
     sigma_px: float = sigma * rheed_data.ri.screen_scale
 
-    # --- Handle single image ---
-    if rheed_data.ndim == IMAGE_NDIMS:
-        filtered_values = _apply_hp_filter(rheed_data.values, threshold, sigma_px)
-        filtered = rheed_data.copy()
-        filtered.values = filtered_values
+    # --- Spatial dims ---
+    if rheed_data.ndim < IMAGE_NDIMS:
+        raise ValueError("Data must be at least 2D")
 
-    # --- Handle stack ---
-    elif rheed_data.ndim == STACK_NDIMS:
-        stack_dim = rheed_data.dims[0]
-        filtered_slices = []
+    spatial_dims = list(rheed_data.dims[-2:])
 
-        for i in range(rheed_data.sizes[stack_dim]):
-            slice_values = rheed_data.isel({stack_dim: i}).values
-            filtered_slice = _apply_hp_filter(slice_values, threshold, sigma_px)
-            da_slice = rheed_data.isel({stack_dim: i}).copy()
-            da_slice.values = filtered_slice
-            filtered_slices.append(da_slice)
+    # --- Apply vectorized ---
+    filtered = xr.apply_ufunc(
+        _high_pass_single_image,
+        rheed_data,
+        kwargs={
+            "sigma_px": sigma_px,
+            "threshold": threshold,
+        },
+        input_core_dims=[spatial_dims],
+        output_core_dims=[spatial_dims],
+        vectorize=True,
+    )
 
-        filtered = xr.concat(filtered_slices, dim=stack_dim, coords="minimal")
-        filtered = filtered.assign_coords({stack_dim: rheed_data[stack_dim]})
-
-    else:
-        raise ValueError(
-            f"rheed_data must be {IMAGE_NDIMS}D or {STACK_NDIMS}D (stack), "
-            f"got {rheed_data.ndim}D"
-        )
-
-    # Set attributes for high-pass filtering
+    # --- Preserve + annotate attrs ---
+    filtered.attrs.update(rheed_data.attrs)
     filtered.attrs.update(
         {
             "hp_filter": True,
@@ -134,32 +128,32 @@ def high_pass_filter(
             "hp_sigma": sigma,
         }
     )
-    logger.info(
-        "high_pass_filter: applied hp filter (threshold=%s sigma=%s) to data with ndim=%s",
-        threshold,
-        sigma,
-        rheed_data.ndim,
-    )
 
     return filtered
 
 
-def _apply_hp_filter(
-    image_values: NDArray, threshold: float, sigma_px: float
-) -> NDArray:
+def _high_pass_single_image(
+    image: np.ndarray,
+    sigma_px: float,
+    threshold: float,
+) -> np.ndarray:
     """
-    Helper function to apply high-pass filter to a single 2D image array.
+    Apply high-pass filter to a single 2D image.
+    """
 
-    Returns clipped uint8 array.
-    """
-    logger.debug(
-        "_apply_hp_filter: sigma_px=%s threshold=%s image_shape=%s",
-        sigma_px,
-        threshold,
-        getattr(image_values, "shape", None),
-    )
-    blurred = gaussian_filter(image_values, sigma=sigma_px)
-    hp_image = image_values - threshold * blurred
-    hp_image -= hp_image.min()
-    hp_image = np.clip(hp_image, 0, 255).astype(np.uint8)
-    return hp_image
+    img = image.astype(np.float32)
+
+    blurred = gaussian_filter(img, sigma=sigma_px, mode="nearest")
+    img = img - threshold * blurred
+
+    # shift to positive
+    img -= img.min()
+
+    # clip to dtype
+    if np.issubdtype(image.dtype, np.integer):
+        info = np.iinfo(image.dtype)
+        img = np.clip(img, info.min, info.max).astype(image.dtype)
+    else:
+        img = img.astype(image.dtype)
+
+    return img
