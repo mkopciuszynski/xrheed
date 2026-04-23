@@ -2,6 +2,8 @@
 Global constants for xrheed.
 """
 
+import numpy as np
+
 # -----------------------------
 # Canonical dimension names
 # -----------------------------
@@ -37,3 +39,9 @@ DEFAULT_ALPHA = 0.0  # degrees
 # -----------------------------
 K_INV_ANGSTROM = 0.5123167219534328  # Å⁻¹ * sqrt(E/eV)
 ANGSTROM = 10**-10  # Å
+MIRROR_ROT_DEG = 180.0
+
+# -----------------------------
+# kx-ky Default grid default k_vect
+# -----------------------------
+DEFAULT_K_VECT = np.linspace(-10.0, 10.0, 2048, dtype=np.float32)
