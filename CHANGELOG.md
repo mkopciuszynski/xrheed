@@ -7,6 +7,7 @@
 - `show_vectors` option in `plot_real()` to toggle display of basis vector arrows (default: `True`).
 - `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice`, with validated setters and on-demand lattice regeneration.
 - `tqdm_disable` argument in matching functions of the `ewald` class to control progress bar visibility (`False` enables `tqdm`).
+- AI generated test for `preparation.filters` module.
 
 ### Changed
 - Legend is now hidden by default in `plot_real()`.
@@ -21,6 +22,7 @@
 - Improved line rendering and spot markers in `plot_image()`.
 - Deprecated multi-image transformation to `kxky` with a warning.
 - Updated example notebooks.
+- Renamed `test_preparation.py` to `test_preparation_alignment.py`.
 
 ### Deprecated
 - Setting `image_azimuthal_angle` directly.
@@ -39,6 +41,7 @@
 
 ### Improved
 - Improved documentation of the geometry convention to clarify angular definitions and rotation directions.
+- Refactored high-pass filter to use vectorized xarray operations and use float-based computations in image filtering.
 
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-11-25
