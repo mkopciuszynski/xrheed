@@ -190,6 +190,9 @@ def _transform_frame_kxky(
     if frame.ndim != IMAGE_NDIMS:
         raise ValueError("_transform_frame_kxky expects a 2D DataArray")
 
+    if not np.issubdtype(frame.dtype, np.floating):
+        frame = frame.astype(np.float32)
+
     transformed = frame.interp(sx=sx, sy=sy, method="linear")
 
     if rotate_angle is not None:
@@ -204,27 +207,21 @@ def _transform_frame_kxky(
 
 
 def _rotate_trans_image(
-    trans_image: xr.DataArray, angle: float, mode: str = "constant"
+    trans_image: xr.DataArray,
+    angle: float,
+    mode: str = "constant",
 ) -> xr.DataArray:
     """
     Rotate a 2D xarray.DataArray around its center by a given angle.
 
-    Parameters
-    ----------
-    rheed_image : xr.DataArray
-        2D image-like DataArray to rotate.
-    angle : float
-        Rotation angle in degrees (counter-clockwise).
-    mode : str
-        How to handle values outside boundaries ('constant', 'nearest', 'reflect', ...).
-
-    Returns
-    -------
-    rotated : xr.DataArray
-        Rotated DataArray with NaNs preserved.
+    Notes
+    -----
+    - Assumes `trans_image` is already floating point (float32).
+    - NaN regions are preserved using an explicit validity mask.
     """
-    if trans_image.ndim != 2:
-        raise ValueError("rotate_xarray expects a 2D DataArray")
+
+    if trans_image.ndim != IMAGE_NDIMS:
+        raise ValueError("_rotate_trans_image expects a 2D DataArray")
 
     logger.debug(
         "called _rotate_trans_image: angle=%.3f mode=%s input_shape=%s",
@@ -233,31 +230,28 @@ def _rotate_trans_image(
         trans_image.shape,
     )
 
-    # Assert that coordinates exist
     if "kx" not in trans_image.coords or "ky" not in trans_image.coords:
-        raise ValueError("rotate_xarray requires coordinates 'kx' and 'ky'")
+        raise ValueError("Rotation requires 'kx' and 'ky' coordinates")
 
-    # Assert that kx and ky are identical
     if not np.allclose(trans_image["kx"].values, trans_image["ky"].values):
-        raise ValueError("rotate_xarray requires kx and ky coordinates to be identical")
+        raise ValueError("kx and ky coordinates must be identical for rotation")
 
-    # Build mask for NaNs
-    nan_mask: NDArray[np.bool_] = ~np.isnan(trans_image.values)
-    filled: xr.DataArray = trans_image.fillna(0)
+    valid_mask: NDArray[np.bool_] = ~np.isnan(trans_image.values)
 
-    # Rotate data and mask
+    filled = trans_image.fillna(0.0)
+
     rotated_data = ndimage.rotate(
-        filled.values, angle, reshape=False, mode=mode, order=3
-    ).astype(trans_image.dtype)
+        filled.values,
+        angle,
+        reshape=False,
+        order=3,
+        mode=mode,
+    )
 
-    rotated_mask: NDArray[np.bool_] = (
-        ndimage.rotate(
-            nan_mask.astype(np.uint8), angle, reshape=False, mode=mode, order=3
-        )
-        > 0
-    ).astype(np.bool)
+    rotated_mask: NDArray[np.bool_] = ndimage.rotate(
+        valid_mask, angle, reshape=False, order=0, mode=mode
+    ).astype(bool)
 
-    # Wrap back into DataArray, reusing same coords/dims
     rotated = xr.DataArray(
         rotated_data,
         coords=trans_image.coords,
