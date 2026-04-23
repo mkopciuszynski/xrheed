@@ -172,9 +172,9 @@ def _rotate_trans_image(
     filled: xr.DataArray = trans_image.fillna(0)
 
     # Rotate data and mask
-    rotated_data: NDArray[np.uint8] = ndimage.rotate(
+    rotated_data = ndimage.rotate(
         filled.values, angle, reshape=False, mode=mode, order=1
-    ).astype(np.uint8)
+    ).astype(trans_image.dtype)
 
     rotated_mask: NDArray[np.bool_] = (
         ndimage.rotate(
