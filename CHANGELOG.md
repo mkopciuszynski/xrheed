@@ -1,13 +1,14 @@
 # Changelog
 
 <a name="2.1.0"></a>
-## [2.1.0] – 2026-04-23
+## [2.1.0] – 2026-04-24
 
 ### Added
 - `show_vectors` option in `plot_real()` to toggle display of basis vector arrows (default: `True`).
 - `real_lattice_size` and `reciprocal_lattice_size` properties in `lattice`, with validated setters and on-demand lattice regeneration.
 - `tqdm_disable` argument in matching functions of the `ewald` class to control progress bar visibility (`False` enables `tqdm`).
 - AI generated test for `preparation.filters` module.
+- New `transform_stack_to_kxky()` function for explicit and efficient transformation of image stacks into kx–ky space.
 
 ### Changed
 - Legend is now hidden by default in `plot_real()`.
@@ -20,28 +21,34 @@
   - `ewald_azimuthal_rotation`  
   These distinguish the RHEED image azimuthal orientation (typically defined with respect to high-symmetry directions such as `[11-2]`) from the Ewald construction rotation used for rotated lattices (e.g. √7×√7 reconstructions).
 - Improved line rendering and spot markers in `plot_image()`.
-- Deprecated multi-image transformation to `kxky` with a warning.
+- Refactored kx–ky image transformations to use a shared frame-level helper function.
+- Allow to pass `k_vect` in transformations.
+- Rotation of images in kx–ky space is now applied only when the required azimuth/alpha information is available.
+- Removed unsafe dtype casting during rotation and improved NaN preservation.
+- Resolved type issues via explicit `float32` casting.
+- Deprecated multi-image transformation via `transform_image_to_kxky()` in favor of explicit stack handling.
 - Updated example notebooks.
 - Renamed `test_preparation.py` to `test_preparation_alignment.py`.
 
 ### Deprecated
-- Setting `image_azimuthal_angle` directly.
-  The image azimuth is now treated as an immutable experimental reference.
+- Setting `image_azimuthal_angle` directly.  
+  The image azimuth is now treated as an immutable experimental reference.  
   A deprecated setter is retained for backward compatibility when the image azimuth
   is scalar; assignments emit a `DeprecationWarning` and are interpreted as setting
   `ewald_azimuthal_rotation`.
+- Passing multi-image stacks to `transform_image_to_kxky()`; users should migrate to `transform_stack_to_kxky()`.
 
 ### Fixed
 - Corrected FCC primitive vector generation in the `lattice` module.
 - Fixed `azimuthal_angle` property handling for single images in image stacks.
 - Resolved type issues via explicit `float32` casting.
 - Fixed orientation arrows in geometry figures in the documentation to use single-headed arrows for indicating the positive angular direction.
+- Fixed xarray `FutureWarning` related to concatenation and coordinate handling.
 - Various minor bug fixes and internal refactors.
-- Fix xarray FutureWarning
 
 ### Improved
 - Improved documentation of the geometry convention to clarify angular definitions and rotation directions.
-- Refactored high-pass filter to use vectorized xarray operations and use float-based computations in image filtering.
+- Refactored high-pass filter to use vectorized xarray operations and float-based computations in image filtering.
 
 <a name="2.0.0"></a>
 ## [2.0.0] – 2025-11-25
