@@ -1,7 +1,7 @@
 import copy
 import logging
-from typing import Optional, Union
 import warnings
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
