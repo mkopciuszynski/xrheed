@@ -13,6 +13,18 @@ from .base import convert_gx_gy_to_sx_sy
 
 logger = logging.getLogger(__name__)
 
+from typing import Literal
+
+InterpMethod = Literal[
+    "linear",
+    "nearest",
+    "zero",
+    "slinear",
+    "quadratic",
+    "cubic",
+    "quintic",
+]
+
 
 def transform_image_to_kxky(
     rheed_image: xr.DataArray,
@@ -20,6 +32,7 @@ def transform_image_to_kxky(
     k_vect: np.ndarray | None = None,
     rotate: bool = True,
     point_symmetry: bool = False,
+    interp_method: InterpMethod = "nearest",
 ) -> xr.DataArray:
     """
     Transform a single RHEED image into kx-ky coordinates.
@@ -82,6 +95,7 @@ def transform_image_to_kxky(
         sy=sy,
         rotate_angle=rotate_angle,
         point_symmetry=point_symmetry,
+        method=interp_method,
     )
 
 
@@ -93,6 +107,7 @@ def transform_stack_to_kxky(
     k_vect: np.ndarray | None = None,
     rotate: bool = True,
     point_symmetry: bool = False,
+    interp_method: InterpMethod = "nearest",
     show_progress: bool = False,
 ) -> xr.DataArray:
     """
@@ -158,6 +173,7 @@ def transform_stack_to_kxky(
             sy=sy,
             rotate_angle=rotate_angle,
             point_symmetry=point_symmetry,
+            method=interp_method,
         )
 
         coord_val = rheed_stack[stack_dim].values[i].item()
@@ -182,6 +198,7 @@ def _transform_frame_kxky(
     sy: xr.DataArray,
     rotate_angle: float | None = None,
     point_symmetry: bool = False,
+    method: InterpMethod,
 ) -> xr.DataArray:
     """
     Transform a single 2D RHEED frame into kx-ky coordinates.
@@ -193,7 +210,7 @@ def _transform_frame_kxky(
     if not np.issubdtype(frame.dtype, np.floating):
         frame = frame.astype(np.float32)
 
-    transformed = frame.interp(sx=sx, sy=sy, method="linear")
+    transformed = frame.interp(sx=sx, sy=sy, method=method)
 
     if rotate_angle is not None:
         transformed = _rotate_trans_image(transformed, rotate_angle)
@@ -247,6 +264,8 @@ def _rotate_trans_image(
         order=3,
         mode=mode,
     )
+
+    rotated_data = np.clip(rotated_data, 0.0, None)
 
     rotated_mask: NDArray[np.bool_] = ndimage.rotate(
         valid_mask, angle, reshape=False, order=0, mode=mode
