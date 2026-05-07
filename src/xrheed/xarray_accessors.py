@@ -22,10 +22,10 @@ from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
 from .constants import (
-    DEFAULT_ALPHA,
-    DEFAULT_BETA,
     DEFAULT_SCREEN_ROI_HEIGHT,
     DEFAULT_SCREEN_ROI_WIDTH,
+    ANALYSIS_DEFAULT_ALPHA,
+    ANALYSIS_DEFAULT_BETA,
     IMAGE_DIMS,
     IMAGE_NDIMS,
     K_INV_ANGSTROM,
@@ -68,44 +68,68 @@ class RHEEDAccessor:
         return float(da.attrs.get("screen_sample_distance", 1.0))
 
     @property
-    def incident_angle(self) -> float:
-        """
-        Incident angle in degrees. Stored in attrs as 'incident_angle'.
-        If present as a coordinate 'beta', returns that instead.
-        """
+    def incident_angle(self) -> Union[float, np.ndarray]:
+        """Incident angle β in degrees."""
         da = self._obj
+
         if "beta" in da.coords:
-            return da.coords["beta"].values
-        return float(da.attrs.get("incident_angle", DEFAULT_BETA))
+            beta = da.coords["beta"].values
+            return float(beta) if beta.ndim == 0 else beta
+
+        if da.ndim == 2:
+            return ANALYSIS_DEFAULT_BETA
+
+        raise ValueError("beta coordinate not found on stacked data. ")
 
     @incident_angle.setter
     def incident_angle(self, value: float) -> None:
-        """Set the incident angle in degrees."""
+        """Set incident angle β in degrees."""
         if not isinstance(value, (int, float)):
             raise ValueError(f"incident_angle must be numeric, got {value!r}")
-        self._obj.attrs["incident_angle"] = float(value)
+
+        da = self._obj
+
+        if "beta" in da.coords and da.coords["beta"].ndim != 0:
+            raise ValueError(
+                "Cannot set scalar incident_angle on data with varying beta. "
+                "Assign coordinates explicitly instead."
+            )
+
+        self._obj = da.assign_coords(beta=float(value))
 
     @property
-    def azimuthal_angle(self) -> Union[float, NDArray]:
-        """
-        Azimuthal angle in degrees. Stored in attrs as 'azimuthal_angle'.
-        If present as a coordinate 'alpha', returns that instead.
-        """
+    def azimuthal_angle(self) -> Union[float, np.ndarray]:
+        """Azimuthal angle alpha in degrees."""
         da = self._obj
+
         if "alpha" in da.coords:
-            return da.coords["alpha"].values
-        return float(da.attrs.get("azimuthal_angle", DEFAULT_ALPHA))
+            alpha = da.coords["alpha"].values
+            return float(alpha) if alpha.ndim == 0 else alpha
+
+        if da.ndim == 2:
+            return ANALYSIS_DEFAULT_ALPHA
+
+        raise ValueError("alpha coordinate not found on stacked data. ")
 
     @azimuthal_angle.setter
     def azimuthal_angle(self, value: float) -> None:
-        """Set the azimuthal angle in degrees."""
+        """Set azimuthal angle alpha in degrees."""
         if not isinstance(value, (int, float)):
             raise ValueError(f"azimuthal_angle must be numeric, got {value!r}")
-        self._obj.attrs["azimuthal_angle"] = float(value)
+
+        da = self._obj
+
+        if "alpha" in da.coords and da.coords["alpha"].ndim != 0:
+            raise ValueError(
+                "Cannot set scalar azimuthal_angle on data with varying alpha. "
+                "Assign coordinates explicitly instead."
+            )
+
+        self._obj = da.assign_coords(alpha=float(value))
 
     @property
-    def beta(self) -> float:
-        """Alias for incident_angle (read/write)."""
+    def beta(self) -> Union[float, np.ndarray]:
+        """Alias for incident_angle."""
         return self.incident_angle
 
     @beta.setter
@@ -113,8 +137,8 @@ class RHEEDAccessor:
         self.incident_angle = value
 
     @property
-    def alpha(self) -> Union[float, NDArray]:
-        """Alias for azimuthal_angle (read/write)."""
+    def alpha(self) -> Union[float, np.ndarray]:
+        """Alias for azimuthal_angle."""
         return self.azimuthal_angle
 
     @alpha.setter

@@ -21,8 +21,8 @@ class DsnpArpesBmpPlugin(LoadRheedBase):
         "screen_center_sx_px": 749,  # horizontal center of an image in px
         "screen_center_sy_px": 70,  # vertical center (shadow edge) in px
         "beam_energy": 19_400,  # eV
-        "azimuthal_angle": 0.0,  # alpha
-        "incident_angle": 2.0,  # beta
+        "alpha": None,  # azimuthal angle [deg]
+        "beta": None,  # incident angle [deg]
     }
 
     def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
@@ -30,6 +30,7 @@ class DsnpArpesBmpPlugin(LoadRheedBase):
         image = Image.open(file_path).convert("L")  # Convert to grayscale
         image_np: NDArray[np.uint8] = np.array(image)
 
-        da = self.dataarray_from_image(image_np)
-
-        return self.add_file_metadata(da, file_path)
+        return self.dataarray_from_image(
+            image_np,
+            file_path=file_path,
+        )

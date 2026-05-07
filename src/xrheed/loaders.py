@@ -1,166 +1,290 @@
 """
-RHEED Data Loader
+RHEED data loading API.
 
-Provides a unified API to load RHEED images either via plugins or manually.
+This module provides a unified entry point for loading RHEED data.
+
+Two loading modes are supported:
+
+1. Plugin-based loading (recommended)
+   - supports single images and stacks
+   - uses registered plugins
+   - reproducible and metadata-driven
+
+2. Manual loading (beginner-friendly)
+   - supports ONLY single-image loading
+   - user provides geometry explicitly
+   - still produces a canonical DataArray
 """
 
-import logging
 from pathlib import Path
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Sequence, Union, Iterable
+import logging
 
 import numpy as np
 import xarray as xr
-from numpy.typing import NDArray
 from PIL import Image
 
-from .constants import CANONICAL_STACK_DIMS
-from .plugins import PLUGINS
+from .plugins import PLUGINS, LoadRheedBase
+from .constants import (
+    IMAGE_DIMS,
+    IMAGE_NDIMS,
+    STACK_NDIMS,
+    CANONICAL_STACK_DIMS,
+)
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["load_data"]
 
-logger = logging.getLogger(__name__)
+
+# ----------------------------------------------------------------------
+# Internal helpers
+# ----------------------------------------------------------------------
+
+
+def _normalize_paths(
+    path: Union[str, Path, Sequence[Union[str, Path]]],
+) -> list[Path]:
+    """Normalize path argument to a non-empty list of Path objects."""
+    if isinstance(path, (str, Path)):
+        paths = [Path(path)]
+    else:
+        paths = [Path(p) for p in path]
+
+    if not paths:
+        raise ValueError("No input paths provided")
+
+    return paths
+
+
+def _validate_single_image_da(da: xr.DataArray) -> None:
+    """Validate that a DataArray represents a canonical single RHEED image."""
+    if da.ndim != IMAGE_NDIMS:
+        raise ValueError(f"Invalid image ndim={da.ndim}, expected {IMAGE_NDIMS}")
+    if set(da.dims) != IMAGE_DIMS:
+        raise ValueError(f"Invalid image dims {set(da.dims)}, expected {IMAGE_DIMS}")
+
+
+# ----------------------------------------------------------------------
+# Plugin-based loading
+# ----------------------------------------------------------------------
+
+
+def _load_plugin_images(
+    paths: Iterable[Path],
+    *,
+    plugin: str,
+    **kwargs,
+) -> list[xr.DataArray]:
+    """Load one or more images via a registered plugin."""
+    if plugin not in PLUGINS:
+        raise ValueError(f"Unknown plugin: {plugin}")
+
+    plugin_cls = PLUGINS[plugin]
+    loader = plugin_cls()
+
+    dataarrays: list[xr.DataArray] = []
+
+    for p in paths:
+        if not loader.is_file_accepted(p):
+            raise ValueError(f"File not accepted by plugin '{plugin}': {p}")
+
+        da = loader.load_single_image(p, **kwargs)
+        _validate_single_image_da(da)
+        dataarrays.append(da)
+
+    return dataarrays
+
+
+# ----------------------------------------------------------------------
+# Manual loading (single image ONLY)
+# ----------------------------------------------------------------------
+
+
+def _load_manual_single_image(
+    path: Path,
+    *,
+    screen_scale: float,
+    screen_center_sy_px: Optional[int] = None,
+    screen_center_sx_px: Optional[int] = None,
+    screen_sample_distance: Optional[float] = None,
+    beam_energy: Optional[float] = None,
+    alpha: Optional[float] = None,
+    beta: Optional[float] = None,
+) -> xr.DataArray:
+    """
+    Manual loading path.
+
+    This is NOT a plugin and does NOT implement the plugin abstract API.
+    The user explicitly supplies geometry and (optional) acquisition parameters.
+
+    Only single-image loading is supported.
+    """
+
+    # --- Load image ---
+    image = Image.open(path).convert("L")
+    image_np = np.asarray(image, dtype=np.uint8)
+    h, w = image_np.shape
+
+    # --- Resolve geometry ---
+    cx = screen_center_sx_px if screen_center_sx_px is not None else w // 2
+    cy = screen_center_sy_px if screen_center_sy_px is not None else h // 2
+    px_to_mm = float(screen_scale)
+
+    sx = (np.arange(w) - cx) / px_to_mm
+    sy = (cy - np.arange(h)) / px_to_mm
+
+    image_np = np.flipud(image_np)
+    sy = np.flip(sy)
+
+    # Assemble attrs directly from manual arguments
+    attrs = {
+        "screen_scale": screen_scale,
+        "screen_center_sx_px": cx,
+        "screen_center_sy_px": cy,
+        "screen_sample_distance": screen_sample_distance,
+        "beam_energy": beam_energy,
+        "alpha": alpha,
+        "beta": beta,
+    }
+
+    # --- Create DataArray ---
+    da = xr.DataArray(
+        image_np,
+        dims=("sy", "sx"),
+        coords={"sy": sy, "sx": sx},
+        attrs=attrs,
+    )
+
+    return da
+
+
+# ----------------------------------------------------------------------
+# Public API
+# ----------------------------------------------------------------------
 
 
 def load_data(
     path: Union[str, Path, Sequence[Union[str, Path]]],
     plugin: Optional[str] = None,
     *,
-    screen_sample_distance: Optional[float] = None,
-    screen_scale: Optional[float] = None,
-    beam_energy: Optional[float] = None,
-    screen_center_sx_px: Optional[int] = None,
-    screen_center_sy_px: Optional[int] = None,
-    alpha: float = 0.0,
-    beta: float = 2.0,
     stack_dim: Optional[str] = None,
-    stack_coords: Optional[Union[Sequence[float], NDArray]] = None,
+    stack_coords: Optional[Sequence] = None,
+    # ---- manual-loading arguments  ----
+    screen_scale: Optional[float] = None,
+    screen_center_sy_px: Optional[int] = None,
+    screen_center_sx_px: Optional[int] = None,
+    screen_sample_distance: Optional[float] = None,
+    beam_energy: Optional[float] = None,
+    alpha: Optional[float] = None,
+    beta: Optional[float] = None,
     **kwargs,
 ) -> xr.DataArray:
     """
-    Load a RHEED image (or a stack of images) using either a plugin or manual parameters.
+    Load RHEED image data.
 
     Parameters
     ----------
-    path : str | Path | list[str|Path]
-        File path (single image) or list of files (stacked images).
-    plugin : str, optional
-        Name of plugin to use. If None, manual mode is assumed.
-    screen_sample_distance, screen_scale, beam_energy : float
-        Required in manual mode.
-    screen_center_sx_px, screen_center_sy_px : int, optional
-        Optional centers in px (default: image midpoints).
-    alpha, beta : float
-        Optional angles.
-    stack_dim : str, optional
-        New dimension name when stacking multiple files.
-    stack_coords : array-like, optional
-        Coordinates for the new dimension.
+    path
+        Path or paths to image files.
+    plugin
+        Name of a registered plugin (recommended).
+        If None, manual loading is used.
+    stack_dim
+        Dimension name for stacking multiple images (plugin mode only).
+    stack_coords
+        Optional coordinate values for the stack dimension.
 
     Returns
     -------
-    xarray.DataArray
-        Image data with coordinates and attributes.
+    xr.DataArray
+        Canonical RHEED DataArray.
     """
 
-    # --- Multi-file case ---
-    if isinstance(path, (list, tuple)):
-        if plugin is None:
-            logger.error("Multi-file loading requested but no plugin specified.")
-            raise ValueError("Multi-file loading is only supported with plugins.")
+    paths = _normalize_paths(path)
 
-        logger.info("Loading %d files with plugin=%s", len(path), plugin)
-        arrays = [load_data(p, plugin=plugin, **kwargs) for p in path]
-
-        if stack_dim is None:
-            logger.error("No stack_dim provided for multi-file loading.")
-            raise ValueError("stack_dim must be provided when loading multiple files.")
-
-        if stack_dim not in CANONICAL_STACK_DIMS:
-            logger.warning(
-                "Non-standard stack dimension '%s'. Consider using one of %s for consistency.",
-                stack_dim,
-                sorted(CANONICAL_STACK_DIMS),
-            )
-
-        da = xr.concat(arrays, dim=stack_dim)
-        if stack_coords is not None:
-            da = da.assign_coords({stack_dim: stack_coords})
-            logger.info(
-                "Concatenating %d images along dimension '%s'", len(arrays), stack_dim
-            )
-
-        return da
-
-    # --- Single-file case ---
-    path = cast(str | Path, path)
-    path = Path(path)
-
-    if plugin is not None:
-        logger.debug("Loading file '%s' using plugin '%s'", path, plugin)
-        plugin_cls = PLUGINS[plugin]
-        plugin_instance = plugin_cls()
-        if not plugin_instance.is_file_accepted(path):
-            logger.error(
-                "File %s not accepted by plugin '%s'. Allowed extensions: %s",
-                path,
-                plugin,
-                plugin_cls.TOLERATED_EXTENSIONS,
-            )
+    # ------------------------------------------------------------------
+    # 1. Manual loading path (single image only)
+    # ------------------------------------------------------------------
+    if plugin is None:
+        if len(paths) != 1:
             raise ValueError(
-                f"File {path} not accepted by plugin '{plugin}'. "
-                f"Allowed extensions: {plugin_cls.TOLERATED_EXTENSIONS}"
+                "Manual loading supports only a single image. "
+                "Use a plugin for multi-image loading."
             )
-        return plugin_instance.load_single_image(path, **kwargs)
 
-    # --- Single-file case - manual mode ---
-    else:
-        logger.info("Loading file '%s' in manual mode.", path)
         if screen_scale is None:
-            logger.error("screen_scale must be provided in manual mode.")
-            raise ValueError("screen_scale must be provided in manual mode.")
-        if screen_sample_distance is None:
-            logger.error("screen_sample_distance must be provided in manual mode.")
-            raise ValueError("screen_sample_distance must be provided in manual mode.")
-        if beam_energy is None:
-            logger.error("beam_energy must be provided in manual mode.")
-            raise ValueError("beam_energy must be provided in manual mode.")
-
-        logger.info("Opening image file '%s' as grayscale.", path)
-        image = Image.open(path).convert("L")
-        image_np: NDArray[np.uint8] = np.array(image, dtype=np.uint8)
-
-        h, w = image_np.shape
-
-        if screen_center_sx_px is None:
-            logger.warning("screen_center_sx_px not provided, using image midpoint.")
-            screen_center_sx_px = w // 2
-        if screen_center_sy_px is None:
-            logger.warning("screen_center_sy_px not provided, using image midpoint.")
-            screen_center_sy_px = h // 2
+            raise ValueError("Manual loading requires screen_scale to be provided")
 
         logger.info(
-            "Calculating physical coordinates for image of shape (%d, %d).", h, w
+            "Using manual loading path (beginner mode). "
+            "Plugin-based loading is recommended for reproducibility."
         )
-        sx = (np.arange(w) - screen_center_sx_px) / screen_scale
-        sy = (screen_center_sy_px - np.arange(h)) / screen_scale
 
-        sy = np.flip(sy)
-        image_np = np.flipud(image_np)
-
-        coords = {"sy": sy, "sx": sx}
-        attrs = dict(
-            plugin="manual",
-            screen_sample_distance=screen_sample_distance,
+        return _load_manual_single_image(
+            paths[0],
             screen_scale=screen_scale,
-            screen_center_sx_px=screen_center_sx_px,
             screen_center_sy_px=screen_center_sy_px,
+            screen_center_sx_px=screen_center_sx_px,
+            screen_sample_distance=screen_sample_distance,
             beam_energy=beam_energy,
             alpha=alpha,
             beta=beta,
-            file_name=path.name,
         )
 
-        logger.info(
-            "Returning DataArray for file '%s' with shape %s.", path, image_np.shape
+    # ------------------------------------------------------------------
+    # 2. Plugin-based loading path
+    # ------------------------------------------------------------------
+    dataarrays = _load_plugin_images(
+        paths,
+        plugin=plugin,
+        **kwargs,
+    )
+
+    # ------------------------------------------------------------------
+    # 3. Single image → return directly
+    # ------------------------------------------------------------------
+    if len(dataarrays) == 1:
+        if stack_dim is not None or stack_coords is not None:
+            raise ValueError("stack_dim / stack_coords provided for a single image")
+        return dataarrays[0]
+
+    # ------------------------------------------------------------------
+    # 4. Multiple images → stacking required
+    # ------------------------------------------------------------------
+    if stack_dim is None:
+        raise ValueError("stack_dim must be provided when loading multiple images")
+
+    if stack_dim not in CANONICAL_STACK_DIMS:
+        logger.warning(
+            f"Non-canonical stack dimension '{stack_dim}'. "
+            "This is allowed but discouraged."
         )
-        return xr.DataArray(image_np, coords=coords, dims=["sy", "sx"], attrs=attrs)
+
+    stacked = xr.concat(dataarrays, dim=stack_dim)
+
+    if stacked.ndim != STACK_NDIMS:
+        raise ValueError(
+            f"Stacked data has ndim={stacked.ndim}, expected {STACK_NDIMS}"
+        )
+
+    # ------------------------------------------------------------------
+    # 5. Assign stack coordinates (structural only)
+    # ------------------------------------------------------------------
+    if stack_coords is not None:
+        if len(stack_coords) != len(dataarrays):
+            raise ValueError("Length of stack_coords does not match number of images")
+        stacked = stacked.assign_coords({stack_dim: stack_coords})
+
+    # ------------------------------------------------------------------
+    # 6. Conservative promotion of acquisition parameters
+    # ------------------------------------------------------------------
+    for key in ("alpha", "beta"):
+        values = [da.attrs.get(key) for da in dataarrays]
+
+        # Promote only if all values exist and they vary
+        if all(v is not None for v in values):
+            if len(set(values)) > 1 and key not in stacked.coords:
+                stacked = stacked.assign_coords({key: (stack_dim, values)})
+
+    return stacked

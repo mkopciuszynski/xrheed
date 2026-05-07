@@ -18,9 +18,9 @@ class DsnpArpesRawPlugin(LoadRheedBase):
         "screen_scale": 9.3112,  # pixels per mm
         "screen_center_sx_px": 740,
         "screen_center_sy_px": 155,
-        "beam_energy": 19_400,  # eV
-        "azimuthal_angle": 0.0,
-        "incident_angle": 2.0,
+        "beam_energy": 19_400,  # eV - constan in all experime
+        "alpha": None,   # azimuthal angle [deg]
+        "beta": None,    # incident angle [deg]
     }
 
     def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
@@ -28,5 +28,7 @@ class DsnpArpesRawPlugin(LoadRheedBase):
         raw = np.fromfile(file_path, dtype=">u2").reshape(1038, 1388)
         image_np = (raw / 256).astype(np.uint8)
 
-        da = self.dataarray_from_image(image_np)
-        return self.add_file_metadata(da, file_path)
+        return self.dataarray_from_image(
+            image_np,
+            file_path=file_path,
+        )
