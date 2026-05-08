@@ -216,6 +216,14 @@ def load_data(
         if screen_scale is None:
             raise ValueError("Manual loading requires screen_scale to be provided")
 
+        if screen_sample_distance is None:
+            raise ValueError(
+                "Manual loading requires screen_sample_distance to be provided"
+            )
+
+        if beam_energy is None:
+            raise ValueError("Manual loading requires beam_energy to be provided")
+
         logger.info(
             "Using manual loading path (beginner mode). "
             "Plugin-based loading is recommended for reproducibility."
