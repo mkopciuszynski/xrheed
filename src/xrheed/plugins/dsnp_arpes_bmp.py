@@ -21,8 +21,6 @@ class DsnpArpesBmpPlugin(LoadRheedBase):
         "screen_center_sx_px": 749,  # horizontal center of an image in px
         "screen_center_sy_px": 70,  # vertical center (shadow edge) in px
         "beam_energy": 19_400,  # eV
-        "alpha": None,  # azimuthal angle [deg]
-        "beta": None,  # incident angle [deg]
     }
 
     def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
