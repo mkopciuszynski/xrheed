@@ -31,8 +31,6 @@ IMAGE_DIMS = {"sy", "sx"}
 # -----------------------------
 DEFAULT_SCREEN_ROI_WIDTH = 50.0  # mm
 DEFAULT_SCREEN_ROI_HEIGHT = 50.0  # mm
-ANALYSIS_DEFAULT_ALPHA = 0.0    # degrees
-ANALYSIS_DEFAULT_BETA = 1.0     # degrees
 
 # -----------------------------
 # Physical constants

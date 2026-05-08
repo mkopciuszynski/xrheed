@@ -99,7 +99,7 @@ not attributes.
 - If angles are provided per image and vary across a stack, they are
   promoted to coordinates by the loader.
 - If angles are missing:
-  - single-image accessors fall back to **analysis defaults**,
+  - single-images returns ``None``, angles might be added via accessors,
   - stacked data requires explicit coordinates and will raise an error.
 
 Returned DataArray
