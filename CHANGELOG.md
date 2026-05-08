@@ -1,5 +1,35 @@
 # Changelog
 
+<a name="2.2.0"></a>
+## [2.2.0] – 2026-05-xx
+
+### Added
+- Added a **reference example plugin** illustrating the recommended, minimal plugin structure and best practices.
+- Added **analysis-only angle defaults**:
+  - `ANALYSIS_DEFAULT_ALPHA`
+  - `ANALYSIS_DEFAULT_BETA`
+  used only as single-image fallbacks in accessors.
+
+### Fixed
+- Removed **hardcoded default angle values** from the loading pipeline:
+  - missing acquisition parameters are now represented as `None`,
+  - physical defaults are no longer implicitly injected during loading.
+- Fixed inconsistent behavior when accessing angles on stacked data without coordinates.
+
+### Improved
+- Improved clarity and robustness of the loading system without changing its core API.
+- Improved **geometry handling** by making default and instrument-specific assumptions explicit.
+- **Improved internal representation of angles**:
+  - `alpha` and `beta` are no longer stored as attrs,
+  - acquisition angles are consistently promoted to **coordinates** when present,
+  - this ensures correct semantics for stacking, slicing, and downstream analysis.
+- Improved `alpha` / `beta` accessors:
+  - clear distinction between standardized coordinate data and analysis fallbacks,
+  - stricter and more predictable setter behavior,
+  - simpler and more explicit implementation.
+- Updated data-loading documentation to reflect recent internal refinements
+
+
 <a name="2.1.0"></a>
 ## [2.1.0] – 2026-04-24
 
