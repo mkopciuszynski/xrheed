@@ -4,11 +4,12 @@ features from RHEED data.
 
 """
 
-from .peaks import filter_kspace_peaks
+from .peaks import filter_kspace_peaks, plot_detected_peaks
 
 # future:
 # from .profiles import fit_profile_peaks
 
 __all__ = [
     "filter_kspace_peaks",
+    "plot_detected_peaks",
 ]

@@ -111,7 +111,7 @@ def _process_image(
     min_peak_distance: float,
     peak_percentile: float,
     peak_width: float,
-) -> xr.DataArray:
+) -> tuple[xr.DataArray, xr.DataArray]:
     """
     Full processing pipeline for a single image (physical → pixel).
 
@@ -142,18 +142,38 @@ def _process_image(
     # 2D Gaussian: G_max = 1 / (2πσ²)
     normalization = 2.0 * np.pi * peak_width_px**2
 
-    reconstructed = (
-        _reconstruct_from_peaks_pixel(peaks, sigma=peak_width_px)
-        * normalization
+    peak_indices = np.argwhere(peak_mask)
+
+    kx_vals = data.coords["kx"].values
+    ky_vals = data.coords["ky"].values
+
+    peak_kx = kx_vals[peak_indices[:, 0]]
+    peak_ky = ky_vals[peak_indices[:, 1]]
+    peak_amp = data.values[peak_mask]
+
+    peaks_da = xr.DataArray(
+        peak_amp,
+        dims=("peak",),
+        coords={
+            "kx": ("peak", peak_kx),
+            "ky": ("peak", peak_ky),
+        },
+        name="peaks",
     )
 
-    return xr.DataArray(
+    reconstructed = (
+        _reconstruct_from_peaks_pixel(peaks, sigma=peak_width_px) * normalization
+    )
+
+    reconstructed_da = xr.DataArray(
         reconstructed,
         coords=data.coords,
         dims=data.dims,
         attrs=data.attrs,
         name=data.name,
     )
+
+    return (reconstructed_da, peaks_da)
 
 
 # ---------------------------------------------------------------------
@@ -169,25 +189,27 @@ def filter_kspace_peaks(
     peak_percentile: float,
     peak_width: float,
     show_progress: bool = False,
-) -> xr.DataArray:
+    return_peaks: bool = False,
+):
     """
     Filter k-space data by retaining only significant diffraction peaks.
 
-    Replaces experimental peak shapes with idealized Gaussian peaks while
-    preserving peak positions and amplitudes.
-
-    Parameters are expressed in physical k-space units.
+    Optionally returns detected peak coordinates.
     """
 
     # --- single image ---
     if data.ndim == IMAGE_NDIMS:
-        return _process_image(
+        reconstructed, peaks = _process_image(
             data,
             sigma_smooth=sigma_smooth,
             min_peak_distance=min_peak_distance,
             peak_percentile=peak_percentile,
             peak_width=peak_width,
         )
+
+        if return_peaks:
+            return reconstructed, peaks
+        return reconstructed
 
     # --- stack ---
     elif data.ndim == STACK_NDIMS:
@@ -198,18 +220,76 @@ def filter_kspace_peaks(
         if show_progress:
             iterator = tqdm(iterator, desc="Filtering k-space peaks")
 
-        processed = [
-            _process_image(
+        reconstructed_list: list[xr.DataArray] = []
+        peaks_list: list[xr.DataArray] = []
+
+        for i in iterator:
+            rec, peaks = _process_image(
                 data.isel({stack_dim: i}),
                 sigma_smooth=sigma_smooth,
                 min_peak_distance=min_peak_distance,
                 peak_percentile=peak_percentile,
                 peak_width=peak_width,
             )
-            for i in iterator
-        ]
 
-        return xr.concat(processed, dim=stack_dim)
+            reconstructed_list.append(rec)
+            peaks_list.append(peaks)
+
+        reconstructed_stack = xr.concat(reconstructed_list, dim=stack_dim)
+
+        if not return_peaks:
+            return reconstructed_stack
+
+        return reconstructed_stack, peaks_list
 
     else:
         raise ValueError("Input must be a 2D image or 3D stack.")
+
+
+def plot_detected_peaks(
+    data: xr.DataArray,
+    peaks: xr.DataArray,
+    *,
+    ax=None,
+    vmin=None,
+    vmax=None,
+    **scatter_kwargs,
+):
+    """
+    Plot k-space image with detected peaks overlaid.
+    """
+
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        ax = plt.gca()
+
+    if scatter_kwargs is None:
+        scatter_kwargs = {}
+
+    data.plot(
+        ax=ax,
+        vmin=vmin,
+        vmax=vmax,
+        add_colorbar=False,
+    )
+
+    ax.set_title("")
+
+    scatter_kwargs.setdefault("marker", "o")
+    scatter_kwargs.setdefault("s", 50)
+    scatter_kwargs.setdefault("edgecolors", "white")
+    scatter_kwargs.setdefault("linewidths", 0.5)
+    scatter_kwargs.setdefault("facecolors", "none")
+
+    ax.scatter(
+        peaks.coords["ky"].values,
+        peaks.coords["kx"].values,
+        **scatter_kwargs,
+    )
+
+    ax.set_aspect("equal")
+    ax.set_xlabel("$k_y$ (1/Å)")
+    ax.set_ylabel("$k_x$ (1/Å)")
+
+    return ax
