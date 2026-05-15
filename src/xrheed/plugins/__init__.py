@@ -1,5 +1,10 @@
 """
 Plugin system for RHEED data loading.
+
+Design principles:
+- Plugins describe how to load: pixels, optional metadata.
+- A single canonical constructor creates valid RHEED DataArrays.
+- File provenance is always attached automatically.
 """
 
 import abc
@@ -35,42 +40,102 @@ class LoadRheedBase(abc.ABC):
         return file_path.suffix.lower() in self.TOLERATED_EXTENSIONS
 
     @abc.abstractmethod
-    def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray: ...
+    def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
+        """
+        Load a single image and return a canonical RHEED DataArray.
 
-    def add_file_metadata(self, da: xr.DataArray, file_path: Path) -> xr.DataArray:
-        """Attach common metadata (file name, creation time) to attrs."""
-        da.attrs["file_name"] = file_path.name
-        try:
-            stat = Path(file_path).stat()
-            ctime = stat.st_mtime  # Use modification time
-            da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(ctime).strftime(
-                "%Y-%m-%d, %H:%M:%S"
-            )
-        except Exception:
-            pass
-        return da
+        Implementations MUST call `self.dataarray_from_image(...)`
+        exactly once and return its result.
+        """
+        raise NotImplementedError
 
     def dataarray_from_image(
         self,
         image_np: np.ndarray,
+        *,
+        file_path: Optional[Path] = None,
         attrs_override: Optional[Dict[str, Any]] = None,
         flip: bool = True,
     ) -> xr.DataArray:
         """
-        Helper to create DataArray from a numpy image, using ATTRS scaling and centers.
-        Plugins may use or override this.
+        Construct a canonical RHEED DataArray from an image.
+
+        Responsibilities:
+        - merge default attrs with overrides
+        - resolve geometry (including screen center)
+        - construct sx / sy coordinates
+        - attach file provenance automatically
         """
-        px_to_mm = float(self.ATTRS["screen_scale"])
+
+        if image_np.ndim != 2:
+            raise ValueError("RHEED image must be a 2D array")
+
+        # --------------------------------------------------------------
+        # 1. Merge attributes
+        # --------------------------------------------------------------
+        attrs: Dict[str, Any] = dict(self.ATTRS)
+        if attrs_override:
+            attrs.update(attrs_override)
+
+        # --------------------------------------------------------------
+        # 2. Validate required geometry
+        # --------------------------------------------------------------
+        screen_scale = attrs.get("screen_scale")
+        if screen_scale is None:
+            raise ValueError(
+                "screen_scale must be defined to construct RHEED coordinates"
+            )
+
+        px_to_mm = float(screen_scale)
         h, w = image_np.shape
 
-        sx = (np.arange(w) - self.ATTRS.get("screen_center_sx_px", w // 2)) / px_to_mm
-        sy = (self.ATTRS.get("screen_center_sy_px", h // 2) - np.arange(h)) / px_to_mm
+        # --------------------------------------------------------------
+        # 3. Resolve screen center (None → image center)
+        # --------------------------------------------------------------
+        cx = attrs.get("screen_center_sx_px")
+        cy = attrs.get("screen_center_sy_px")
+
+        if cx is None:
+            cx = w // 2
+        if cy is None:
+            cy = h // 2
+
+        # --------------------------------------------------------------
+        # 4. Construct coordinates
+        # --------------------------------------------------------------
+        sx = (np.arange(w) - cx) / px_to_mm
+        sy = (cy - np.arange(h)) / px_to_mm
 
         if flip:
             sy = np.flip(sy)
             image_np = np.flipud(image_np)
 
-        coords = {"sy": sy, "sx": sx}
-        attrs = {**self.ATTRS, **(attrs_override or {})}
+        # --------------------------------------------------------------
+        # 5. Create DataArray
+        # --------------------------------------------------------------
+        da = xr.DataArray(
+            image_np,
+            dims=("sy", "sx"),
+            coords={"sy": sy, "sx": sx},
+            attrs=attrs,
+        )
 
-        return xr.DataArray(image_np, coords=coords, dims=["sy", "sx"], attrs=attrs)
+        # --------------------------------------------------------------
+        # 6. Attach file metadata (provenance)
+        # --------------------------------------------------------------
+        if file_path is not None:
+            da = self._attach_file_metadata(da, file_path)
+
+        return da
+
+    def _attach_file_metadata(self, da: xr.DataArray, file_path: Path) -> xr.DataArray:
+        """Attach file provenance metadata to attrs."""
+        da.attrs["file_name"] = file_path.name
+        try:
+            stat = file_path.stat()
+            da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(
+                stat.st_mtime
+            ).strftime("%Y-%m-%d, %H:%M:%S")
+        except Exception:
+            pass
+        return da

@@ -65,11 +65,9 @@ def plot_image(
         ax.axhline(y=0.0, linewidth=1.0, color="c", linestyle="-", alpha=0.8)
         ax.axvline(x=0.0, linewidth=1.0, color="c", linestyle="-", alpha=0.8)
 
-    if show_specular_spot:
-        specular_y = (
-            -np.tan(np.deg2rad(rheed_image.ri.beta))
-            * rheed_image.ri.screen_sample_distance
-        )
+    beta = rheed_image.ri.beta
+    if show_specular_spot and beta is not None:
+        specular_y = -np.tan(np.deg2rad(beta)) * rheed_image.ri.screen_sample_distance
         ax.scatter(
             0.0, specular_y, marker="o", edgecolors="c", facecolors="none", s=100
         )

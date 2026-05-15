@@ -18,12 +18,9 @@ import numpy as np
 import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
-from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
 from .constants import (
-    DEFAULT_ALPHA,
-    DEFAULT_BETA,
     DEFAULT_SCREEN_ROI_HEIGHT,
     DEFAULT_SCREEN_ROI_WIDTH,
     IMAGE_DIMS,
@@ -68,58 +65,80 @@ class RHEEDAccessor:
         return float(da.attrs.get("screen_sample_distance", 1.0))
 
     @property
-    def incident_angle(self) -> float:
-        """
-        Incident angle in degrees. Stored in attrs as 'incident_angle'.
-        If present as a coordinate 'beta', returns that instead.
-        """
+    def beta(self) -> Union[float, np.ndarray, None]:
+        """Incident angle beta in degrees."""
         da = self._obj
+
         if "beta" in da.coords:
-            return da.coords["beta"].values
-        return float(da.attrs.get("incident_angle", DEFAULT_BETA))
-
-    @incident_angle.setter
-    def incident_angle(self, value: float) -> None:
-        """Set the incident angle in degrees."""
-        if not isinstance(value, (int, float)):
-            raise ValueError(f"incident_angle must be numeric, got {value!r}")
-        self._obj.attrs["incident_angle"] = float(value)
-
-    @property
-    def azimuthal_angle(self) -> Union[float, NDArray]:
-        """
-        Azimuthal angle in degrees. Stored in attrs as 'azimuthal_angle'.
-        If present as a coordinate 'alpha', returns that instead.
-        """
-        da = self._obj
-        if "alpha" in da.coords:
-            return da.coords["alpha"].values
-        return float(da.attrs.get("azimuthal_angle", DEFAULT_ALPHA))
-
-    @azimuthal_angle.setter
-    def azimuthal_angle(self, value: float) -> None:
-        """Set the azimuthal angle in degrees."""
-        if not isinstance(value, (int, float)):
-            raise ValueError(f"azimuthal_angle must be numeric, got {value!r}")
-        self._obj.attrs["azimuthal_angle"] = float(value)
-
-    @property
-    def beta(self) -> float:
-        """Alias for incident_angle (read/write)."""
-        return self.incident_angle
+            values = da.coords["beta"].values
+            return float(values) if values.ndim == 0 else values
+        else:
+            return None
 
     @beta.setter
     def beta(self, value: float) -> None:
-        self.incident_angle = value
+        """Set incident angle beta in degrees."""
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"beta must be numeric, got {value!r}")
+
+        da = self._obj
+
+        if "beta" in da.coords and da.coords["beta"].ndim != 0:
+            raise ValueError(
+                "Cannot set scalar beta on data with varying beta. "
+                "Assign coordinates explicitly instead."
+            )
+
+        da.coords["beta"] = float(value)
 
     @property
-    def alpha(self) -> Union[float, NDArray]:
-        """Alias for azimuthal_angle (read/write)."""
-        return self.azimuthal_angle
+    def alpha(self) -> Union[float, np.ndarray, None]:
+        """Azimuthal angle alpha in degrees."""
+        da = self._obj
+
+        if "alpha" in da.coords:
+            values = da.coords["alpha"].values
+            return float(values) if values.ndim == 0 else values
+        else:
+            return None
 
     @alpha.setter
     def alpha(self, value: float) -> None:
-        self.azimuthal_angle = value
+        """Set azimuthal angle alpha in degrees."""
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"alpha must be numeric, got {value!r}")
+
+        da = self._obj
+
+        if "alpha" in da.coords and da.coords["alpha"].ndim != 0:
+            raise ValueError(
+                "Cannot set scalar alpha on data with varying alpha. "
+                "Assign coordinates explicitly instead."
+            )
+
+        da.coords["alpha"] = float(value)
+
+    # ------------------------------------------------------------------
+    # Semantic aliases
+    # ------------------------------------------------------------------
+
+    @property
+    def incident_angle(self) -> Union[float, np.ndarray, None]:
+        """Alias for beta (incident angle)."""
+        return self.beta
+
+    @incident_angle.setter
+    def incident_angle(self, value: float) -> None:
+        self.beta = value
+
+    @property
+    def azimuthal_angle(self) -> Union[float, np.ndarray, None]:
+        """Alias for alpha (azimuthal angle)."""
+        return self.alpha
+
+    @azimuthal_angle.setter
+    def azimuthal_angle(self, value: float) -> None:
+        self.alpha = value
 
     @property
     def screen_scale(self) -> float:
@@ -205,9 +224,15 @@ class RHEEDAccessor:
             raise ValueError("Beam energy is not set.")
         return np.sqrt(beam_energy) * K_INV_ANGSTROM
 
-    # ---- Methods ----
     def __repr__(self) -> str:
         da = self._obj
+
+        beta = self.incident_angle
+        alpha = self.azimuthal_angle
+
+        beta_str = "None" if beta is None else f"{beta:.2f} deg"
+        alpha_str = "None" if alpha is None else f"{alpha:.2f} deg"
+
         return (
             f"<RHEEDAccessor>\n"
             f"  File name: {da.attrs.get('file_name', 'N/A')}\n"
@@ -215,8 +240,8 @@ class RHEEDAccessor:
             f"  Image shape: {da.shape}\n"
             f"  Screen scale: {self.screen_scale} px/mm\n"
             f"  Screen sample distance: {self.screen_sample_distance} mm\n"
-            f"  Incident (beta) angle: {self.incident_angle:.2f} deg\n"
-            f"  Azimuthal (alpha) angle: {self.azimuthal_angle:.2f} deg\n"
+            f"  Incident (beta) angle: {beta_str}\n"
+            f"  Azimuthal (alpha) angle: {alpha_str}\n"
             f"  Beam Energy: {self.beam_energy} eV\n"
         )
 
