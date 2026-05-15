@@ -5,10 +5,6 @@
 
 ### Added
 - Added a **reference example plugin** illustrating the recommended, minimal plugin structure and best practices.
-- Added **analysis-only angle defaults**:
-  - `ANALYSIS_DEFAULT_ALPHA`
-  - `ANALYSIS_DEFAULT_BETA`
-  used only as single-image fallbacks in accessors.
 
 ### Fixed
 - Removed **hardcoded default angle values** from the loading pipeline:
@@ -23,12 +19,11 @@
   - `alpha` and `beta` are no longer stored as attrs,
   - acquisition angles are consistently promoted to **coordinates** when present,
   - this ensures correct semantics for stacking, slicing, and downstream analysis.
-- Improved `alpha` / `beta` accessors:
-  - clear distinction between standardized coordinate data and analysis fallbacks,
-  - stricter and more predictable setter behavior,
-  - simpler and more explicit implementation.
-- Updated data-loading documentation to reflect recent internal refinements
+- Improved `alpha` / `beta` accessors.
+- Updated data-loading documentation to reflect recent internal refinements.
 
+### Removed
+- Removed default azimuthal and incident angles added where the data was missing
 
 <a name="2.1.0"></a>
 ## [2.1.0] – 2026-04-24
