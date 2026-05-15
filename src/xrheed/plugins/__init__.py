@@ -49,7 +49,6 @@ class LoadRheedBase(abc.ABC):
         """
         raise NotImplementedError
 
-
     def dataarray_from_image(
         self,
         image_np: np.ndarray,

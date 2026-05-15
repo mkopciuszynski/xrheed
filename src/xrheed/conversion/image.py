@@ -1,6 +1,6 @@
 import logging
 import warnings
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import xarray as xr
@@ -13,7 +13,6 @@ from .base import convert_gx_gy_to_sx_sy
 
 logger = logging.getLogger(__name__)
 
-from typing import Literal
 
 InterpMethod = Literal[
     "linear",

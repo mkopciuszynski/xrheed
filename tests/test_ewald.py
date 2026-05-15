@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-
 import xrheed
 from xrheed.kinematics.ewald import Ewald
 from xrheed.kinematics.lattice import Lattice

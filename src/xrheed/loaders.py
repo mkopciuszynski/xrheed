@@ -16,21 +16,16 @@ Two loading modes are supported:
    - still produces a canonical DataArray
 """
 
-from pathlib import Path
-from typing import Optional, Sequence, Union, Iterable
 import logging
+from pathlib import Path
+from typing import Iterable, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
 from PIL import Image
 
-from .plugins import PLUGINS, LoadRheedBase
-from .constants import (
-    IMAGE_DIMS,
-    IMAGE_NDIMS,
-    STACK_NDIMS,
-    CANONICAL_STACK_DIMS,
-)
+from .constants import CANONICAL_STACK_DIMS, IMAGE_DIMS, IMAGE_NDIMS, STACK_NDIMS
+from .plugins import PLUGINS
 
 logger = logging.getLogger(__name__)
 

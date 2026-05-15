@@ -18,7 +18,6 @@ import numpy as np
 import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
-from numpy.typing import NDArray
 from scipy import ndimage  # type: ignore
 
 from .constants import (
@@ -226,7 +225,6 @@ class RHEEDAccessor:
         return np.sqrt(beam_energy) * K_INV_ANGSTROM
 
     def __repr__(self) -> str:
-
         da = self._obj
 
         beta = self.incident_angle
