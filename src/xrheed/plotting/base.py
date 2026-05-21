@@ -80,6 +80,7 @@ def plot_image(
 
     ax.set_xlim(-roi_width, roi_width)
     ax.set_ylim(-roi_height, rheed_image.sy.max())
+    ax.set_title("")
     ax.set_xlabel("Screen X (mm)")
     ax.set_ylabel("Screen Y (mm)")
 
