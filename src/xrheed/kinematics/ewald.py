@@ -1,7 +1,7 @@
 import copy
 import logging
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,9 +50,26 @@ class Ewald:
     controlled relative rotation of the theoretical Ewald construction.
     """
 
-    # Class constants
     SPOT_WIDTH_MM: float = 1.5
     SPOT_HEIGHT_MM: float = 5.0
+
+    NO_IMAGE_DEFAULTS = {
+        "beam_energy": 18_600.0,
+        "screen_sample_distance": 309.2,
+        "screen_scale": 9.5,
+        "screen_roi_width": 60.0,
+        "screen_roi_height": 80.0,
+        "incident_angle": 1.0,
+        "azimuthal_angle": 0.0,
+    }
+
+    REQUIRED_IMAGE_ATTRS = (
+        "beam_energy",
+        "screen_sample_distance",
+        "screen_scale",
+        "incident_angle",
+        "azimuthal_angle",
+    )
 
     def __init__(
         self,
@@ -60,77 +77,23 @@ class Ewald:
         image: Optional[xr.DataArray] = None,
         stack_index: int = 0,
     ) -> None:
-        """
-        Initialize an Ewald object for RHEED spot calculations.
-
-        Parameters
-        ----------
-        lattice : Lattice
-            Lattice object representing the crystal structure.
-        image : Optional[xr.DataArray], optional
-            RHEED image data. Can be a single image or a stack of images. If None,
-            default values are used.
-        stack_index : int, optional
-            Index of the image to use from a stack (default is 0).
-        """
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
 
+        self.image: Optional[xr.DataArray] = None
+        self._image_data_available: bool = False
+
         if image is None:
-            logger.warning("RHEED image not provided, default parameters are loaded.")
-            self.image: Optional[xr.DataArray] = None
-            self.beam_energy: float = 18_600.0
-            self.screen_sample_distance: float = 309.2
-            self.screen_scale: float = 9.5
-            self.screen_roi_width: float = 60
-            self.screen_roi_height: float = 80
-            self._incident_angle: Union[float, NDArray[np.float32]] = 1.0
-            self._image_azimuthal_angle: Union[float, NDArray[np.float32]] = 0.0
-            self._image_data_available: bool = False
+            self._initialize_without_image()
         else:
-            if image.ndim == IMAGE_NDIMS:
-                self.image = image.copy()
-            elif image.ndim == STACK_NDIMS:
-                self._image_stack = image.copy()
-                self.image = self._image_stack[stack_index]
+            self._initialize_from_image(image, stack_index)
 
-            self.beam_energy = float(image.ri.beam_energy)
-            self.screen_sample_distance = float(image.ri.screen_sample_distance)
-            self.screen_scale = float(image.ri.screen_scale)
-            self.screen_roi_width = float(image.ri.screen_roi_width)
-            self.screen_roi_height = float(image.ri.screen_roi_height)
-
-            self._incident_angle = image.ri.incident_angle
-            self._image_azimuthal_angle = image.ri.azimuthal_angle
-            self._image_data_available = True
-
-        self._lattice_scale: float = 1.0
-
-        self._spot_w_px: int = int(self.SPOT_WIDTH_MM * self.screen_scale)
-        self._spot_h_px: int = int(self.SPOT_HEIGHT_MM * self.screen_scale)
-        self.spot_structure: NDArray[np.bool_] = self._generate_spot_structure()
-
-        self.shift_x: float = 0.0
-        self.shift_y: float = 0.0
-        self.fine_scaling: float = 1.0
-
-        self.ewald_radius: float = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
-        self._ewald_roi: float = self._calc_ewald_roi()
-        self._ewald_azimuthal_rotation: float = 0.0
-
-        self._lattice: Lattice = copy.deepcopy(lattice)
-        self._inverse_lattice: NDArray[np.float32] = self._prepare_inverse_lattice()
-        self.label: Optional[str] = lattice.label
-
-        self.mirror_symmetry: bool = False
-        self.ew_sx: NDArray[np.float32]
-        self.ew_sy: NDArray[np.float32]
-
-        self.use_cache: bool = True
-        self.cache_dir: str = "cache"
-        self.cache_key: Optional[str] = None
+        self._initialize_geometry()
+        self._initialize_lattice(lattice)
+        self._initialize_cache()
 
         self.calculate_ewald()
+
         logger.info(
             "Initialized Ewald: label=%s image_provided=%s beam_energy=%.1f screen_scale=%.2f",
             self.label,
@@ -138,6 +101,97 @@ class Ewald:
             self.beam_energy,
             self.screen_scale,
         )
+
+    def _initialize_without_image(self) -> None:
+        logger.warning("RHEED image not provided, default parameters are loaded.")
+
+        self.beam_energy = self.NO_IMAGE_DEFAULTS["beam_energy"]
+        self.screen_sample_distance = self.NO_IMAGE_DEFAULTS["screen_sample_distance"]
+        self.screen_scale = self.NO_IMAGE_DEFAULTS["screen_scale"]
+        self.screen_roi_width = self.NO_IMAGE_DEFAULTS["screen_roi_width"]
+        self.screen_roi_height = self.NO_IMAGE_DEFAULTS["screen_roi_height"]
+
+        self._incident_angle = self.NO_IMAGE_DEFAULTS["incident_angle"]
+        self._image_azimuthal_angle = self.NO_IMAGE_DEFAULTS["azimuthal_angle"]
+
+    def _initialize_from_image(
+        self,
+        image: xr.DataArray,
+        stack_index: int,
+    ) -> None:
+        if image.ndim == IMAGE_NDIMS:
+            self.image = image.copy()
+
+        elif image.ndim == STACK_NDIMS:
+            self._image_stack = image.copy()
+            self.image = self._image_stack[stack_index]
+
+        else:
+            raise ValueError(
+                f"Invalid RHEED image input.\n"
+                f"Expected DataArray with ndim={IMAGE_NDIMS} or {STACK_NDIMS}, "
+                f"but got ndim={getattr(image, 'ndim', None)}."
+            )
+
+        assert self.image is not None
+
+        missing = [
+            attr
+            for attr in self.REQUIRED_IMAGE_ATTRS
+            if getattr(self.image.ri, attr, None) is None
+        ]
+
+        if missing:
+            raise ValueError(
+                "Invalid RHEED image: missing required RI metadata attributes.\n"
+                f"Missing attributes: {', '.join(missing)}\n"
+            )
+
+        self.beam_energy = float(self.image.ri.beam_energy)
+        self.screen_sample_distance = float(self.image.ri.screen_sample_distance)
+        self.screen_scale = float(self.image.ri.screen_scale)
+
+        self.screen_roi_width = float(self.image.ri.screen_roi_width)
+        self.screen_roi_height = float(self.image.ri.screen_roi_height)
+
+        self._incident_angle = self.image.ri.incident_angle
+        self._image_azimuthal_angle = self.image.ri.azimuthal_angle
+
+        self._image_data_available = True
+
+    def _initialize_geometry(self) -> None:
+        self._lattice_scale: float = 1.0
+
+        self._spot_w_px = int(self.SPOT_WIDTH_MM * self.screen_scale)
+        self._spot_h_px = int(self.SPOT_HEIGHT_MM * self.screen_scale)
+
+        self.spot_structure = self._generate_spot_structure()
+
+        self.shift_x = 0.0
+        self.shift_y = 0.0
+        self.fine_scaling = 1.0
+
+        self.ewald_radius = np.sqrt(self.beam_energy) * K_INV_ANGSTROM
+
+        self._ewald_roi = self._calc_ewald_roi()
+        self._ewald_azimuthal_rotation = 0.0
+
+        self.mirror_symmetry = False
+
+    def _initialize_lattice(self, lattice: Lattice) -> None:
+        self._lattice = copy.deepcopy(lattice)
+
+        self._inverse_lattice = self._prepare_inverse_lattice()
+
+        self.label = lattice.label
+
+        self.ew_sx: NDArray[np.float32]
+        self.ew_sy: NDArray[np.float32]
+
+    def _initialize_cache(self) -> None:
+        self.use_cache = True
+        self.cache_dir = "cache"
+        self.cache_key = None
 
     def __repr__(self) -> str:
         return (
