@@ -21,6 +21,7 @@
   - this ensures correct semantics for stacking, slicing, and downstream analysis.
 - Improved `alpha` / `beta` accessors.
 - Updated data-loading documentation to reflect recent internal refinements.
+- Refactored and improved the Ewald constructor structure; added validation of required RHEED image metadata parameters.
 
 ### Removed
 - Removed default azimuthal and incident angles added where the data was missing
