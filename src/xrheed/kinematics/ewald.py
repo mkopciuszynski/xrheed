@@ -8,13 +8,18 @@ import numpy as np
 import xarray as xr
 from matplotlib.axes import Axes
 from numpy.typing import NDArray
-from scipy import ndimage  # type: ignore
-from tqdm.auto import tqdm
 
 from ..constants import IMAGE_NDIMS, K_INV_ANGSTROM, STACK_NDIMS
 from ..conversion.base import convert_gx_gy_to_sx_sy
 from ..plotting.base import plot_image
-from .cache_utils import smart_cache
+from .ewald_matching import (
+    calculate_match,
+    generate_mask,
+    generate_spot_structure,
+    match_alpha,
+    match_alpha_scale,
+    match_scale,
+)
 from .lattice import Lattice, rotation_matrix
 
 logger = logging.getLogger(__name__)
@@ -165,7 +170,10 @@ class Ewald:
         self._spot_w_px = int(self.SPOT_WIDTH_MM * self.screen_scale)
         self._spot_h_px = int(self.SPOT_HEIGHT_MM * self.screen_scale)
 
-        self.spot_structure = self._generate_spot_structure()
+        self.spot_structure = generate_spot_structure(
+            self._spot_w_px,
+            self._spot_h_px,
+        )
 
         self.shift_x = 0.0
         self.shift_y = 0.0
@@ -332,7 +340,10 @@ class Ewald:
         """
         self._spot_w_px = int(width * self.screen_scale)
         self._spot_h_px = int(height * self.screen_scale)
-        self.spot_structure = self._generate_spot_structure()
+        self.spot_structure = generate_spot_structure(
+            self._spot_w_px,
+            self._spot_h_px,
+        )
 
     def calculate_ewald(self, **kwargs) -> None:
         """
@@ -575,199 +586,6 @@ class Ewald:
 
         return ax
 
-    def calculate_match(self, normalize: bool = True) -> np.uint32:
-        """
-        Calculate the match coefficient between predicted and observed spots.
-
-        Parameters
-        ----------
-        normalize : bool
-            If True, normalize the coefficient by the number of spots.
-
-        Returns
-        -------
-        np.uint32
-            Match coefficient.
-        """
-
-        assert self.image is not None
-
-        image = self.image.data
-
-        mask = self._generate_mask()
-
-        # Calculate the match coefficient as the sum of masked image intensity
-        match_coef = (mask * image).sum(dtype=np.uint32)
-
-        # Optionally normalize
-        if normalize:
-            norm_coef = np.uint32(
-                np.count_nonzero(mask) // np.count_nonzero(self.spot_structure)
-            )
-            match_coef = np.uint32(match_coef // norm_coef)
-
-        return match_coef
-
-    @smart_cache
-    def match_alpha(
-        self,
-        alpha_vector: NDArray,
-        normalize: bool = True,
-        tqdm_disable: bool = True,
-    ) -> xr.DataArray:
-        """
-        Calculate match coefficients over a range of azimuthal angles.
-
-        Parameters
-        ----------
-        alpha_vector : NDArray[np.float64]
-            Array of alpha (azimuthal) angles in degrees.
-        normalize : bool, optional
-            If True, normalize the coefficients (default: True).
-        tqdm_disable : bool, optional
-            If False, show the tqdm progress bar (default: True).
-
-        Returns
-        -------
-        xr.DataArray
-            Match coefficients with alpha as coordinate.
-        """
-
-        match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
-
-        for i, alpha in enumerate(tqdm(alpha_vector, disable=tqdm_disable)):
-            self.ewald_azimuthal_rotation = alpha
-            self.calculate_ewald()
-            match_vector[i] = self.calculate_match(normalize=normalize)
-
-        return xr.DataArray(
-            match_vector, dims=["alpha"], coords={"alpha": alpha_vector}
-        )
-
-    @smart_cache
-    def match_scale(
-        self,
-        scale_vector: NDArray,
-        normalize: bool = True,
-        tqdm_disable: bool = True,
-    ) -> xr.DataArray:
-        """
-        Calculate the match coefficient for a series of lattice scale values.
-
-        Parameters
-        ----------
-        scale_vector : NDArray
-            Array of scale values to test.
-        normalize : bool, optional
-            If True, normalize the match coefficient (default: True).
-        tqdm_disable : bool, optional
-            If False, show the tqdm progress bar (default: True).
-
-        Returns
-        -------
-        xr.DataArray
-            Match coefficients for each scale value.
-        """
-
-        match_vector = np.zeros_like(scale_vector, dtype=np.uint32)
-
-        self.ewald_roi = self._calc_ewald_roi(scale_vector.max())
-
-        self._inverse_lattice = self._prepare_inverse_lattice()
-
-        for i, scale in enumerate(tqdm(scale_vector, disable=tqdm_disable)):
-            self.lattice_scale = scale
-            self.calculate_ewald()
-            match_vector[i] = self.calculate_match(normalize=normalize)
-
-        return xr.DataArray(
-            match_vector,
-            dims=["scale"],
-            coords={"scale": scale_vector},
-        )
-
-    @smart_cache
-    def match_alpha_scale(
-        self,
-        alpha_vector: NDArray,
-        scale_vector: NDArray,
-        normalize: bool = True,
-        flatten: bool = True,
-        tqdm_disable: bool = True,
-    ) -> xr.DataArray:
-        """
-        Calculate the match coefficient for a grid of alpha angles and scale values.
-
-        Parameters
-        ----------
-        alpha_vector : NDArray
-            Array of azimuthal angles to test.
-        scale_vector : NDArray
-            Array of scale values to test.
-        normalize : bool, optional
-            If True, normalize the match coefficient (default: True).
-        flatten : bool, optional
-            If True, the result map is flatten by subtracting quadratic
-            background fitted along scale direction
-              (default: True).
-        tqdm_disable : bool, optional
-            If False, show the tqdm progress bar (default: True).
-
-        Returns
-        -------
-        xr.DataArray
-            Match coefficients for each (alpha, scale) pair.
-        """
-
-        match_matrix: NDArray[np.uint32] = np.zeros(
-            (len(alpha_vector), len(scale_vector)), dtype=np.uint32
-        )
-
-        self._ewald_roi = self._calc_ewald_roi(scale_vector.max())
-        self._inverse_lattice = self._prepare_inverse_lattice()
-
-        for i, scale in enumerate(
-            tqdm(scale_vector, disable=tqdm_disable, desc="Matching scales")
-        ):
-            logger.info(
-                "Matching scale %d/%d: lattice_scale=%.2f",
-                i + 1,
-                len(scale_vector),
-                scale,
-            )
-
-            self.lattice_scale = scale
-            self.calculate_ewald()
-
-            match_alpha = np.zeros_like(alpha_vector)
-            for j, alpha in enumerate(alpha_vector):
-                self.ewald_azimuthal_rotation = alpha
-                self.calculate_ewald()
-                match_alpha[j] = self.calculate_match(normalize=normalize)
-
-            match_matrix[:, i] = match_alpha
-
-        if flatten:
-            # Step 1: Mean over alpha
-            mean_profile = match_matrix.mean(axis=0)
-
-            # Step 2: Fit quadratic
-            scale_vals = np.arange(match_matrix.shape[1])  # or use actual scale values
-            coeffs = np.polyfit(scale_vals, mean_profile, deg=2)
-            background_fit = np.poly1d(coeffs)(scale_vals)
-
-            # Step 3: Subtract background
-            match_matrix = match_matrix - background_fit
-
-        match_matrix -= match_matrix.min()
-
-        match_matrix_xr = xr.DataArray(
-            match_matrix,
-            dims=["alpha", "scale"],
-            coords={"alpha": alpha_vector, "scale": scale_vector},
-        )
-        return match_matrix_xr
-
     def _prepare_inverse_lattice(self) -> NDArray[np.float32]:
         """
         Generate reciprocal lattice points for the current ROI.
@@ -784,97 +602,58 @@ class Ewald:
         )
         return inverse_lattice
 
-    def _generate_spot_structure(self) -> NDArray[np.bool_]:
-        """
-        Generate a binary elliptical spot structure.
-
-        Returns
-        -------
-        NDArray[np.bool_]
-            Boolean array mask for the spot shape.
-        """
-
-        # Define dimensions
-        spot_w = self._spot_w_px
-        spot_h = self._spot_h_px
-
-        spot_structure = np.zeros((spot_h, spot_w), dtype=bool)
-
-        # Center of the ellipse
-        center_x = spot_w / 2 - 0.5
-        center_y = spot_h / 2 - 0.5
-
-        # Radii of the ellipse
-        radius_x = spot_w / 2
-        radius_y = spot_h / 2
-
-        for i in range(spot_h):
-            for j in range(spot_w):
-                # Check if the point (j, i) is inside the ellipse
-                if ((j - center_x) ** 2 / radius_x**2) + (
-                    (i - center_y) ** 2 / radius_y**2
-                ) <= 1:
-                    spot_structure[i, j] = True
-
-        return spot_structure
-
-    # TODO prepare calculate match for a list of phi angles next we will do the same for a list of
-    # lattice stalling
-
-    def _generate_mask(self) -> NDArray[np.bool_]:
-        """
-        Generate a mask for predicted spot positions in the image.
-
-        Returns
-        -------
-        NDArray[np.bool_]
-            Boolean mask of the same shape as the RHEED image.
-        """
-        image = self.image
-
-        assert image is not None
-
-        screen_scale = self.screen_scale
-        screen_roi_width = self.screen_roi_width
-        screen_roi_height = self.screen_roi_height
-
-        # Physical origin of image
-        origin_x = image.sx.values.min()
-        origin_y = image.sy.values.min()  # bottom edge in mm
-
-        # Map physical coords to pixel indices
-        ppx = np.round((self.ew_sx - origin_x) * screen_scale).astype(np.uint32)
-        ppy = np.round((self.ew_sy - origin_y) * screen_scale).astype(np.uint32)
-
-        # Filter within bounds
-        valid = (
-            (ppx >= 0)
-            & (ppx < image.shape[1])
-            & (ppy >= 0)
-            & (ppy < image.shape[0])
-            & (self.ew_sx >= -screen_roi_width)
-            & (self.ew_sx <= screen_roi_width)
-            & (self.ew_sy >= -screen_roi_height)
-            & (self.ew_sy <= 0)
-        )
-
-        ppx = ppx[valid]
-        ppy = ppy[valid]
-
-        # Build mask
-        mask: NDArray[np.bool_] = np.zeros_like(image, dtype=np.bool_)
-        mask[ppy, ppx] = True
-
-        # Apply dilation
-        mask = ndimage.binary_dilation(mask, structure=self.spot_structure).astype(
-            np.bool_
-        )
-
-        return mask
-
     def _calc_ewald_roi(self, scale_max: float = 1.0) -> float:
         return float(
             self.ewald_radius
             * (self.screen_roi_width / self.screen_sample_distance)
             * scale_max
+        )
+
+    def _generate_mask(self):
+        return generate_mask(self)
+
+    def calculate_match(self, normalize: bool = True):
+        return calculate_match(self, normalize=normalize)
+
+    def match_alpha(
+        self,
+        alpha_vector,
+        normalize: bool = True,
+        tqdm_disable: bool = True,
+    ):
+        return match_alpha(
+            self,
+            alpha_vector=alpha_vector,
+            normalize=normalize,
+            tqdm_disable=tqdm_disable,
+        )
+
+    def match_scale(
+        self,
+        scale_vector,
+        normalize: bool = True,
+        tqdm_disable: bool = True,
+    ):
+        return match_scale(
+            self,
+            scale_vector=scale_vector,
+            normalize=normalize,
+            tqdm_disable=tqdm_disable,
+        )
+
+    def match_alpha_scale(
+        self,
+        alpha_vector,
+        scale_vector,
+        normalize: bool = True,
+        flatten: bool = True,
+        tqdm_disable: bool = True,
+    ):
+        return match_alpha_scale(
+            self,
+            alpha_vector=alpha_vector,
+            scale_vector=scale_vector,
+            normalize=normalize,
+            flatten=flatten,
+            tqdm_disable=tqdm_disable,
         )
