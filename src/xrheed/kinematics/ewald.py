@@ -79,19 +79,20 @@ class Ewald:
     def __init__(
         self,
         lattice: Lattice,
-        image: Optional[xr.DataArray] = None,
+        rheed_data: Optional[xr.DataArray] = None,
         stack_index: int = 0,
     ) -> None:
+
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
 
         self.image: Optional[xr.DataArray] = None
         self._image_data_available: bool = False
 
-        if image is None:
-            self._initialize_without_image()
+        if rheed_data is None:
+            self._initialize_without_rheed_data()
         else:
-            self._initialize_from_image(image, stack_index)
+            self._initialize_from_rheed_data(rheed_data, stack_index)
 
         self._initialize_geometry()
         self._initialize_lattice(lattice)
@@ -107,7 +108,7 @@ class Ewald:
             self.screen_scale,
         )
 
-    def _initialize_without_image(self) -> None:
+    def _initialize_without_rheed_data(self) -> None:
         logger.warning("RHEED image not provided, default parameters are loaded.")
 
         self.beam_energy = self.NO_IMAGE_DEFAULTS["beam_energy"]
@@ -119,23 +120,24 @@ class Ewald:
         self._incident_angle = self.NO_IMAGE_DEFAULTS["incident_angle"]
         self._image_azimuthal_angle = self.NO_IMAGE_DEFAULTS["azimuthal_angle"]
 
-    def _initialize_from_image(
+    def _initialize_from_rheed_data(
         self,
-        image: xr.DataArray,
+        rheed_data: xr.DataArray,
         stack_index: int,
     ) -> None:
-        if image.ndim == IMAGE_NDIMS:
-            self.image = image.copy()
 
-        elif image.ndim == STACK_NDIMS:
-            self._image_stack = image.copy()
+        if rheed_data.ndim == IMAGE_NDIMS:
+            self.image = rheed_data.copy()
+
+        elif rheed_data.ndim == STACK_NDIMS:
+            self._image_stack = rheed_data.copy()
             self.image = self._image_stack[stack_index]
 
         else:
             raise ValueError(
                 f"Invalid RHEED image input.\n"
                 f"Expected DataArray with ndim={IMAGE_NDIMS} or {STACK_NDIMS}, "
-                f"but got ndim={getattr(image, 'ndim', None)}."
+                f"but got ndim={getattr(rheed_data, 'ndim', None)}."
             )
 
         assert self.image is not None
@@ -159,8 +161,8 @@ class Ewald:
         self.screen_roi_width = float(self.image.ri.screen_roi_width)
         self.screen_roi_height = float(self.image.ri.screen_roi_height)
 
-        self._incident_angle = self.image.ri.incident_angle
-        self._image_azimuthal_angle = self.image.ri.azimuthal_angle
+        self._incident_angle = rheed_data.ri.incident_angle
+        self._image_azimuthal_angle = rheed_data.ri.azimuthal_angle
 
         self._image_data_available = True
 

@@ -38,7 +38,7 @@ class TestEwald(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_init_without_image(self):
-        ewald = Ewald(self.lattice, image=None)
+        ewald = Ewald(self.lattice, rheed_data=None)
 
         self.assertFalse(ewald._image_data_available)
         self.assertIsNone(ewald.image)
