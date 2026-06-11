@@ -82,7 +82,6 @@ class Ewald:
         rheed_data: Optional[xr.DataArray] = None,
         stack_index: int = 0,
     ) -> None:
-
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
 
@@ -125,7 +124,6 @@ class Ewald:
         rheed_data: xr.DataArray,
         stack_index: int,
     ) -> None:
-
         if rheed_data.ndim == IMAGE_NDIMS:
             self.image = rheed_data.copy()
 
