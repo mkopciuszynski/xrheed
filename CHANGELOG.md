@@ -1,10 +1,11 @@
 # Changelog
 
 <a name="2.2.0"></a>
-## [2.2.0] – 2026-05-xx
+## [2.2.0] – 2026-06-12
 
 ### Added
 - Added a **reference example plugin** illustrating the recommended, minimal plugin structure and best practices.
+- Added more tests of Ewald class.
 
 ### Fixed
 - Removed **hardcoded default angle values** from the loading pipeline:
@@ -22,6 +23,8 @@
 - Improved `alpha` / `beta` accessors.
 - Updated data-loading documentation to reflect recent internal refinements.
 - Refactored and improved the Ewald constructor structure; added validation of required RHEED image metadata parameters.
+- Refactor Ewald class: matching functions moved to a separate file.
+- Refractor Ewald class constructor arguments: use `rheed_data` instead of `image`.
 
 ### Removed
 - Removed default azimuthal and incident angles added where the data was missing
