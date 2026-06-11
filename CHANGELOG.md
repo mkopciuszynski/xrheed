@@ -1,33 +1,35 @@
 # Changelog
 
 <a name="2.2.0"></a>
-## [2.2.0] – 2026-06-12
+## [2.2.0] – 2026-06-11
 
 ### Added
-- Added a **reference example plugin** illustrating the recommended, minimal plugin structure and best practices.
-- Added more tests of Ewald class.
+- **k-space filters (Issue #44)**: Added `filter_kspace_peaks` analysis tool for processing RHEED images, enabling suppression of RHEED streaks/Kikuchi lines and precise detection of discrete diffraction spots.
+- Added `plot_detected_peaks()` function to visualize raw spot positions for verification of filter parameters.
+- Added a **minimal reference plugin** (example BMP plugin) illustrating the recommended, best-practice structure for specific RHEED systems.
+- Added a comprehensive suite of tests for the `Ewald` class.
+
+### Changed & Refactored
+- **Loading & Geometry System Refactoring**: Consolidated architectural improvements across plugins, loaders, and accessors to enforce a consistent, canonical RHEED data model while preserving backward compatibility.
+- **Angle Handling Semantics**: 
+  - Moved `alpha` and `beta` angles fully to coordinates (no longer stored as `attrs` with `None` values if missing).
+  - Centralized acquisition angle promotion to coordinates to ensure correct semantics for stacking, slicing, and downstream analysis.
+- **Ewald Class Enhancements**:
+  - Refactored constructor structure for better readability and added validation/assertions for required RHEED image metadata parameters.
+  - Renamed constructor argument from `image` to `rheed_data` to better reflect support for stack-type data.
+  - Moved matching functions to a separate file to improve code separation.
+- Exposed the interpolation method (`interp_method`) in $k_x, k_y$ transformation and fixed negative intensity artifacts by clipping.
 
 ### Fixed
-- Removed **hardcoded default angle values** from the loading pipeline:
-  - missing acquisition parameters are now represented as `None`,
-  - physical defaults are no longer implicitly injected during loading.
-- Fixed inconsistent behavior when accessing angles on stacked data without coordinates.
-
-### Improved
-- Improved clarity and robustness of the loading system without changing its core API.
-- Improved **geometry handling** by making default and instrument-specific assumptions explicit.
-- **Improved internal representation of angles**:
-  - `alpha` and `beta` are no longer stored as attrs,
-  - acquisition angles are consistently promoted to **coordinates** when present,
-  - this ensures correct semantics for stacking, slicing, and downstream analysis.
-- Improved `alpha` / `beta` accessors.
-- Updated data-loading documentation to reflect recent internal refinements.
-- Refactored and improved the Ewald constructor structure; added validation of required RHEED image metadata parameters.
-- Refactor Ewald class: matching functions moved to a separate file.
-- Refractor Ewald class constructor arguments: use `rheed_data` instead of `image`.
+- Fixed **azimuthal angle handling** for stack images, ensuring required parameters (like azimuthal angle) are attached to images before creating the `Ewald` object.
+- Fixed a plotting crash occurring when the `beta` angle is `None`.
+- Fixed data loading bugs: enforced strict assertion that all required `kwargs` are provided during manual loading.
+- Improved **geometry handling** by making default and instrument-specific assumptions (such as explicit vertical center) safe and explicit.
+- Updated and aligned all data-loading documentation to reflect the removal of implicit angle defaults and new plugin responsibilities.
 
 ### Removed
-- Removed default azimuthal and incident angles added where the data was missing
+- **Removed implicit/hardcoded angle defaults**: Physical defaults are no longer implicitly injected during loading, and missing acquisition parameters are now represented as `None`.
+- Removed default azimuthal and incident angles that were previously added where data was missing.
 
 <a name="2.1.0"></a>
 ## [2.1.0] – 2026-04-24
