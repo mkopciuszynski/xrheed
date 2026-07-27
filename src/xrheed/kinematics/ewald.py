@@ -82,6 +82,9 @@ class Ewald:
         rheed_data: Optional[xr.DataArray] = None,
         stack_index: int = 0,
     ) -> None:
+
+        self.label: Optional[str]
+
         self._image_stack: Optional[xr.DataArray] = None
         self._stack_index: int = stack_index
 
@@ -212,6 +215,7 @@ class Ewald:
             f"  Sample-Screen Distance  : {self.screen_sample_distance:.1f} mm\n"
             f"  Screen Shift X          : {self.shift_x:.2f} mm\n"
             f"  Screen Shift Y          : {self.shift_y:.2f} mm\n"
+            f"  Lattice label           : {self.label}\n"
             f"  Reciprocal Vector b1    : [{self._lattice.b1[0]:.2f}, {self._lattice.b1[1]:.2f}] 1/Å\n"
             f"  Reciprocal Vector b2    : [{self._lattice.b2[0]:.2f}, {self._lattice.b2[1]:.2f}] 1/Å\n"
         )
@@ -511,6 +515,7 @@ class Ewald:
         ax.scatter(
             (self.ew_sx + self.shift_x) * fine_scaling,
             (self.ew_sy + self.shift_y) * fine_scaling,
+            label=self.label,
             **kwargs,
         )
         logger.info("Plotted %d ewald spots on axes.", getattr(self.ew_sx, "size", 0))
