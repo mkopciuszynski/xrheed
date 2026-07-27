@@ -1,7 +1,6 @@
 import copy
 import logging
 import warnings
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,16 +78,15 @@ class Ewald:
     def __init__(
         self,
         lattice: Lattice,
-        rheed_data: Optional[xr.DataArray] = None,
+        rheed_data: xr.DataArray | None = None,
         stack_index: int = 0,
     ) -> None:
+        self.label: str | None
 
-        self.label: Optional[str]
-
-        self._image_stack: Optional[xr.DataArray] = None
+        self._image_stack: xr.DataArray | None = None
         self._stack_index: int = stack_index
 
-        self.image: Optional[xr.DataArray] = None
+        self.image: xr.DataArray | None = None
         self._image_data_available: bool = False
 
         if rheed_data is None:
@@ -432,7 +430,7 @@ class Ewald:
 
     def plot(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         show_image: bool = True,
         show_roi: bool = False,
         auto_levels: float = 0.0,

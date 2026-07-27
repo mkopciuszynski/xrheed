@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+
 from xrheed.kinematics.lattice import Lattice, rotation_matrix
 
 

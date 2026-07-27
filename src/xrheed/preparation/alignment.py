@@ -1,6 +1,5 @@
 import logging
 import warnings
-from typing import Optional, Tuple
 
 import lmfit as lf  # type: ignore
 import numpy as np
@@ -502,7 +501,7 @@ def _find_reflection_and_transmission_spots(
     prominence: float = 0.1,
     center_x: float = 0.0,
     center_y: float = 0.0,
-) -> Tuple[float, Optional[float]]:
+) -> tuple[float, float | None]:
     """
     Detect reflection (sy<0) and transmission (sy>0) spots near sx=0.
     Optionally shift coordinates by center_x and center_y.
@@ -572,7 +571,7 @@ def _find_reflection_and_transmission_spots(
 
 
 def _calculate_incident_angle(
-    sy_mirr: float, sy_trans: Optional[float], screen_sample_distance: float
+    sy_mirr: float, sy_trans: float | None, screen_sample_distance: float
 ) -> float:
     """
     Calculate incident angle beta (deg) from mirror and transmission spot positions.

@@ -11,7 +11,7 @@ These accessors extend xarray's `DataArray` objects with domain-specific methods
 """
 
 import logging
-from typing import Literal, Optional, Tuple, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -65,7 +65,7 @@ class RHEEDAccessor:
         return float(da.attrs.get("screen_sample_distance", 1.0))
 
     @property
-    def beta(self) -> Union[float, np.ndarray, None]:
+    def beta(self) -> float | np.ndarray | None:
         """Incident angle beta in degrees."""
         da = self._obj
 
@@ -92,7 +92,7 @@ class RHEEDAccessor:
         da.coords["beta"] = float(value)
 
     @property
-    def alpha(self) -> Union[float, np.ndarray, None]:
+    def alpha(self) -> float | np.ndarray | None:
         """Azimuthal angle alpha in degrees."""
         da = self._obj
 
@@ -123,7 +123,7 @@ class RHEEDAccessor:
     # ------------------------------------------------------------------
 
     @property
-    def incident_angle(self) -> Union[float, np.ndarray, None]:
+    def incident_angle(self) -> float | np.ndarray | None:
         """Alias for beta (incident angle)."""
         return self.beta
 
@@ -132,7 +132,7 @@ class RHEEDAccessor:
         self.beta = value
 
     @property
-    def azimuthal_angle(self) -> Union[float, np.ndarray, None]:
+    def azimuthal_angle(self) -> float | np.ndarray | None:
         """Alias for alpha (azimuthal angle)."""
         return self.alpha
 
@@ -171,7 +171,7 @@ class RHEEDAccessor:
         da["sy"] = da.sy * old_px_to_mm / px_to_mm
 
     @property
-    def screen_width(self) -> Optional[float]:
+    def screen_width(self) -> float | None:
         """Screen width in mm, if set."""
         val = self._obj.attrs.get("screen_width")
         return float(val) if val is not None else None
@@ -199,7 +199,7 @@ class RHEEDAccessor:
         self._obj.attrs["screen_roi_height"] = float(value)
 
     @property
-    def beam_energy(self) -> Optional[float]:
+    def beam_energy(self) -> float | None:
         """Beam energy in eV, if set."""
         val = self._obj.attrs.get("beam_energy")
         return float(val) if val is not None else None
@@ -281,8 +281,8 @@ class RHEEDAccessor:
 
     def set_center_manual(
         self,
-        center_x: Union[float, list[float], np.ndarray] = 0.0,
-        center_y: Union[float, list[float], np.ndarray] = 0.0,
+        center_x: float | list[float] | np.ndarray = 0.0,
+        center_y: float | list[float] | np.ndarray = 0.0,
         method: Literal["linear", "nearest", "cubic"] = "linear",
     ) -> None:
         """
@@ -425,7 +425,7 @@ class RHEEDAccessor:
 
     def get_profile(
         self,
-        center: Tuple[float, float],
+        center: tuple[float, float],
         width: float,
         height: float,
         stack_index: int = 0,
@@ -518,7 +518,7 @@ class RHEEDAccessor:
 
     def plot_image(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         auto_levels: float = 0.0,
         show_center_lines: bool = False,
         show_specular_spot: bool = False,
@@ -628,7 +628,7 @@ class RHEEDProfileAccessor:
 
     def plot_profile(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         transform_to_k: bool = True,
         normalize: bool = True,
         **kwargs,

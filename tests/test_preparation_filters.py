@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 import xarray as xr
+
 import xrheed
 from xrheed.preparation import high_pass_filter
 

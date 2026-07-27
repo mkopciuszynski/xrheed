@@ -8,7 +8,7 @@ from .filters import high_pass_filter
 
 __all__ = [
     "find_horizontal_center",
-    "find_vertical_center",
     "find_incident_angle",
+    "find_vertical_center",
     "high_pass_filter",
 ]

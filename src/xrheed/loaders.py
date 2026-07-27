@@ -17,8 +17,8 @@ Two loading modes are supported:
 """
 
 import logging
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -38,7 +38,7 @@ __all__ = ["load_data"]
 
 
 def _normalize_paths(
-    path: Union[str, Path, Sequence[Union[str, Path]]],
+    path: str | Path | Sequence[str | Path],
 ) -> list[Path]:
     """Normalize path argument to a non-empty list of Path objects."""
     if isinstance(path, (str, Path)):
@@ -100,12 +100,12 @@ def _load_manual_single_image(
     path: Path,
     *,
     screen_scale: float,
-    screen_center_sy_px: Optional[int] = None,
-    screen_center_sx_px: Optional[int] = None,
-    screen_sample_distance: Optional[float] = None,
-    beam_energy: Optional[float] = None,
-    alpha: Optional[float] = None,
-    beta: Optional[float] = None,
+    screen_center_sy_px: int | None = None,
+    screen_center_sx_px: int | None = None,
+    screen_sample_distance: float | None = None,
+    beam_energy: float | None = None,
+    alpha: float | None = None,
+    beta: float | None = None,
 ) -> xr.DataArray:
     """
     Manual loading path.
@@ -160,19 +160,19 @@ def _load_manual_single_image(
 
 
 def load_data(
-    path: Union[str, Path, Sequence[Union[str, Path]]],
-    plugin: Optional[str] = None,
+    path: str | Path | Sequence[str | Path],
+    plugin: str | None = None,
     *,
-    stack_dim: Optional[str] = None,
-    stack_coords: Optional[Sequence] = None,
+    stack_dim: str | None = None,
+    stack_coords: Sequence | None = None,
     # ---- manual-loading arguments  ----
-    screen_scale: Optional[float] = None,
-    screen_center_sy_px: Optional[int] = None,
-    screen_center_sx_px: Optional[int] = None,
-    screen_sample_distance: Optional[float] = None,
-    beam_energy: Optional[float] = None,
-    alpha: Optional[float] = None,
-    beta: Optional[float] = None,
+    screen_scale: float | None = None,
+    screen_center_sy_px: int | None = None,
+    screen_center_sx_px: int | None = None,
+    screen_sample_distance: float | None = None,
+    beam_energy: float | None = None,
+    alpha: float | None = None,
+    beta: float | None = None,
     **kwargs,
 ) -> xr.DataArray:
     """

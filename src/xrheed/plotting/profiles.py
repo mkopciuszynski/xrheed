@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import matplotlib.pyplot as plt
 import xarray as xr
 from matplotlib.axes import Axes
@@ -12,7 +10,7 @@ from xrheed.conversion.base import convert_sx_to_ky
 
 def plot_profile(
     rheed_profile: xr.DataArray,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     transform_to_k: bool = True,
     normalize: bool = True,
     **kwargs,

@@ -97,8 +97,7 @@ def _get_isotropic_scale(data: xr.DataArray) -> float:
 
     if not np.isclose(dkx, dky, rtol=1e-3):
         raise ValueError(
-            f"kx and ky spacing must be equal (isotropic grid): "
-            f"dkx={dkx}, dky={dky}"
+            f"kx and ky spacing must be equal (isotropic grid): dkx={dkx}, dky={dky}"
         )
 
     return dkx

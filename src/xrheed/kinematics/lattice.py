@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import List, Literal, Optional, Tuple, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,9 +42,9 @@ class Lattice:
 
     def __init__(
         self,
-        a1: Union[List[float], Vector],
-        a2: Union[List[float], Vector],
-        label: Optional[str] = None,
+        a1: list[float] | Vector,
+        a2: list[float] | Vector,
+        label: str | None = None,
     ) -> None:
         """
         Initializes a Lattice object with two basis vectors.
@@ -58,7 +58,7 @@ class Lattice:
             ValueError: If the provided vectors are invalid or cannot be validated.
         """
 
-        self.label: Optional[str] = label
+        self.label: str | None = label
 
         self.a1: Vector = Lattice._validate_vector(a1)
         self.a2: Vector = Lattice._validate_vector(a2)
@@ -179,7 +179,7 @@ class Lattice:
         a: float = 1.0,
         cubic_type: AllowedCubicTypes = "FCC",
         plane: AllowedPlanes = "111",
-        label: Optional[str] = None,
+        label: str | None = None,
     ) -> Lattice:
         """
         Create a 2D lattice from a bulk cubic crystal.
@@ -251,7 +251,7 @@ class Lattice:
         return cls(a1, a2, label)
 
     @classmethod
-    def from_surface_hex(cls, a: float = 1.0, label: Optional[str] = None) -> Lattice:
+    def from_surface_hex(cls, a: float = 1.0, label: str | None = None) -> Lattice:
         """
         Create a 2D hexagonal lattice from the given lattice constant.
 
@@ -299,7 +299,7 @@ class Lattice:
 
     def plot_real(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         space_size: float = 10.0,
         show_vectors: bool = True,
         **kwargs,
@@ -362,7 +362,7 @@ class Lattice:
         return ax
 
     def plot_reciprocal(
-        self, ax: Optional[Axes] = None, space_size: float = 5.0, **kwargs
+        self, ax: Axes | None = None, space_size: float = 5.0, **kwargs
     ) -> Axes:
         """
         Plot the reciprocal-space lattice points on a 2D matplotlib Axes.
@@ -398,7 +398,7 @@ class Lattice:
         return ax
 
     @staticmethod
-    def hex_lattice(a: float) -> Tuple[Vector, Vector]:
+    def hex_lattice(a: float) -> tuple[Vector, Vector]:
         """
         Generate basis vectors for a 2D hexagonal lattice.
 
@@ -414,7 +414,7 @@ class Lattice:
         return a1, a2
 
     @staticmethod
-    def _validate_vector(vector: Union[List[float], Vector]) -> Vector:
+    def _validate_vector(vector: list[float] | Vector) -> Vector:
         """
         Validate that the vector is a list or ndarray of size (2,) or (3,).
 
@@ -442,7 +442,7 @@ class Lattice:
         return vector
 
     @staticmethod
-    def _calc_reciprocal_vectors(a1: Vector, a2: Vector) -> Tuple[Vector, Vector]:
+    def _calc_reciprocal_vectors(a1: Vector, a2: Vector) -> tuple[Vector, Vector]:
         """
         Calculate the reciprocal lattice vectors for a 2D lattice.
 

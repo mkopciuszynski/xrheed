@@ -1,4 +1,3 @@
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +8,7 @@ from numpy.typing import NDArray
 
 def plot_image(
     rheed_image: xr.DataArray,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     auto_levels: float = 0.0,
     show_center_lines: bool = True,
     show_specular_spot: bool = False,

@@ -19,7 +19,7 @@ from importlib.metadata import PackageNotFoundError, version
 from . import xarray_accessors  # noqa: F401 (registers accessors)
 from .loaders import load_data
 
-__all__ = ["load_data", "__version__"]
+__all__ = ["__version__", "load_data"]
 
 # Configure logging
 logger = logging.getLogger("xrheed")

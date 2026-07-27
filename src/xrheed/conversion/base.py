@@ -1,5 +1,4 @@
 import logging
-from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -45,9 +44,9 @@ def convert_gx_gy_to_sx_sy(
     ewald_radius: float,
     incident_angle: float,
     screen_sample_distance: float,
-    remove_outside: Optional[bool] = True,
+    remove_outside: bool | None = True,
     **kwargs,
-) -> Tuple[NDArray[np.float32], NDArray[np.float32]]:
+) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
     """
     Convert reciprocal lattice coordinates (gx, gy) to RHEED screen coordinates (sx, sy)
     using the Ewald sphere construction.

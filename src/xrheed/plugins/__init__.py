@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional, Set, Type
 import numpy as np
 import xarray as xr
 
-PLUGINS: Dict[str, Type["LoadRheedBase"]] = {}
+PLUGINS: dict[str, type["LoadRheedBase"]] = {}
 
 
 def register_plugin(name: str):
@@ -33,8 +33,8 @@ class LoadRheedBase(abc.ABC):
     Base class for RHEED plugins.
     """
 
-    TOLERATED_EXTENSIONS: Set[str] = set()
-    ATTRS: Dict[str, Any] = {}
+    TOLERATED_EXTENSIONS: set[str] = set()
+    ATTRS: dict[str, Any] = {}
 
     def is_file_accepted(self, file_path: Path) -> bool:
         return file_path.suffix.lower() in self.TOLERATED_EXTENSIONS
@@ -53,8 +53,8 @@ class LoadRheedBase(abc.ABC):
         self,
         image_np: np.ndarray,
         *,
-        file_path: Optional[Path] = None,
-        attrs_override: Optional[Dict[str, Any]] = None,
+        file_path: Path | None = None,
+        attrs_override: dict[str, Any] | None = None,
         flip: bool = True,
     ) -> xr.DataArray:
         """
@@ -73,7 +73,7 @@ class LoadRheedBase(abc.ABC):
         # --------------------------------------------------------------
         # 1. Merge attributes
         # --------------------------------------------------------------
-        attrs: Dict[str, Any] = dict(self.ATTRS)
+        attrs: dict[str, Any] = dict(self.ATTRS)
         if attrs_override:
             attrs.update(attrs_override)
 

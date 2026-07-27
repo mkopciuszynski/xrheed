@@ -1,4 +1,4 @@
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -9,7 +9,7 @@ from .base import plot_image
 
 
 def plot_images(
-    rheed_data: Union[xr.DataArray, Sequence[xr.DataArray]],
+    rheed_data: xr.DataArray | Sequence[xr.DataArray],
     ncols: int = 3,
     fig_w: float = 3,
     auto_levels: float = 0.0,
