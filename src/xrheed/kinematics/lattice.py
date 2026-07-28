@@ -425,7 +425,7 @@ class Lattice:
             Vector: Validated 3D vector.
 
         Raises:
-            ValueError: If the input is not a list or ndarray, or has invalid shape.
+            TypeError: If the input is not a list or ndarray, or has invalid shape.
         """
         if isinstance(vector, list):
             vector = np.array(vector, dtype=np.float32)

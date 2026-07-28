@@ -97,9 +97,9 @@ class TestLattice(unittest.TestCase):
         self.assertIn("a2", s)
 
     def test_invalid_vector(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Lattice([1], [0, 1])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Lattice([1, 0, 0, 0], [0, 1])
 
     def test_plot_methods(self):
