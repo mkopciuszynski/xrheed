@@ -63,9 +63,9 @@ class TestDataLoading(unittest.TestCase):
                 )
                 self.assertEqual(len(image.shape), 2, msg=f"[{plugin}] Data is not 2D")
 
-                # Check dtype is uint8
+                # Check dtype is float32
                 self.assertEqual(
-                    image.dtype, np.uint8, msg=f"[{plugin}] Data is not uint8"
+                    image.dtype, np.float32, msg=f"[{plugin}] Data is not float32"
                 )
 
     def test_sy_asymmetry(self):
@@ -117,7 +117,7 @@ class TestDataLoading(unittest.TestCase):
         self.assertIn("sx", da_manual.dims)
         self.assertIn("sy", da_manual.dims)
         self.assertEqual(len(da_manual.shape), 2)
-        self.assertEqual(da_manual.dtype, np.uint8)
+        self.assertEqual(da_manual.dtype, np.float32)
 
         # Check essential attributes
         for attr in ["screen_sample_distance", "screen_scale", "beam_energy"]:
