@@ -125,6 +125,8 @@ def _load_manual_single_image(
 
     image_np = np.asarray(image)
 
+    h, w = image_np.shape
+
     # Canonicalize
     image_np, detector_dtype = normalize_detector_image(image_np)
 
