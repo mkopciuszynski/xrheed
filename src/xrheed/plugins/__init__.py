@@ -10,7 +10,7 @@ Design principles:
 import abc
 import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -136,6 +136,6 @@ class LoadRheedBase(abc.ABC):
             da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(
                 stat.st_mtime
             ).strftime("%Y-%m-%d, %H:%M:%S")
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return da

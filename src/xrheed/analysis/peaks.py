@@ -123,7 +123,7 @@ def _process_image(
 
     sigma_smooth_px = sigma_smooth / scale
     peak_width_px = peak_width / scale
-    size_px = max(1, int(round(min_peak_distance / scale)))
+    size_px = max(1, round(min_peak_distance / scale))
 
     # --- detect peaks (mask only) ---
     peak_mask = _detect_local_peaks_pixel(

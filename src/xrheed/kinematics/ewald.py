@@ -316,7 +316,7 @@ class Ewald:
     @incident_angle.setter
     def incident_angle(self, value: float):
         if isinstance(self._incident_angle, np.ndarray):
-            raise ValueError("Cannot set incident individually for stack images.")
+            raise TypeError("Cannot set incident individually for stack images.")
         self._incident_angle = value
         self.calculate_ewald()
 
@@ -462,7 +462,7 @@ class Ewald:
         """
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         logger.debug(
             "plot: show_image=%s show_roi=%s show_center_lines=%s",
             show_image,

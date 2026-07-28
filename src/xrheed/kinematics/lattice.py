@@ -317,7 +317,7 @@ class Lattice:
             Axes: The matplotlib Axes object used for plotting.
         """
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if "marker" not in kwargs:
             kwargs["marker"] = "o"
@@ -376,7 +376,7 @@ class Lattice:
             Axes: The matplotlib Axes object used for plotting.
         """
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if "marker" not in kwargs:
             kwargs["marker"] = "o"
@@ -432,13 +432,13 @@ class Lattice:
         elif isinstance(vector, np.ndarray):
             vector = vector.astype(np.float32)
         else:
-            raise ValueError("Vector must be a list or ndarray.")
+            raise TypeError("Vector must be a list or ndarray.")
 
         if vector.shape == (2,):
             vector = np.append(vector, np.float32(0.0))
 
         if vector.shape != (3,):
-            raise ValueError("Vector must be of size (2,) or (3,).")
+            raise TypeError("Vector must be of size (2,) or (3,).")
         return vector
 
     @staticmethod

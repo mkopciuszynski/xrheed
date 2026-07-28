@@ -79,7 +79,7 @@ class RHEEDAccessor:
     def beta(self, value: float) -> None:
         """Set incident angle beta in degrees."""
         if not isinstance(value, (int, float)):
-            raise ValueError(f"beta must be numeric, got {value!r}")
+            raise TypeError(f"beta must be numeric, got {value!r}")
 
         da = self._obj
 
@@ -106,7 +106,7 @@ class RHEEDAccessor:
     def alpha(self, value: float) -> None:
         """Set azimuthal angle alpha in degrees."""
         if not isinstance(value, (int, float)):
-            raise ValueError(f"alpha must be numeric, got {value!r}")
+            raise TypeError(f"alpha must be numeric, got {value!r}")
 
         da = self._obj
 

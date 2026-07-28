@@ -37,7 +37,7 @@ def plot_profile(
         The axes with the plotted profile.
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(5, 3))
+        _, ax = plt.subplots(figsize=(5, 3))
 
     profile: xr.DataArray = rheed_profile.copy()
 
