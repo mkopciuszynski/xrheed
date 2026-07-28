@@ -114,7 +114,7 @@ def _set_auto_levels(
     )
 
     # Flatten, exclude NaNs
-    values: NDArray[np.uint8] = roi_image.values.ravel()
+    values: NDArray[np.float32] = roi_image.values.ravel()
     values = values[~np.isnan(values)]
 
     # Compute clipped percentiles
