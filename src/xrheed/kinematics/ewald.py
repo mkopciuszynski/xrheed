@@ -72,8 +72,6 @@ class Ewald:
         "beam_energy",
         "screen_sample_distance",
         "screen_scale",
-        "screen_center_sx_px",
-        "screen_center_sy_px",
     )
 
     def __init__(
