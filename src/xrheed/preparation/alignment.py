@@ -16,6 +16,18 @@ from ..constants import IMAGE_DIMS
 logger = logging.getLogger(__name__)
 
 
+def _normalize_values(values: NDArray[np.float64]) -> NDArray[np.float64]:
+    """
+    Normalize an array to the range [0, 1].
+    """
+    values = np.asarray(values, dtype=float)
+
+    value_range = np.ptp(values)
+    if value_range == 0:
+        raise ValueError("Cannot normalize values with zero dynamic range.")
+
+    return (values - np.min(values)) / value_range
+
 def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
@@ -55,8 +67,10 @@ def find_horizontal_center(
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
     # Normalize
-    vals = global_profile_smooth.values.astype(float)
-    vals = (vals - vals.min()) / np.ptp(vals)
+    try:
+        vals = _normalize_values(global_profile_smooth.values)
+    except ValueError as exc:
+        raise RuntimeError("Global profile is flat, cannot find center") from exc
 
     # Detect peaks
     peaks, _ = find_peaks(vals, prominence=prominence)
@@ -90,8 +104,11 @@ def find_horizontal_center(
         if profile_smooth.max() < global_max * 0.7:
             continue
 
-        vals = profile_smooth.values.astype(float)
-        vals = (vals - vals.min()) / np.ptp(vals)
+        try:
+            vals = _normalize_values(profile_smooth.values)
+        except ValueError:
+            continue
+
         peaks, _ = find_peaks(vals, prominence=prominence)
         if peaks.size == 0:
             continue
@@ -221,11 +238,10 @@ def find_vertical_center(
         sy_coords = np.concatenate([sy_extra, sy_coords])
         vals = np.concatenate([vals_extra, vals])
 
-        if np.ptp(vals) == 0:
+        try:
+            vals = _normalize_values(vals)
+        except ValueError:
             continue
-
-        # Normalize
-        vals = (vals - vals.min()) / np.ptp(vals)
 
         # Fit sigmoid with limited iterations
         sigmoid_model = lf.Model(_linear_plus_sigmoid)
@@ -421,7 +437,22 @@ def _spot_sigma_from_profile(
         raise AssertionError("Profile must have 'sx' or 'sy' coordinate")
 
     y = profile.values.astype(float)
+    if len(x) < 2:
+        warnings.warn("Profile too short, returning max_sigma")
+        return max_sigma
+
     dx = abs(x[1] - x[0])
+    try:
+        y_norm = _normalize_values(y)
+    except ValueError:
+        warnings.warn("Flat profile, returning max_sigma")
+        return max_sigma
+
+    peaks, _ = find_peaks(
+        y_norm,
+        prominence=0.05,
+    )
+
     n = len(y)
 
     # window sizes in index units
@@ -429,13 +460,17 @@ def _spot_sigma_from_profile(
     max_window = int((2.0 * max_sigma) // dx)
 
     # --- find candidate peaks ---
-    peaks, _ = find_peaks(y, prominence=0.5)
+    peaks, _ = find_peaks(
+        y_norm,
+        prominence=0.05,
+    )
+
     if peaks.size == 0:
         warnings.warn("No peaks detected, returning max_sigma")
         return max_sigma
 
     # Sort peaks by height (strongest first)
-    peak_order = peaks[np.argsort(y[peaks])[::-1]]
+    peak_order = peaks[np.argsort(y_norm[peaks])[::-1]]
 
     # --- try each peak until one works ---
     for i_max in peak_order:
@@ -451,8 +486,10 @@ def _spot_sigma_from_profile(
             if len(xw) < 5 or np.ptp(yw) == 0:
                 continue
 
-            # Normalize to [0,1]
-            yw = (yw - yw.min()) / np.ptp(yw)
+            try:
+                yw = _normalize_values(yw)
+            except ValueError:
+                continue
 
             model = LorentzianModel(prefix="l_")
             params = model.make_params()
@@ -543,8 +580,10 @@ def _find_reflection_and_transmission_spots(
     sy_coords = vertical_profile.sy.values - center_y
     vals = vertical_profile.values.astype(float)
 
-    if np.ptp(vals) == 0:
-        raise RuntimeError("Flat profile: cannot detect spots")
+    try:
+        vals = _normalize_values(vals)
+    except ValueError as exc:
+        raise RuntimeError("Flat profile: cannot detect spots") from exc
 
     vals -= vals.min()
     vals /= vals.max()
