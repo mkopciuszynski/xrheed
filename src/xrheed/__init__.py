@@ -70,4 +70,4 @@ def _in_jupyter() -> bool:
 
 
 if _in_jupyter():
-    print("\n🎉 xrheed v%s loaded!" % __version__)
+    print(f"\n🎉 xrheed v{__version__} loaded!")
