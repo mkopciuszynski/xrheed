@@ -14,7 +14,7 @@ class DsnpArpesBmpPlugin(LoadRheedBase):
     """Plugin to load UMCS DSNP ARPES BMP RHEED images."""
 
     TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".bmp"}
-    
+
     ATTRS: ClassVar[dict[str, Any]] = {
         "plugin": "UMCS DSNP ARPES bmp",
         "screen_sample_distance": 309.2,  # mm

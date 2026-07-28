@@ -20,6 +20,7 @@ PLUGINS: dict[str, type["LoadRheedBase"]] = {}
 
 logger = logging.getLogger(__name__)
 
+
 def register_plugin(name: str):
     """Decorator to register a new plugin."""
 

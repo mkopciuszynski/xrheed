@@ -286,7 +286,11 @@ def load_data(
         values = [da.attrs.get(key) for da in dataarrays]
 
         # Promote only if all values exist and they vary
-        if all(v is not None for v in values) and len(set(values)) > 1 and key not in stacked.coords:
-                stacked = stacked.assign_coords({key: (stack_dim, values)})
+        if (
+            all(v is not None for v in values)
+            and len(set(values)) > 1
+            and key not in stacked.coords
+        ):
+            stacked = stacked.assign_coords({key: (stack_dim, values)})
 
     return stacked
