@@ -9,6 +9,7 @@ Design principles:
 
 import abc
 import datetime
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,7 @@ import xarray as xr
 
 PLUGINS: dict[str, type["LoadRheedBase"]] = {}
 
+logger = logging.getLogger(__name__)
 
 def register_plugin(name: str):
     """Decorator to register a new plugin."""
@@ -134,8 +136,9 @@ class LoadRheedBase(abc.ABC):
         try:
             stat = file_path.stat()
             da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(
-                stat.st_mtime
+                stat.st_mtime, tz=datetime.UTC
             ).strftime("%Y-%m-%d, %H:%M:%S")
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as e:  # noqa: BLE001
+            logger.debug("Failed to read file timestamp for %s: %s", file_path, e)
+
         return da
