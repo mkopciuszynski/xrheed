@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -55,7 +54,7 @@ def plot_image(
         kwargs.setdefault("add_colorbar", False)
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=(6, 4))
+        _, ax = plt.subplots(figsize=(6, 4))
 
     rheed_image.plot(ax=ax, **kwargs)
     ax.set_aspect(1.0)

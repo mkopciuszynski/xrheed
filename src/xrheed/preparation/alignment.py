@@ -283,7 +283,7 @@ def find_vertical_center(
             )
         else:
             logger.debug("Incident angle refinement skipped (no transmission spot)")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.debug("Incident angle refinement failed: %s", str(e))
 
     return center_y
@@ -464,7 +464,7 @@ def _spot_sigma_from_profile(
 
             try:
                 result = model.fit(yw, params, x=xw, max_nfev=100)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug("Fit failed at window %d for peak %d: %s", half, i_max, e)
                 continue
 

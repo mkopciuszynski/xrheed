@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, ClassVar
 
 import numpy as np
 import xarray as xr
@@ -18,9 +19,9 @@ class ExampleRheedBmpPlugin(LoadRheedBase):
     - The returned DataArray is always fully initialized
     """
 
-    TOLERATED_EXTENSIONS = {".bmp"}
+    TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".bmp"}
 
-    ATTRS = {
+    ATTRS: ClassVar[dict[str, Any]] = {
         # Instrument / geometry
         "screen_sample_distance": 309.2,  # mm (system constant)
         "screen_scale": 10.0,  # px / mm (required)

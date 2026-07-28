@@ -9,13 +9,16 @@ Design principles:
 
 import abc
 import datetime
+import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type
+from typing import Any, ClassVar
 
 import numpy as np
 import xarray as xr
 
 PLUGINS: dict[str, type["LoadRheedBase"]] = {}
+
+logger = logging.getLogger(__name__)
 
 
 def register_plugin(name: str):
@@ -33,8 +36,8 @@ class LoadRheedBase(abc.ABC):
     Base class for RHEED plugins.
     """
 
-    TOLERATED_EXTENSIONS: set[str] = set()
-    ATTRS: dict[str, Any] = {}
+    TOLERATED_EXTENSIONS: ClassVar[set[str]] = set()
+    ATTRS: ClassVar[dict[str, Any]] = {}
 
     def is_file_accepted(self, file_path: Path) -> bool:
         return file_path.suffix.lower() in self.TOLERATED_EXTENSIONS
@@ -134,8 +137,9 @@ class LoadRheedBase(abc.ABC):
         try:
             stat = file_path.stat()
             da.attrs["file_ctime"] = datetime.datetime.fromtimestamp(
-                stat.st_mtime
+                stat.st_mtime, tz=datetime.UTC
             ).strftime("%Y-%m-%d, %H:%M:%S")
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001
+            logger.debug("Failed to read file timestamp for %s: %s", file_path, e)
+
         return da

@@ -51,7 +51,7 @@ def _discover_plugins():
             logger.warning("No plugin modules found in xrheed.plugins.")
         else:
             logger.info("Plugin discovery completed successfully.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("Plugin discovery failed: %s", e)
 
 
@@ -65,9 +65,9 @@ def _in_jupyter() -> bool:
 
         shell = get_ipython()
         return shell is not None and shell.__class__.__name__ == "ZMQInteractiveShell"
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
 if _in_jupyter():
-    print("\n🎉 xrheed v%s loaded!" % __version__)
+    print(f"\n🎉 xrheed v{__version__} loaded!")
