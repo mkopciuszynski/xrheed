@@ -24,8 +24,7 @@ class DsnpArpesRawPlugin(LoadRheedBase):
 
     def load_single_image(self, file_path: Path, **kwargs) -> xr.DataArray:
         # Load image data into numpy
-        raw = np.fromfile(file_path, dtype=">u2").reshape(1038, 1388)
-        image_np = (raw / 256).astype(np.uint8)
+        image_np = np.fromfile(file_path, dtype=">u2").reshape(1038, 1388)
 
         return self.dataarray_from_image(
             image_np,

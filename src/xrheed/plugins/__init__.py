@@ -31,6 +31,46 @@ def register_plugin(name: str):
     return decorator
 
 
+def normalize_detector_image(
+    image_np: np.ndarray,
+) -> tuple[np.ndarray, str]:
+    """
+    Convert detector image to canonical float32 [0,1].
+
+    Returns
+    -------
+    normalized_image
+    original_dtype
+    """
+
+    original_dtype = str(image_np.dtype)
+
+    if np.issubdtype(image_np.dtype, np.integer):
+
+        max_value = np.iinfo(image_np.dtype).max
+
+        image_np = (
+            image_np.astype(np.float32)
+            / max_value
+        )
+
+    elif np.issubdtype(image_np.dtype, np.floating):
+
+        image_np = image_np.astype(np.float32)
+
+        if image_np.min() < 0 or image_np.max() > 1:
+            raise ValueError(
+                "Floating detector data must be normalized to [0,1]"
+            )
+
+    else:
+        raise TypeError(
+            f"Unsupported detector dtype {image_np.dtype}"
+        )
+
+    return image_np, original_dtype
+
+
 class LoadRheedBase(abc.ABC):
     """
     Base class for RHEED plugins.
@@ -73,6 +113,9 @@ class LoadRheedBase(abc.ABC):
         if image_np.ndim != 2:
             raise ValueError("RHEED image must be a 2D array")
 
+        image_np, detector_dtype = normalize_detector_image(image_np)
+
+
         # --------------------------------------------------------------
         # 1. Merge attributes
         # --------------------------------------------------------------
@@ -80,6 +123,10 @@ class LoadRheedBase(abc.ABC):
         if attrs_override:
             attrs.update(attrs_override)
 
+        attrs["detector_dtype"] = detector_dtype
+        attrs["data_dtype"] = "float32"
+        attrs["data_normalization"] = "dtype_max"
+        
         # --------------------------------------------------------------
         # 2. Validate required geometry
         # --------------------------------------------------------------

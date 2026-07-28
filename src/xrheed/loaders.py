@@ -25,7 +25,7 @@ import xarray as xr
 from PIL import Image
 
 from .constants import CANONICAL_STACK_DIMS, IMAGE_DIMS, IMAGE_NDIMS, STACK_NDIMS
-from .plugins import PLUGINS
+from .plugins import PLUGINS, normalize_detector_image
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +117,16 @@ def _load_manual_single_image(
     """
 
     # --- Load image ---
-    image = Image.open(path).convert("L")
-    image_np = np.asarray(image, dtype=np.uint8)
-    h, w = image_np.shape
+    image = Image.open(path)
+
+    # Convert RGB/RGBA images to grayscale
+    if image.mode in ("RGB", "RGBA"):
+        image = image.convert("L")
+
+    image_np = np.asarray(image)
+
+    # Canonicalize
+    image_np, detector_dtype = normalize_detector_image(image_np)
 
     # --- Resolve geometry ---
     cx = screen_center_sx_px if screen_center_sx_px is not None else w // 2
@@ -141,6 +148,10 @@ def _load_manual_single_image(
         "beam_energy": beam_energy,
         "alpha": alpha,
         "beta": beta,
+        # Data representation metadata
+        "detector_dtype": detector_dtype,
+        "data_dtype": "float32",
+        "data_range": "[0,1]",
     }
 
     # --- Create DataArray ---
