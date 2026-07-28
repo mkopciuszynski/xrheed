@@ -1,5 +1,15 @@
 # Changelog
 
+<a name="2.3.0"></a>
+## [2.3.0] – 2026-07-xx
+
+### Fixed
+- Resolved RUF012 warnings by annotating plugin metadata with ClassVar.
+- Updated plugin classes to avoid mutable class‑attribute defaults.
+- Replaced root‑logger usage with module‑level logger to satisfy LOG015.
+- Ensured consistent typing for plugin metadata (dict[str, Any]).
+- Removed screen_center_sx_px and screen_center_sy_px from required RI attributes.
+
 <a name="2.2.0"></a>
 ## [2.2.0] – 2026-06-11
 
