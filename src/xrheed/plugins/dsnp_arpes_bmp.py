@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, ClassVar
 
 import numpy as np
 import xarray as xr
@@ -12,9 +13,9 @@ from . import LoadRheedBase, register_plugin
 class DsnpArpesBmpPlugin(LoadRheedBase):
     """Plugin to load UMCS DSNP ARPES BMP RHEED images."""
 
-    TOLERATED_EXTENSIONS = {".bmp"}
-
-    ATTRS = {
+    TOLERATED_EXTENSIONS: ClassVar[set[str]] = {".bmp"}
+    
+    ATTRS: ClassVar[dict[str, Any]] = {
         "plugin": "UMCS DSNP ARPES bmp",
         "screen_sample_distance": 309.2,  # mm
         "screen_scale": 9.3112,  # pixels per mm

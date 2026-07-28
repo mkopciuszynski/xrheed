@@ -11,7 +11,7 @@ import abc
 import datetime
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import xarray as xr
@@ -35,8 +35,8 @@ class LoadRheedBase(abc.ABC):
     Base class for RHEED plugins.
     """
 
-    TOLERATED_EXTENSIONS: set[str] = set()
-    ATTRS: dict[str, Any] = {}
+    TOLERATED_EXTENSIONS: ClassVar[set[str]] = set()
+    ATTRS: ClassVar[dict[str, Any]] = {}
 
     def is_file_accepted(self, file_path: Path) -> bool:
         return file_path.suffix.lower() in self.TOLERATED_EXTENSIONS

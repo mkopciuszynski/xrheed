@@ -1,6 +1,7 @@
 import copy
 import logging
 import warnings
+from typing import ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -57,7 +58,7 @@ class Ewald:
     SPOT_WIDTH_MM: float = 1.5
     SPOT_HEIGHT_MM: float = 5.0
 
-    NO_IMAGE_DEFAULTS = {
+    NO_IMAGE_DEFAULTS: ClassVar[dict[str, float]] = {
         "beam_energy": 18_600.0,
         "screen_sample_distance": 309.2,
         "screen_scale": 9.5,
@@ -67,12 +68,12 @@ class Ewald:
         "azimuthal_angle": 0.0,
     }
 
-    REQUIRED_IMAGE_ATTRS = (
+    REQUIRED_IMAGE_ATTRS: ClassVar[tuple[str, ...]] = (
         "beam_energy",
         "screen_sample_distance",
         "screen_scale",
-        "incident_angle",
-        "azimuthal_angle",
+        "screen_center_sx_px",
+        "screen_center_sy_px",
     )
 
     def __init__(
@@ -260,7 +261,7 @@ class Ewald:
     def lattice_scale(self, value: float):
         if abs(self._lattice_scale - value) > 0.5:
             self.ewald_roi = self._calc_ewald_roi(value)
-            logging.info("New Ewald roi: %.2f", self.ewald_roi)
+            logger.info("New Ewald roi: %.2f", self.ewald_roi)
         self._lattice_scale = value
         self.calculate_ewald()
 
