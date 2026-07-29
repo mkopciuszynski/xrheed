@@ -1,10 +1,7 @@
 # Changelog
 
 <a name="2.3.0"></a>
-## [2.3.0] – 2026-07-xx
-
-<a name="2.3.0"></a>
-## [2.3.0] – 2026-07-xx
+## [2.3.0] – 2026-07-29
 
 ### Changed
 - Adopted normalized `float32` as the canonical internal representation for RHEED images.
