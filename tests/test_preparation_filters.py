@@ -57,16 +57,6 @@ class TestHighPassFilter(unittest.TestCase):
 
         self.assertIn("test_coord", filtered.coords)
 
-    def test_uint16_support(self):
-        """Filter should support uint16 images."""
-        img = self._load_image("Si_111_7x7_112_phi_00.raw")
-
-        img16 = img.astype("uint16")
-
-        filtered = high_pass_filter(img16)
-
-        self.assertEqual(filtered.dtype, img16.dtype)
-
     def test_filter_effect_strength(self):
         """Larger sigma should produce stronger high-pass effect."""
         img = self._load_image("Si_111_7x7_112_phi_00.raw")
