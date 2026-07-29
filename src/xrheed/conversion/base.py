@@ -129,7 +129,9 @@ def convert_gx_gy_to_sx_sy(
     theta: NDArray[np.float32] = np.arcsin(rk / k0)
 
     # calculate the radius on the RHEED screen
-    rho: NDArray[np.float32] = screen_sample_distance * np.tan(theta)
+    rho: NDArray[np.float32] = (
+        np.float32(screen_sample_distance) * np.tan(theta)
+    ).astype(np.float32)
 
     # calculate the spot positions
     sx: NDArray[np.float32] = rho * np.cos(phi)

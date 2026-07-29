@@ -172,7 +172,7 @@ class TestEwald(unittest.TestCase):
 
         self.assertIsInstance(
             score_A,
-            (int, np.integer),
+            (int, np.float32),
         )
 
         self.assertGreater(score_A, score_B)

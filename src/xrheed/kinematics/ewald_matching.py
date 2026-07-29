@@ -89,9 +89,13 @@ def generate_mask(ewald: "Ewald") -> NDArray[np.bool_]:
     return mask
 
 
-def calculate_match(ewald: "Ewald", normalize: bool = True) -> np.uint32:
+def calculate_match(
+    ewald: "Ewald",
+    normalize: bool = True,
+) -> np.float32:
     """
     Calculate the match coefficient between predicted and observed spots.
+
     """
 
     assert ewald.image is not None
@@ -100,17 +104,19 @@ def calculate_match(ewald: "Ewald", normalize: bool = True) -> np.uint32:
 
     mask = generate_mask(ewald)
 
-    # Calculate the match coefficient as the sum of masked image intensity
-    match_coef = (mask * image).sum(dtype=np.uint32)
+    # Sum normalized image intensity inside predicted spots
+    match_coef = np.sum(
+        image[mask],
+        dtype=np.float32,
+    )
 
-    # Optionally normalize
     if normalize:
-        norm_coef = np.uint32(
-            np.count_nonzero(mask) // np.count_nonzero(ewald.spot_structure)
+        norm_coef = np.float32(
+            np.count_nonzero(mask) / np.count_nonzero(ewald.spot_structure)
         )
-        match_coef = np.uint32(match_coef // norm_coef)
+        match_coef /= norm_coef
 
-    return match_coef
+    return np.float32(match_coef)
 
 
 @smart_cache
@@ -124,7 +130,7 @@ def match_alpha(
     Calculate match coefficients over a range of azimuthal angles.
     """
 
-    match_vector = np.zeros_like(alpha_vector, dtype=np.uint32)
+    match_vector = np.zeros_like(alpha_vector, dtype=np.float32)
 
     for i, alpha in enumerate(tqdm(alpha_vector, disable=tqdm_disable)):
         ewald.ewald_azimuthal_rotation = alpha
@@ -149,7 +155,7 @@ def match_scale(
     Calculate the match coefficient for a series of lattice scale values.
     """
 
-    match_vector = np.zeros_like(scale_vector, dtype=np.uint32)
+    match_vector = np.zeros_like(scale_vector, dtype=np.float32)
 
     ewald.ewald_roi = ewald._calc_ewald_roi(scale_vector.max())
 
@@ -180,8 +186,8 @@ def match_alpha_scale(
     Calculate the match coefficient for a grid of alpha angles and scale values.
     """
 
-    match_matrix: NDArray[np.uint32] = np.zeros(
-        (len(alpha_vector), len(scale_vector)), dtype=np.uint32
+    match_matrix: NDArray[np.float32] = np.zeros(
+        (len(alpha_vector), len(scale_vector)), dtype=np.float32
     )
 
     ewald._ewald_roi = ewald._calc_ewald_roi(scale_vector.max())
@@ -200,7 +206,7 @@ def match_alpha_scale(
         ewald.lattice_scale = scale
         ewald.calculate_ewald()
 
-        match_alpha_vals = np.zeros_like(alpha_vector)
+        match_alpha_vals = np.zeros_like(alpha_vector, dtype=np.float32)
 
         for j, alpha in enumerate(alpha_vector):
             ewald.ewald_azimuthal_rotation = alpha
@@ -216,8 +222,11 @@ def match_alpha_scale(
         mean_profile = match_matrix.mean(axis=0)
 
         scale_vals = np.arange(match_matrix.shape[1])
+
         coeffs = np.polyfit(scale_vals, mean_profile, deg=2)
-        background_fit = np.poly1d(coeffs)(scale_vals)
+        background_fit = np.poly1d(coeffs)(scale_vals).astype(np.float32)
+
+        match_matrix -= background_fit
 
         match_matrix = match_matrix - background_fit
 

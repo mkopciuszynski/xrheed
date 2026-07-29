@@ -4,7 +4,41 @@ Data Loading
 xRHEED provides a unified and robust data-loading interface for RHEED images.
 Images can be loaded either via **plugins** (recommended) or via **manual
 loading** (for quick tests or getting started). In both cases, the result is an
-``xarray.DataArray`` following the same structural conventions.
+``xarray.DataArray`` following the same structural and data representation
+conventions.
+
+All loaded images are converted to the canonical internal representation:
+
+- data type: ``float32``
+- intensity range: ``[0, 1]``
+
+This representation is optimized for quantitative image processing and avoids
+repeated dtype conversions during analysis.
+
+Image normalization
+-------------------
+
+The original detector precision is preserved during loading.
+
+Integer images are normalized using their full dtype range:
+
+- ``uint8`` images::
+
+      image.astype(np.float32) / 255.0
+
+- ``uint16`` images::
+
+      image.astype(np.float32) / 65535.0
+
+Other integer types are normalized according to their maximum representable
+value.
+
+The original detector dtype is stored in the DataArray attributes for
+traceability (for example, ``uint16`` images remain identifiable even though
+the internal representation is ``float32``).
+
+Color images (RGB/RGBA) are converted to grayscale before normalization,
+because RHEED analysis operates on two-dimensional intensity images.
 
 Using Plugins
 -------------
@@ -19,8 +53,13 @@ the experiment.
 A plugin should:
 
 - **Load a specific data format** (e.g. ``.raw``, ``.png``, ``.bmp``).
-- **Declare instrument and geometry defaults** via an ``ATTRS`` dictionary.
-- **Return a canonical ``xarray.DataArray``** using the provided helper.
+- **Extract or declare instrument-specific metadata**.
+- **Declare geometry defaults via an ``ATTRS`` dictionary**.
+- **Return a canonical ``xarray.DataArray`` using the provided helper.**
+
+Plugins should preserve the original detector data type whenever possible.
+They should not convert detector images to ``uint8`` or otherwise reduce image
+precision during loading. Pixel normalization is handled centrally by xRHEED.
 
 Plugin ``ATTRS``
 ^^^^^^^^^^^^^^^^
@@ -49,6 +88,8 @@ Helper Function
 
 Plugins typically use the helper method ``dataarray_from_image()``, which:
 
+- converts detector data to the canonical ``float32`` ``[0,1]`` representation,
+- stores the original detector dtype,
 - resolves geometry (including screen centers),
 - creates ``sx`` and ``sy`` coordinates in millimeters,
 - attaches file-provenance metadata.
@@ -65,8 +106,12 @@ plugin.
 In this mode, only a **single image** may be loaded. The user must provide the
 essential calibration parameters explicitly.
 
+Manual loading follows the same canonical image conversion rules as plugins:
+images are converted to grayscale when required and normalized to
+``float32`` values in the range ``[0,1]``.
+
 Required parameters
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 - ``screen_sample_distance``: Distance from sample to screen [mm].
 - ``screen_scale``: Pixel-to-mm scaling factor.
@@ -77,7 +122,7 @@ Optional parameters
 
 - ``screen_center_sx_px``: Horizontal image center [px].
 - ``screen_center_sy_px``: Shadow-edge position [px].
-  If omitted, the top of the image (0 px) is used with a warning.
+  If omitted, the image midpoint is used.
 - ``alpha`` / ``beta``: Acquisition angles, if known.
 
 Example:
@@ -114,6 +159,17 @@ All loading methods return an ``xarray.DataArray`` with:
 - coordinates:
   - ``sx``: horizontal axis [mm],
   - ``sy``: vertical axis [mm],
+
+and canonical pixel data:
+
+- dtype: ``float32``
+- range: ``[0,1]``
+
+Additional attributes may include:
+
+- ``detector_dtype``: original image dtype before normalization,
+- ``data_dtype``: canonical internal dtype,
+- ``data_range``: canonical intensity range.
 
 The image is oriented so that the shadow edge is at the top. This ensures
 consistent downstream analysis, visualization, and stacking within xRHEED.

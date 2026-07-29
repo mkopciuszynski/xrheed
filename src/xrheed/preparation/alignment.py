@@ -16,11 +16,24 @@ from ..constants import IMAGE_DIMS
 logger = logging.getLogger(__name__)
 
 
+def _normalize_values(values: NDArray[np.float64]) -> NDArray[np.float64]:
+    """
+    Normalize an array to the range [0, 1].
+    """
+    values = np.asarray(values, dtype=float)
+
+    value_range = np.ptp(values)
+    if value_range == 0:
+        raise ValueError("Cannot normalize values with zero dynamic range.")
+
+    return (values - np.min(values)) / value_range
+
+
 def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
     prominence: float = 0.1,
-    refinement_tolerance: float = 1.0,  # default in mm
+    refinement_tolerance: float = 2.0,  # default in mm
 ) -> float:
     """
     Estimate horizontal (sx) symmetry center of a diffraction image.
@@ -50,13 +63,15 @@ def find_horizontal_center(
 
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
-    smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
+    smooth_sigma = _spot_sigma_from_profile(global_profile)
 
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
     # Normalize
-    vals = global_profile_smooth.values.astype(float)
-    vals = (vals - vals.min()) / np.ptp(vals)
+    try:
+        vals = _normalize_values(global_profile_smooth.values)
+    except ValueError as exc:
+        raise RuntimeError("Global profile is flat, cannot find center") from exc
 
     # Detect peaks
     peaks, _ = find_peaks(vals, prominence=prominence)
@@ -71,28 +86,37 @@ def find_horizontal_center(
         approx_center = float(np.average(x_coords, weights=heights))
     logger.debug("Global approx_center: %.4f", approx_center)
 
-    global_max = global_profile_smooth.max()
+    # Use 99th percentile as the effective max peak
+    global_max = float(image.quantile(0.99))
 
     ny = int(image.sizes["sy"])
     stripe_height = max(1, ny // int(n_stripes))
     sx_coords = np.asarray(image.sx.values)
 
     centers = []
+
     for i in range(n_stripes):
         start = i * stripe_height
         end = ny if i == n_stripes - 1 else (i + 1) * stripe_height
         stripe = image.isel(sy=slice(start, end))
+
+        stripe_max = float(stripe.quantile(0.99))
+        # use only those stripes that show significant features
+        if stripe_max < global_max * 0.9:
+            continue
+
         profile = stripe.mean(dim="sy")
+
         if profile.size == 0:
             continue
 
         profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
-        if profile_smooth.max() < global_max * 0.7:
-            continue
 
         vals = profile_smooth.values.astype(float)
-        vals = (vals - vals.min()) / np.ptp(vals)
+        vals = _normalize_values(vals)
+
         peaks, _ = find_peaks(vals, prominence=prominence)
+
         if peaks.size == 0:
             continue
         x_coords = np.sort(sx_coords[peaks])
@@ -105,7 +129,6 @@ def find_horizontal_center(
 
         # Pick candidate closest to global approx_center
         center = min(candidates, key=lambda c: abs(c - approx_center))
-
         # Only accept if within fixed tolerance
         if abs(center - approx_center) <= refinement_tolerance:
             centers.append(center)
@@ -221,11 +244,10 @@ def find_vertical_center(
         sy_coords = np.concatenate([sy_extra, sy_coords])
         vals = np.concatenate([vals_extra, vals])
 
-        if np.ptp(vals) == 0:
+        try:
+            vals = _normalize_values(vals)
+        except ValueError:
             continue
-
-        # Normalize
-        vals = (vals - vals.min()) / np.ptp(vals)
 
         # Fit sigmoid with limited iterations
         sigmoid_model = lf.Model(_linear_plus_sigmoid)
@@ -388,9 +410,6 @@ def _linear_plus_sigmoid(
     return a * x + b + L * expit(k * (x - x0))
 
 
-logging.getLogger(__name__)
-
-
 def _spot_sigma_from_profile(
     profile: xr.DataArray,
     max_sigma: float = 2.0,  # in mm
@@ -399,18 +418,6 @@ def _spot_sigma_from_profile(
     Fit a Lorentzian around peaks in a 1D diffraction profile.
     Iteratively expand window until fit stabilizes.
     Returns sigma (HWHM), capped to avoid runaway values.
-
-    Parameters
-    ----------
-    profile : xr.DataArray
-        1D profile with coordinate 'sx' or 'sy'.
-    max_sigma : float, optional
-        Maximum allowed sigma in mm (default 2.0).
-
-    Returns
-    -------
-    float
-        Estimated sigma (HWHM) in mm. Falls back to max_sigma if no stable fit.
     """
     # --- coordinate extraction ---
     if "sx" in profile.coords:
@@ -421,6 +428,13 @@ def _spot_sigma_from_profile(
         raise AssertionError("Profile must have 'sx' or 'sy' coordinate")
 
     y = profile.values.astype(float)
+
+    try:
+        y_norm = _normalize_values(y)
+    except Exception:  # noqa: BLE001
+        warnings.warn("Flat profile")
+        return max_sigma
+
     dx = abs(x[1] - x[0])
     n = len(y)
 
@@ -429,10 +443,11 @@ def _spot_sigma_from_profile(
     max_window = int((2.0 * max_sigma) // dx)
 
     # --- find candidate peaks ---
-    peaks, _ = find_peaks(y, prominence=0.5)
+    # Prominence threshold works across both raw & float32 normalized profile ranges
+    peaks, _ = find_peaks(y_norm, prominence=0.1)
     if peaks.size == 0:
-        warnings.warn("No peaks detected, returning max_sigma")
-        return max_sigma
+        warnings.warn("No peaks detected, returning max_sigma", UserWarning)
+        return float(max_sigma)
 
     # Sort peaks by height (strongest first)
     peak_order = peaks[np.argsort(y[peaks])[::-1]]
@@ -452,7 +467,7 @@ def _spot_sigma_from_profile(
                 continue
 
             # Normalize to [0,1]
-            yw = (yw - yw.min()) / np.ptp(yw)
+            yw = _normalize_values(yw)
 
             model = LorentzianModel(prefix="l_")
             params = model.make_params()
@@ -543,8 +558,10 @@ def _find_reflection_and_transmission_spots(
     sy_coords = vertical_profile.sy.values - center_y
     vals = vertical_profile.values.astype(float)
 
-    if np.ptp(vals) == 0:
-        raise RuntimeError("Flat profile: cannot detect spots")
+    try:
+        vals = _normalize_values(vals)
+    except ValueError as exc:
+        raise RuntimeError("Flat profile: cannot detect spots") from exc
 
     vals -= vals.min()
     vals /= vals.max()

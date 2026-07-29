@@ -60,9 +60,13 @@ class RHEEDAccessor:
     # ---- Properties ----
     @property
     def screen_sample_distance(self) -> float:
-        """Distance between sample and screen in mm. Default: 1.0 mm."""
-        da = self._obj
-        return float(da.attrs.get("screen_sample_distance", 1.0))
+        """Distance between sample and screen in mm."""
+        try:
+            return float(self._obj.attrs["screen_sample_distance"])
+        except KeyError:
+            raise KeyError(
+                "Missing required attribute 'screen_sample_distance' in DataArray.attrs"
+            ) from None
 
     @property
     def beta(self) -> float | np.ndarray | None:
@@ -142,9 +146,13 @@ class RHEEDAccessor:
 
     @property
     def screen_scale(self) -> float:
-        """Screen scale in px/mm. Default: 1.0."""
-        da = self._obj
-        return float(da.attrs.get("screen_scale", 1.0))
+        """Screen scale in px/mm."""
+        try:
+            return float(self._obj.attrs["screen_scale"])
+        except KeyError:
+            raise KeyError(
+                "Missing required attribute 'screen_scale' in DataArray.attrs"
+            ) from None
 
     @screen_scale.setter
     def screen_scale(self, px_to_mm: float) -> None:

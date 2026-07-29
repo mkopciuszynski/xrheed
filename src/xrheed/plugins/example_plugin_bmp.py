@@ -40,7 +40,7 @@ class ExampleRheedBmpPlugin(LoadRheedBase):
         # ----------------------------------------------------------
         # 1. Load pixel data logic
         # ----------------------------------------------------------
-        image = Image.open(file_path).convert("L")
+        image = Image.open(file_path)
         image_np = np.asarray(image, dtype=np.uint8)
 
         # ----------------------------------------------------------

@@ -25,6 +25,15 @@ InterpMethod = Literal[
 ]
 
 
+def _clip_normalized_image(
+    data: NDArray[np.floating],
+) -> NDArray[np.float32]:
+    """
+    Clip normalized image data to valid float32 image range.
+    """
+    return np.clip(data, 0.0, 1.0).astype(np.float32, copy=False)
+
+
 def transform_image_to_kxky(
     rheed_image: xr.DataArray,
     *,
@@ -209,7 +218,16 @@ def _transform_frame_kxky(
     if not np.issubdtype(frame.dtype, np.floating):
         frame = frame.astype(np.float32)
 
-    transformed = frame.interp(sx=sx, sy=sy, method=method)
+    transformed = frame.interp(
+        sx=sx,
+        sy=sy,
+        method=method,
+    )
+
+    transformed = transformed.astype(np.float32)
+
+    # interpolation can create small overshoots
+    transformed.data = _clip_normalized_image(transformed.values)
 
     if rotate_angle is not None:
         transformed = _rotate_trans_image(transformed, rotate_angle)
@@ -254,7 +272,7 @@ def _rotate_trans_image(
 
     valid_mask: NDArray[np.bool_] = ~np.isnan(trans_image.values)
 
-    filled = trans_image.fillna(0.0)
+    filled = trans_image.fillna(np.float32(0.0))
 
     rotated_data = ndimage.rotate(
         filled.values,
@@ -264,7 +282,15 @@ def _rotate_trans_image(
         mode=mode,
     )
 
-    rotated_data = np.clip(rotated_data, 0.0, None)
+    rotated_data = ndimage.rotate(
+        filled.values.astype(np.float32),
+        angle,
+        reshape=False,
+        order=3,
+        mode=mode,
+    )
+
+    rotated_data = _clip_normalized_image(rotated_data)
 
     rotated_mask: NDArray[np.bool_] = ndimage.rotate(
         valid_mask, angle, reshape=False, order=0, mode=mode
