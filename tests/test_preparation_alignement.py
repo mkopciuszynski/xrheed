@@ -11,8 +11,8 @@ from xrheed.preparation.alignment import (
 # Expected centers for each dataset (cx, cy)
 DATAFILE_CENTER_MAP = {
     "Si_111_7x7_112_phi_00.raw": (-0.27, -0.43),
-    "Si_111_r3Ag_112_thA.raw": (-5.58, -4.24),
-    "Si_111_r3Ag_112_thD.raw": (-5.53, 3.33),
+    "Si_111_r3Ag_112_thA.raw": (-5.56, -4.24),
+    "Si_111_r3Ag_112_thD.raw": (-5.56, 3.33),
     "Si_111_r3Ag_thA_phi15.raw": (-5.48, 1.83),
 }
 
