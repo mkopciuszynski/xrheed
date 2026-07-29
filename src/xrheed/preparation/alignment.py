@@ -13,6 +13,7 @@ from xrheed.preparation.filters import gaussian_filter_profile
 
 from ..constants import IMAGE_DIMS
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +34,7 @@ def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
     prominence: float = 0.1,
-    refinement_tolerance: float = 1.0,  # default in mm
+    refinement_tolerance: float = 2.0,  # default in mm
 ) -> float:
     """
     Estimate horizontal (sx) symmetry center of a diffraction image.
@@ -64,7 +65,7 @@ def find_horizontal_center(
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
     smooth_sigma = _spot_sigma_from_profile(global_profile)
-
+    
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
     # Normalize
@@ -86,30 +87,37 @@ def find_horizontal_center(
         approx_center = float(np.average(x_coords, weights=heights))
     logger.debug("Global approx_center: %.4f", approx_center)
 
-    global_max = global_profile_smooth.max()
+    # Use 99th percentile as the effective max peak
+    global_max = float(image.quantile(0.99))
 
     ny = int(image.sizes["sy"])
     stripe_height = max(1, ny // int(n_stripes))
     sx_coords = np.asarray(image.sx.values)
 
     centers = []
+
     for i in range(n_stripes):
         start = i * stripe_height
         end = ny if i == n_stripes - 1 else (i + 1) * stripe_height
         stripe = image.isel(sy=slice(start, end))
+
+        stripe_max = float(stripe.quantile(0.99))
+        # use only those stripes that show significant features 
+        if stripe_max < global_max * 0.9:
+            continue
+
         profile = stripe.mean(dim="sy")
 
         if profile.size == 0:
             continue
 
         profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
-        if profile_smooth.max() < global_max * 0.7:
-            continue
-
+       
         vals = profile_smooth.values.astype(float)
         vals = _normalize_values(vals)
-
+        
         peaks, _ = find_peaks(vals, prominence=prominence)
+        
         if peaks.size == 0:
             continue
         x_coords = np.sort(sx_coords[peaks])
@@ -122,7 +130,6 @@ def find_horizontal_center(
 
         # Pick candidate closest to global approx_center
         center = min(candidates, key=lambda c: abs(c - approx_center))
-
         # Only accept if within fixed tolerance
         if abs(center - approx_center) <= refinement_tolerance:
             centers.append(center)
