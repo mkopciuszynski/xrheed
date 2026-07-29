@@ -28,6 +28,7 @@ def _normalize_values(values: NDArray[np.float64]) -> NDArray[np.float64]:
 
     return (values - np.min(values)) / value_range
 
+
 def find_horizontal_center(
     image: xr.DataArray,
     n_stripes: int = 10,
@@ -62,7 +63,7 @@ def find_horizontal_center(
 
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
-    smooth_sigma = 2.0 * _spot_sigma_from_profile(global_profile)
+    smooth_sigma = _spot_sigma_from_profile(global_profile)
 
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
@@ -97,6 +98,7 @@ def find_horizontal_center(
         end = ny if i == n_stripes - 1 else (i + 1) * stripe_height
         stripe = image.isel(sy=slice(start, end))
         profile = stripe.mean(dim="sy")
+
         if profile.size == 0:
             continue
 
@@ -104,10 +106,8 @@ def find_horizontal_center(
         if profile_smooth.max() < global_max * 0.7:
             continue
 
-        try:
-            vals = _normalize_values(profile_smooth.values)
-        except ValueError:
-            continue
+        vals = profile_smooth.values.astype(float)
+        vals = _normalize_values(vals)
 
         peaks, _ = find_peaks(vals, prominence=prominence)
         if peaks.size == 0:
@@ -404,9 +404,6 @@ def _linear_plus_sigmoid(
     return a * x + b + L * expit(k * (x - x0))
 
 
-logging.getLogger(__name__)
-
-
 def _spot_sigma_from_profile(
     profile: xr.DataArray,
     max_sigma: float = 2.0,  # in mm
@@ -415,18 +412,6 @@ def _spot_sigma_from_profile(
     Fit a Lorentzian around peaks in a 1D diffraction profile.
     Iteratively expand window until fit stabilizes.
     Returns sigma (HWHM), capped to avoid runaway values.
-
-    Parameters
-    ----------
-    profile : xr.DataArray
-        1D profile with coordinate 'sx' or 'sy'.
-    max_sigma : float, optional
-        Maximum allowed sigma in mm (default 2.0).
-
-    Returns
-    -------
-    float
-        Estimated sigma (HWHM) in mm. Falls back to max_sigma if no stable fit.
     """
     # --- coordinate extraction ---
     if "sx" in profile.coords:
@@ -437,22 +422,14 @@ def _spot_sigma_from_profile(
         raise AssertionError("Profile must have 'sx' or 'sy' coordinate")
 
     y = profile.values.astype(float)
-    if len(x) < 2:
-        warnings.warn("Profile too short, returning max_sigma")
+
+    try:
+        y_norm = _normalize_values(y)
+    except Exception as e:  # noqa: BLE001
+        warnings.warn("Flat profile")
         return max_sigma
 
     dx = abs(x[1] - x[0])
-    try:
-        y_norm = _normalize_values(y)
-    except ValueError:
-        warnings.warn("Flat profile, returning max_sigma")
-        return max_sigma
-
-    peaks, _ = find_peaks(
-        y_norm,
-        prominence=0.05,
-    )
-
     n = len(y)
 
     # window sizes in index units
@@ -460,17 +437,14 @@ def _spot_sigma_from_profile(
     max_window = int((2.0 * max_sigma) // dx)
 
     # --- find candidate peaks ---
-    peaks, _ = find_peaks(
-        y_norm,
-        prominence=0.05,
-    )
-
+    # Prominence threshold works across both raw & float32 normalized profile ranges
+    peaks, _ = find_peaks(y_norm, prominence=0.1)
     if peaks.size == 0:
-        warnings.warn("No peaks detected, returning max_sigma")
-        return max_sigma
+        warnings.warn("No peaks detected, returning max_sigma", UserWarning)
+        return float(max_sigma)
 
     # Sort peaks by height (strongest first)
-    peak_order = peaks[np.argsort(y_norm[peaks])[::-1]]
+    peak_order = peaks[np.argsort(y[peaks])[::-1]]
 
     # --- try each peak until one works ---
     for i_max in peak_order:
@@ -486,10 +460,8 @@ def _spot_sigma_from_profile(
             if len(xw) < 5 or np.ptp(yw) == 0:
                 continue
 
-            try:
-                yw = _normalize_values(yw)
-            except ValueError:
-                continue
+            # Normalize to [0,1]
+            yw = _normalize_values(yw)
 
             model = LorentzianModel(prefix="l_")
             params = model.make_params()
