@@ -46,27 +46,18 @@ def normalize_detector_image(
     original_dtype = str(image_np.dtype)
 
     if np.issubdtype(image_np.dtype, np.integer):
-
         max_value = np.iinfo(image_np.dtype).max
 
-        image_np = (
-            image_np.astype(np.float32)
-            / max_value
-        )
+        image_np = image_np.astype(np.float32) / max_value
 
     elif np.issubdtype(image_np.dtype, np.floating):
-
         image_np = image_np.astype(np.float32)
 
         if image_np.min() < 0 or image_np.max() > 1:
-            raise ValueError(
-                "Floating detector data must be normalized to [0,1]"
-            )
+            raise ValueError("Floating detector data must be normalized to [0,1]")
 
     else:
-        raise TypeError(
-            f"Unsupported detector dtype {image_np.dtype}"
-        )
+        raise TypeError(f"Unsupported detector dtype {image_np.dtype}")
 
     return image_np, original_dtype
 
@@ -115,7 +106,6 @@ class LoadRheedBase(abc.ABC):
 
         image_np, detector_dtype = normalize_detector_image(image_np)
 
-
         # --------------------------------------------------------------
         # 1. Merge attributes
         # --------------------------------------------------------------
@@ -126,7 +116,7 @@ class LoadRheedBase(abc.ABC):
         attrs["detector_dtype"] = detector_dtype
         attrs["data_dtype"] = "float32"
         attrs["data_normalization"] = "dtype_max"
-        
+
         # --------------------------------------------------------------
         # 2. Validate required geometry
         # --------------------------------------------------------------

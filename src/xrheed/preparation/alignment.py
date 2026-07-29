@@ -13,7 +13,6 @@ from xrheed.preparation.filters import gaussian_filter_profile
 
 from ..constants import IMAGE_DIMS
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +64,7 @@ def find_horizontal_center(
     # --- Global profile and approximate center ---
     global_profile = image.mean(dim="sy")
     smooth_sigma = _spot_sigma_from_profile(global_profile)
-    
+
     global_profile_smooth = gaussian_filter_profile(global_profile, sigma=smooth_sigma)
 
     # Normalize
@@ -102,7 +101,7 @@ def find_horizontal_center(
         stripe = image.isel(sy=slice(start, end))
 
         stripe_max = float(stripe.quantile(0.99))
-        # use only those stripes that show significant features 
+        # use only those stripes that show significant features
         if stripe_max < global_max * 0.9:
             continue
 
@@ -112,12 +111,12 @@ def find_horizontal_center(
             continue
 
         profile_smooth = gaussian_filter_profile(profile, sigma=smooth_sigma)
-       
+
         vals = profile_smooth.values.astype(float)
         vals = _normalize_values(vals)
-        
+
         peaks, _ = find_peaks(vals, prominence=prominence)
-        
+
         if peaks.size == 0:
             continue
         x_coords = np.sort(sx_coords[peaks])
@@ -432,7 +431,7 @@ def _spot_sigma_from_profile(
 
     try:
         y_norm = _normalize_values(y)
-    except Exception as e:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         warnings.warn("Flat profile")
         return max_sigma
 
