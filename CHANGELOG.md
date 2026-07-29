@@ -3,12 +3,22 @@
 <a name="2.3.0"></a>
 ## [2.3.0] – 2026-07-xx
 
+<a name="2.3.0"></a>
+## [2.3.0] – 2026-07-xx
+
+### Changed
+- Adopted normalized `float32` as the canonical internal representation for RHEED images.
+  - Loaded images are now converted to floating point values in the `[0, 1]` range.
+  - Preserves high-bit-depth detector information and avoids repeated dtype conversions during image processing.
+  - Updated image processing, alignment, filtering, plotting, tests, and examples to support the new representation.
+
 ### Fixed
 - Resolved RUF012 warnings by annotating plugin metadata with ClassVar.
-- Updated plugin classes to avoid mutable class‑attribute defaults.
-- Replaced root‑logger usage with module‑level logger to satisfy LOG015.
-- Ensured consistent typing for plugin metadata (dict[str, Any]).
-- Removed screen_center_sx_px and screen_center_sy_px from required RI attributes.
+- Updated plugin classes to avoid mutable class-attribute defaults.
+- Replaced root-logger usage with module-level logger to satisfy LOG015.
+- Ensured consistent typing for plugin metadata (`dict[str, Any]`).
+- Removed `screen_center_sx_px` and `screen_center_sy_px` from required RI attributes.
+
 
 <a name="2.2.0"></a>
 ## [2.2.0] – 2026-06-11
