@@ -10,6 +10,29 @@ from ..constants import IMAGE_NDIMS
 logger = logging.getLogger(__name__)
 
 
+def _high_pass_single_image(
+    image: NDArray[np.float32],
+    sigma_px: float,
+    threshold: float,
+) -> NDArray[np.float32]:
+    """
+    Apply high-pass filter to a single 2D image.
+    """
+
+    img: NDArray[np.float32] = image.astype(np.float32, copy=True)
+
+    blurred: NDArray[np.float32] = gaussian_filter(
+        img,
+        sigma=sigma_px,
+        mode="nearest",
+    ).astype(np.float32, copy=False)
+
+    img -= threshold * blurred
+    img -= img.min()
+
+    return img
+
+
 def gaussian_filter_profile(
     profile: xr.DataArray,
     sigma: float = 1.0,
@@ -130,30 +153,3 @@ def high_pass_filter(
     )
 
     return filtered
-
-
-def _high_pass_single_image(
-    image: np.ndarray,
-    sigma_px: float,
-    threshold: float,
-) -> np.ndarray:
-    """
-    Apply high-pass filter to a single 2D image.
-    """
-
-    img = image.astype(np.float32)
-
-    blurred = gaussian_filter(img, sigma=sigma_px, mode="nearest")
-    img = img - threshold * blurred
-
-    # shift to positive
-    img -= img.min()
-
-    # clip to dtype
-    if np.issubdtype(image.dtype, np.integer):
-        info = np.iinfo(image.dtype)
-        img = np.clip(img, info.min, info.max).astype(image.dtype)
-    else:
-        img = img.astype(image.dtype)
-
-    return img
