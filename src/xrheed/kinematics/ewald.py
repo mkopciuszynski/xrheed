@@ -432,7 +432,7 @@ class Ewald:
         ax: Axes | None = None,
         show_image: bool = True,
         show_roi: bool = False,
-        auto_levels: float = 0.0,
+        auto_levels: float | tuple[float, float] = 0.0,
         show_center_lines: bool = False,
         **kwargs,
     ) -> Axes:
@@ -447,8 +447,10 @@ class Ewald:
             If True, plot the RHEED image (default: True).
         show_roi : bool, optional
             If True, overlay the ROI boundary (default: False).
-        auto_levels : float, optional
-            Contrast enhancement factor for image plotting.
+        auto_levels : float or tuple[float, float], optional
+               - If > 0 or a tuple, automatically set vmin/vmax using percentile clipping inside the ROI.
+               - Pass a float `p` to clip the bottom `p%` and top `p%`.
+               - Pass a tuple `(p_low, p_high)` for asymmetric bounds.
         show_center_lines : bool, optional
             If True, plot center cross lines (default: False).
         **kwargs
