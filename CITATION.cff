@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it using the following citation."
+message: "If you use this software, please cite the following publication."
 title: "xRHEED: A versatile Python toolkit for RHEED image analysis"
 version: "3.2"
 date-released: 2026-06-29
@@ -30,4 +30,5 @@ preferred-citation:
       orcid: "https://orcid.org/0000-0001-7360-6829"
   journal: "SoftwareX"
   year: 2026
-  url: "https://www.sciencedirect.com/science/article/pii/S2352711026004607"
+  doi: "10.1016/j.softx.2026.102969"
+  url: "https://doi.org/10.1016/j.softx.2026.102969"
