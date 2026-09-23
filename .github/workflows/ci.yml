@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -14,18 +18,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Install uv and set up Python
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up uv virtualenv
-        run: uv python install 3.12
+          enable-cache: true
 
       - name: Sync all dependencies (with extras)
         run: uv sync --all-extras --dev
@@ -35,3 +37,6 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -vv
+
+      - name: Validate package build
+        run: uv run python -m build

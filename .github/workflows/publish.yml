@@ -3,31 +3,58 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - 'v*'  # Triggers only on version tags like v0.5.10
+      - "v*"
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-publish:
-    name: Build and Publish to PyPI
+  build:
+    name: Build package distributions
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v7
         with:
-          python-version: '3.12'
+          fetch-depth: 0
 
-      - name: Install build tools
-        run: python -m pip install --upgrade pip setuptools wheel build twine
+      - name: Install uv and set up Python
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
 
-      - name: Build wheel and sdist
-        run: python -m build
+      - name: Install project dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Build wheel and source distribution
+        run: uv run python -m build
+
+      - name: Upload package distributions
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish package to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/xrheed
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download package distributions
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: python-distributions
+          path: dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          attestations: false
+        uses: pypa/gh-action-pypi-publish@v1.14.2
