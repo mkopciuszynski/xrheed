@@ -48,7 +48,7 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "ruff",
     "pytest",
