@@ -93,12 +93,15 @@ class Lattice:
         """
         cls: type[Lattice] = self.__class__
         new_lattice = cls.__new__(cls)
+        new_lattice.label = self.label
         new_lattice.a1 = self.a1.copy()
         new_lattice.a2 = self.a2.copy()
         new_lattice.b1 = self.b1.copy()
         new_lattice.b2 = self.b2.copy()
         new_lattice.real_lattice = self.real_lattice.copy()
         new_lattice.reciprocal_lattice = self.reciprocal_lattice.copy()
+        new_lattice._real_size = self._real_size
+        new_lattice._reciprocal_size = self._reciprocal_size
         return new_lattice
 
     @property
@@ -152,12 +155,15 @@ class Lattice:
         cls: type[Lattice] = self.__class__
         new_lattice = cls.__new__(cls)
         memo[id(self)] = new_lattice
+        new_lattice.label = copy.deepcopy(self.label, memo)
         new_lattice.a1 = copy.deepcopy(self.a1, memo)
         new_lattice.a2 = copy.deepcopy(self.a2, memo)
         new_lattice.b1 = copy.deepcopy(self.b1, memo)
         new_lattice.b2 = copy.deepcopy(self.b2, memo)
         new_lattice.real_lattice = copy.deepcopy(self.real_lattice, memo)
         new_lattice.reciprocal_lattice = copy.deepcopy(self.reciprocal_lattice, memo)
+        new_lattice._real_size = self._real_size
+        new_lattice._reciprocal_size = self._reciprocal_size
         return new_lattice
 
     def __repr__(self) -> str:
