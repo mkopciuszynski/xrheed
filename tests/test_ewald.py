@@ -1,3 +1,4 @@
+import copy
 import unittest
 from pathlib import Path
 
@@ -93,6 +94,43 @@ class TestEwald(unittest.TestCase):
         self.ewald.ewald_azimuthal_rotation += 5.0
 
         self.assertFalse(np.array_equal(old_sx, self.ewald.ew_sx))
+
+    def test_substrate_n_fold_generates_equal_offsets(self):
+        self.ewald.ewald_azimuthal_rotation = 10.0
+        self.ewald.substrate_n_fold = 3
+
+        base_angle = self.ewald.image_azimuthal_angle + 10.0
+
+        self.assertAlmostEqual(self.ewald.ewald_azimuthal_angle, base_angle)
+        self.assertGreater(len(self.ewald.ew_sx), 0)
+        self.assertEqual(self.ewald.ew_sx.shape, self.ewald.ew_sy.shape)
+
+    def test_substrate_n_fold_composes_with_mirror_symmetry(self):
+        self.ewald.ewald_azimuthal_rotation = 10.0
+        single_domain_sx = self.ewald.ew_sx.copy()
+        self.ewald.mirror_symmetry = True
+        self.ewald.substrate_n_fold = 3
+        self.ewald.calculate_ewald()
+
+        self.assertFalse(np.array_equal(single_domain_sx, self.ewald.ew_sx))
+        self.assertGreater(len(self.ewald.ew_sx), 0)
+        self.assertEqual(self.ewald.ew_sx.shape, self.ewald.ew_sy.shape)
+
+    def test_substrate_n_fold_rejects_invalid_orders(self):
+        with self.assertRaises(ValueError):
+            self.ewald.substrate_n_fold = 0
+
+        with self.assertRaises(TypeError):
+            self.ewald.substrate_n_fold = 1.5
+
+    def test_copy_preserves_symmetry_settings(self):
+        self.ewald.mirror_symmetry = True
+        self.ewald.substrate_n_fold = 3
+
+        copied_ewald = copy.copy(self.ewald)
+
+        self.assertTrue(copied_ewald.mirror_symmetry)
+        self.assertEqual(copied_ewald.substrate_n_fold, 3)
 
     def test_lattice_scale_updates_ewald_positions(self):
         old_sx = self.ewald.ew_sx.copy()
