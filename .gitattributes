@@ -1,0 +1,3 @@
+*.pkl binary
+*.dill binary
+*.ipynb filter=nbstripout
