@@ -29,30 +29,35 @@ class Ewald:
     """
     Class for calculating and analyzing the Ewald sphere construction in RHEED.
 
-    This class combines experimental RHEED image metadata with a reciprocal
-    lattice model to predict diffraction spot positions on the screen.
+    Combines experimental RHEED image metadata with a reciprocal lattice model
+    to predict diffraction spot positions on the screen.
 
     Azimuthal angle convention
-    --------------------------
-    Three azimuthal angles are distinguished:
-
+    ---------------------------
     * image_azimuthal_angle
-        Experimental azimuth of the RHEED image, read from image metadata.
-        This value defines the reference frame and is treated as immutable.
+        Experimental azimuth of the recorded RHEED image. This defines the
+        reference orientation of the (1x1) surface lattice.
 
     * ewald_azimuthal_rotation
-        User-defined relative rotation of the Ewald construction with respect
-        to the image azimuth. This does not modify the image metadata.
+        User-defined rotation of the probed superstructure relative to the
+        (1x1) surface lattice.
 
-    * Ewald azimuthal angles (effective)
-        The azimuthal angles actually used in the Ewald construction, derived as
+    * Ewald azimuthal angles
+        Effective angles used in the Ewald construction:
 
-            image_azimuthal_angle ± ewald_azimuthal_rotation
+            image_azimuthal_angle
+            + relative_rotation
+            + symmetry_offset
 
-        When mirror symmetry is enabled, both ± rotations are used.
+        When mirror symmetry is enabled, both + and - relative rotations are
+        included. For n-fold symmetry, symmetry-related domains are generated
+        with offsets of 360° / n.
 
-    This separation preserves the experimental reference frame while allowing
-    controlled relative rotation of the theoretical Ewald construction.
+        For example, six-fold symmetry generates:
+            0°, 60°, 120°, 180°, 240°, 300°.
+
+    When the relative rotation is zero, only the unrotated orientation is used
+    to avoid duplicating the +0° and -0° cases.
     """
 
     SPOT_WIDTH_MM: float = 1.5
@@ -185,6 +190,7 @@ class Ewald:
         self._ewald_azimuthal_rotation = 0.0
 
         self.mirror_symmetry = False
+        self._substrate_n_fold = 1
 
     def _initialize_lattice(self, lattice: Lattice) -> None:
         self._lattice = copy.deepcopy(lattice)
@@ -232,6 +238,8 @@ class Ewald:
         new_ewald.incident_angle = self.incident_angle
         new_ewald.lattice_scale = self.lattice_scale
         new_ewald.ewald_roi = self.ewald_roi
+        new_ewald.mirror_symmetry = self.mirror_symmetry
+        new_ewald.substrate_n_fold = self.substrate_n_fold
         new_ewald._spot_w_px = self._spot_w_px
         new_ewald._spot_h_px = self._spot_h_px
         return new_ewald
@@ -307,6 +315,20 @@ class Ewald:
         return self.image_azimuthal_angle + self._ewald_azimuthal_rotation
 
     @property
+    def substrate_n_fold(self) -> int:
+        """Number of rotationally equivalent lattice orientations."""
+        return self._substrate_n_fold
+
+    @substrate_n_fold.setter
+    def substrate_n_fold(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
+            raise TypeError("substrate_n_fold must be a positive integer.")
+        if value < 1:
+            raise ValueError("substrate_n_fold must be a positive integer.")
+
+        self._substrate_n_fold = int(value)
+
+    @property
     def incident_angle(self) -> float:
         if isinstance(self._incident_angle, np.ndarray):
             return self._incident_angle[self._stack_index]
@@ -379,17 +401,38 @@ class Ewald:
         image_azimuthal_angle: float = self.image_azimuthal_angle
         ewald_azimuthal_rotation: float = self.ewald_azimuthal_rotation
 
-        # Determine which azimuthal angles are used to rotate the reciprocal lattice
+        # Substrate rotational symmetry used to generate equivalent
+        # superstructure domains.
+        substrate_n_fold = max(1, int(self.substrate_n_fold))
+
+        symmetry_offsets = (
+            np.arange(substrate_n_fold) * 360.0 / substrate_n_fold
+        )
+
+        # Determine the relative superstructure orientations.
         if np.isclose(ewald_azimuthal_rotation, 0.0):
-            # No relative rotation: use the image azimuthal angle only
-            ewald_azimuthal_angles = [image_azimuthal_angle]
+            relative_rotations = [0.0]
         else:
-            # Relative rotation with respect to the image azimuthal angle
-            ewald_azimuthal_angles = [image_azimuthal_angle + ewald_azimuthal_rotation]
+            relative_rotations = [ewald_azimuthal_rotation]
+
             if self.mirror_symmetry:
-                ewald_azimuthal_angles.insert(
-                    0, image_azimuthal_angle - ewald_azimuthal_rotation
+                relative_rotations.insert(
+                    0,
+                    -ewald_azimuthal_rotation,
                 )
+
+        # Combine the superstructure orientation with the
+        # substrate n-fold symmetry.
+        ewald_azimuthal_angles = [
+            image_azimuthal_angle + relative_rotation + symmetry_offset
+            for relative_rotation in relative_rotations
+            for symmetry_offset in symmetry_offsets
+        ]
+
+        ewald_azimuthal_angles = np.mod(
+            ewald_azimuthal_angles,
+            360.0,
+        ).tolist()
 
         # Apply azimuthal rotations to the inverse lattice and stack results
         rotated_inverse_lattices = [
@@ -421,9 +464,10 @@ class Ewald:
         self.ew_sx = sx
         self.ew_sy = sy
         logger.debug(
-            "calculate_ewald: generated %d spots (mirror=%s) ewald_roi=%.3f",
+            "calculate_ewald: generated %d spots (mirror=%s, substrate_n_fold=%d) ewald_roi=%.3f",
             sx.size,
             self.mirror_symmetry,
+            self.substrate_n_fold,
             getattr(self, "_ewald_roi", float("nan")),
         )
 
