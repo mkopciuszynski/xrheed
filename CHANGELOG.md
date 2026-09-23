@@ -1,9 +1,11 @@
 # Changelog
 
-## [Unreleased]
+<a name="2.4.0"></a>
+## [2.4.0] – 2026-xx-xx
 
 ### Changed
 - Introduced the `Ewald.substrate_n_fold` property to generate rotationally equivalent substrate domains in the Ewald construction.
+
 
 <a name="2.3.0"></a>
 ## [2.3.0] – 2026-07-29
